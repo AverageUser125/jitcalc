@@ -3,7 +3,7 @@
 option(PRODUCTION_BUILD "Make this a production build" OFF)
 
 # project name
-set(PROJECT_NAME "bfjit")
+set(PROJECT_NAME "jitcalc")
 
 # Set the Compiler
 # set(CMAKE_CXX_COMPILER /usr/bin/g++)
