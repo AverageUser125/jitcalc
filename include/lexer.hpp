@@ -9,14 +9,14 @@ enum class TokenType {
 	EOF,
 	Ident,
 	Number,
-	Plus = '+',
-	Minus = '-',
-	Star = '*',
-	Slash = '/',
-	Caret = '^',
-	OpenParenthesis = '(',
-	CloseParenthesis = ')',
-	Comma = ',',
+	Plus,
+	Minus,
+	Star,
+	Slash,
+	Caret,
+	OpenParenthesis ,
+	CloseParenthesis,
+	Comma,
 	MAX
 };
 struct Token {

@@ -52,7 +52,7 @@ Token Lexer::lexerNextToken() {
 			lexerAdvanceTillConditionFail(std::isdigit);
 
 			if (*current == '.') {
-				lexerAdvance();
+				current++;
 				lexerAdvanceTillConditionFail(std::isdigit);
 			}
 			return lexerMakeToken(TokenType::Number);
@@ -63,7 +63,7 @@ Token Lexer::lexerNextToken() {
 				lexerAdvanceTillConditionFail(std::isdigit, std::isalpha);
 				return lexerMakeToken(TokenType::Ident);
 			} else {
-				lexerAdvance();
+				current++;
 				return lexerMakeToken(TokenType::Error);
 			}
 	}
