@@ -9,4 +9,7 @@ func(5) - > 12
 
 # Disclamer
 This may, or will, absolutely fail horribly and there us zero
-guarante it will even compile nor run
+guarante it will even compile nor run.
+
+# Credits
+- https://github.com/PixelRifts/math-expr-evaluator
