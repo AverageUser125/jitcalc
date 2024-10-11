@@ -1,63 +1,73 @@
 #include "lexer.hpp"
+#include "defines.hpp"
 #include <string_view>
 #include <ctype.h>
 
 #pragma region helperFunction
-constexpr bool Lexer::lexerBound() {
-	return *current == '\0';
-}
-constexpr char Lexer::lexerPeek() {
-	return *current;
-}
-constexpr char Lexer::lexerAdvance() {
-	current++;
-	return current[-1];
-}
-constexpr void Lexer::lexerSkipWhitespace() {
-	while (true) {
-		char c = lexerPeek();
-		if (std::isspace(c)) {
-			lexerAdvance();
-		} else {
-			return;
-		}
-	}
-}
-
-inline void Lexer::lexerAdvanceTillConditionFail(bool (*func(char))) {
-	while (func(*current)) {
-		current++;
-	}
-}
-
 inline Token Lexer::lexerMakeToken(TokenType type) {
 	return {type, std::string_view(start, static_cast<size_t>(current - start))};
 }
 #pragma endregion
 
-#pragma region tokenizerFunctions
-
-Token Lexer::lexerNumber() {
-	lexerAdvanceTillConditionFail(std::isdigit);
-
-	if (lexerPeek() == '.') {
-		lexerAdvance();
-		lexerAdvanceTillConditionFail(std::isdigit);
-	}
-
-	return lexerMakeToken(TokenType::Number);
+#pragma region majorFunctions
+void Lexer::lexerInit(std::string expression) {
+	start = expression.data();
+	current = start;
 }
 
-Token Lexer::lexerIdentifier() {
-	lexerAdvanceTillConditionFail(std::isdigit, std::isalpha);
-	return lexerMakeToken(TokenType::Ident);
+Token Lexer::lexerNextToken() {
+	lexerAdvanceTillConditionFail(std::isspace);
+	start = current;
+	if (*current == '\0')
+		lexerMakeToken(TokenType::EOF);
+
+	current++;
+	char currentChar = current[-1];
+	switch (currentChar){
+		case '(':
+			return lexerMakeToken(TokenType::OpenParenthesis);
+		case ')':
+			return lexerMakeToken(TokenType::CloseParenthesis);
+		case '+':
+			return lexerMakeToken(TokenType::Plus);
+		case '-':
+			return lexerMakeToken(TokenType::Minus);
+		case '*':
+			return lexerMakeToken(TokenType::Star);
+		case '/':
+			return lexerMakeToken(TokenType::Slash);
+		case '^':
+			return lexerMakeToken(TokenType::Caret);
+
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9': {
+			lexerAdvanceTillConditionFail(std::isdigit);
+
+			if (*current == '.') {
+				lexerAdvance();
+				lexerAdvanceTillConditionFail(std::isdigit);
+			}
+			return lexerMakeToken(TokenType::Number);
+		}
+
+		default:
+			if (std::isalpha(currentChar)) {
+				lexerAdvanceTillConditionFail(std::isdigit, std::isalpha);
+				return lexerMakeToken(TokenType::Ident);
+			} else {
+				lexerAdvance();
+				return lexerMakeToken(TokenType::Error);
+			}
+	}
+	unreachable();
 }
 
 #pragma endregion
-
-void lexerInit(Lexer* lexer, std::string expression) {
-}
-
-Token lexerNextToken(Lexer* lexer) {
-	return Token();
-}

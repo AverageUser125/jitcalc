@@ -7,16 +7,16 @@
 enum class TokenType {
 	Error,
 	EOF,
-	Indent,
+	Ident,
 	Number,
-	Plus,
-	Minus,
-	Star,
-	Slash,
-	Caret,
-	OpenParenthesis,
-	CloseParenthesis,
-	Comma,
+	Plus = '+',
+	Minus = '-',
+	Star = '*',
+	Slash = '/',
+	Caret = '^',
+	OpenParenthesis = '(',
+	CloseParenthesis = ')',
+	Comma = ',',
 	MAX
 };
 struct Token {
@@ -28,10 +28,6 @@ struct Lexer {
 	char* start;
 	char* current;
 
-	constexpr bool lexerBound();
-	constexpr char lexerPeek();
-	constexpr char lexerAdvance();
-	constexpr void lexerSkipWhitespace();
 	inline Token lexerMakeToken(TokenType type);	
 	// Template function that accepts multiple conditions and checks them in the loop
 	template <typename... Conditions> inline void lexerAdvanceTillConditionFail(Conditions... conditions) {
@@ -46,9 +42,7 @@ struct Lexer {
 		}
 	}
 
-	Token lexerNumber();
-	Token lexerIdentifier();
+	void lexerInit(std::string expression);
+	Token lexerNextToken();
 };
 
-void lexerInit(Lexer* lexer, std::string expression);
-Token lexerNextToken(Lexer* lexer);
