@@ -23,3 +23,45 @@ const static Precedence precedenceLookup[static_cast<int>(TokenType::MAX)] = {
 	Precedence::MIN,   // TokenType::CloseParenthesis
 	Precedence::MIN,   // TokenType::Comma
 };
+
+
+enum class NodeType {
+	Error,
+	Number,
+	Positive,
+	Negative,
+	Add,
+	Sub,
+	Mul,
+	Div,
+	Pow
+};
+
+struct ExpressionNode {
+	NodeType type;
+
+	union {
+		size_t number;
+
+		struct {
+			ExpressionNode* operand;
+		} unary;
+
+		struct {
+			ExpressionNode* left;
+			ExpressionNode* right;
+		} binary;
+	};
+};
+
+/*
+typedef struct Parser {
+	M_Pool node_pool;
+
+	Token curr;
+	Token next;
+	Lexer lexer;
+
+
+} Parser;
+*/

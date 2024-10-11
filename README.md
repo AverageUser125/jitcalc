@@ -13,3 +13,4 @@ guarante it will even compile nor run.
 
 # Credits
 - https://github.com/PixelRifts/math-expr-evaluator
+- https://github.com/tsoding/arena/
