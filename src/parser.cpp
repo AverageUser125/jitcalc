@@ -11,6 +11,7 @@ void Parser::parserAdvance() {
 Parser::Parser(std::string& expression) : lexer(expression), nodePool({}) {
 	curr = lexer.lexerNextToken();
 	next = lexer.lexerNextToken();
+	arena_init(&nodePool);
 }
 
 Parser::~Parser() {

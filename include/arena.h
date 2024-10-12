@@ -75,6 +75,7 @@ void* arena_memdup(Arena* a, void* data, size_t size);
 char* arena_sprintf(Arena* a, const char* format, ...);
 #endif // ARENA_NOSTDIO
 
+void arena_init(Arena* a);
 void arena_reset(Arena* a);
 void arena_free(Arena* a);
 

@@ -93,17 +93,21 @@ void free_region(Region* r) {
 // - How many times existing region was skipped
 // - How many times allocation exceeded REGION_DEFAULT_CAPACITY
 
+void arena_init(Arena* a) {
+	ARENA_ASSERT(a != NULL);
+	ARENA_ASSERT(a->begin == NULL);
+	ARENA_ASSERT(a->end == NULL);
+
+	size_t capacity = REGION_DEFAULT_CAPACITY;
+	a->end = new_region(capacity);
+	a->begin = a->end;
+}
+
 void* arena_alloc(Arena* a, size_t size_bytes) {
 	size_t size = (size_bytes + sizeof(uintptr_t) - 1) / sizeof(uintptr_t);
-
-	if (a->end == NULL) {
-		ARENA_ASSERT(a->begin == NULL);
-		size_t capacity = REGION_DEFAULT_CAPACITY;
-		if (capacity < size)
-			capacity = size;
-		a->end = new_region(capacity);
-		a->begin = a->end;
-	}
+	ARENA_ASSERT(a != NULL);
+	ARENA_ASSERT(a->begin != NULL);
+	ARENA_ASSERT(a->end != NULL);
 
 	while (a->end->count + size > a->end->capacity && a->end->next != NULL) {
 		a->end = a->end->next;

@@ -8,7 +8,7 @@ void main() {
 	// std::getline(std::cin, input);	
 	Parser parser(input);
 	ExpressionNode& tree = parser.parserParseExpression(Precedence::MIN);
-	parser.parserDebugDumpTree(&tree, 0);
+	// parser.parserDebugDumpTree(&tree, 0);
 	// double answer = evaluate(&tree);
 	// std::cout << answer;
 	
