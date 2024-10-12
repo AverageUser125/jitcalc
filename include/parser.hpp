@@ -34,6 +34,7 @@ constexpr Precedence getPrecedence(TokenType type) {
 enum class NodeType {
 	Error,
 	Number,
+	Variable,
 	Positive,
 	Negative,
 	Add,
@@ -75,7 +76,7 @@ typedef struct Parser {
 	ExpressionNode* allocateExpressionNode();
 
 	ExpressionNode* parserParseNumber();
-
+	ExpressionNode* parseIdent();
 	ExpressionNode* parserParsePrefixExpr();
 	ExpressionNode* parserParseExpression(Precedence curr_operator_prec);
 	ExpressionNode* parserParseInfixExpr(Token tk, ExpressionNode* left);

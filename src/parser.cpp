@@ -1,5 +1,7 @@
 #include "parser.hpp"
 
+constexpr double pi = 3.14159265358979323846;
+constexpr double E = 2.718281828459045235360;
 //~ Helpers
 
 inline void Parser::parserAdvance() {
@@ -21,11 +23,35 @@ ExpressionNode* Parser::parserParseNumber() {
 	return ret;
 }
 
+ExpressionNode* Parser::parseIdent() {
+	ExpressionNode* ret = nullptr;
+	if (curr.lexme == "e") {
+		ret = allocateExpressionNode();
+		ret->type = NodeType::Number;
+		ret->number = E;
+	} else if (curr.lexme == "pi") {
+		ret = allocateExpressionNode();
+		ret->type = NodeType::Number;
+		ret->number = pi;	
+	} else if (curr.lexme == "x"){
+		ret = allocateExpressionNode();
+		ret->type = NodeType::Variable;
+		ret->number = 0;
+	} else {
+		ret = allocateExpressionNode();
+		ret->type = NodeType::Error;
+	}
+
+	return ret;
+}
+
 ExpressionNode* Parser::parserParsePrefixExpr() {
 	ExpressionNode* ret = nullptr;
 
 	if (curr.type == TokenType::Number) {
 		ret = parserParseNumber();
+	} else if (curr.type == TokenType::Ident) {
+		ret = parseIdent();
 	} else if (curr.type == TokenType::OpenParenthesis) {
 		parserAdvance();
 		ret = parserParseExpression(Precedence::MIN);
@@ -49,7 +75,7 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 		ret->type = NodeType::Error;
 	}
 
-	if (curr.type == TokenType::Number || curr.type == TokenType::OpenParenthesis) {
+	if (curr.type == TokenType::Number || curr.type == TokenType::Ident || curr.type == TokenType::OpenParenthesis) {
 		ExpressionNode* new_ret = allocateExpressionNode();
 		new_ret->type = NodeType::Mul;
 		new_ret->binary.left = ret;
@@ -126,7 +152,11 @@ void Parser::parserDebugDumpTree(ExpressionNode* node, size_t indent) {
 	case NodeType::Error:
 		printf("Error\n");
 		break;
-
+	
+	case NodeType::Variable: {
+		printf("X\n");
+	} break;
+	
 	case NodeType::Number: {
 		printf("%f\n", node->number);
 	} break;
