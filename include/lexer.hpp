@@ -20,7 +20,7 @@ enum class TokenType {
 	MAX
 };
 struct Token {
-	TokenType type;
+	TokenType type{};
 	std::string_view lexme;
 };
 
@@ -45,6 +45,7 @@ struct Lexer {
 	}
 
 	Token lexerNextToken();
+	Token lexerPeek();
 
 	static void lexerDebugPrintToken(Token token);
 };

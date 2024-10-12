@@ -63,8 +63,8 @@ struct ExpressionNode {
 typedef struct Parser {
 	Arena nodePool;
 
-	Token curr;
-	Token next;
+	Token curr{};
+	Token next{};
 	Lexer lexer;
 
 	Parser::Parser(std::string& expression);

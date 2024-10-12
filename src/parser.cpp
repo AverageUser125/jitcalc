@@ -9,9 +9,9 @@ void Parser::parserAdvance() {
 }
 
 Parser::Parser(std::string& expression) : lexer(expression), nodePool({}) {
-	parserAdvance();
-	parserAdvance();
 	arena_init(&nodePool);
+	parserAdvance();
+	parserAdvance();
 }
 
 Parser::~Parser() {
