@@ -8,7 +8,7 @@ bool gameLogic(float deltaTime) {
 		std::cout << "A";
 	}
 
-	if (platform::isButtonPressedOn(platform::Button::B)) {
+	if (platform::isButtonPressedOn(platform::Button::F11)) {
 		if (platform::isFullScreen()) {
 			platform::setFullScreen(false);
 		} else {

@@ -47,7 +47,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	} else if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
 		int index = key - GLFW_KEY_0;
 		platform::internal::setButtonState(platform::Button::NR0 + index, state);
-	} else if (key <= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
+	} else if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
 		int index = key - GLFW_KEY_F1;
 		platform::internal::setButtonState(platform::Button::F1 + index, state);
 	} else {

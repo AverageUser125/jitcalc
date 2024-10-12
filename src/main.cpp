@@ -12,14 +12,14 @@ int main() {
 	llvm::InitializeNativeTargetAsmPrinter();
 	llvm::InitializeNativeTargetAsmParser();
 
-	/*
+	
 	if (!guiInit()) {
 		return EXIT_FAILURE;
 	}
 	guiLoop();
 	guiCleanup();
-	*/
 	
+	/*
 	// x ^ (0.5) / (x ^ 2) causes crash (negative x)
 	// x ^ (0.5) / (2 ) doesn't crash
 	std::string input = "x * x";
@@ -39,4 +39,5 @@ int main() {
 	
 
 	return EXIT_SUCCESS;
+	*/
 }
