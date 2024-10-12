@@ -26,6 +26,7 @@ class JITCompiler {
 	JITCompiler();
 	double (*compile(ExpressionNode* expr))(double);
 
+
   private:
 	llvm::Value* generateCode(ExpressionNode* expr, llvm::Value* variable);
 	llvm::Function* getPowFunction();

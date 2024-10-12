@@ -46,7 +46,7 @@ if(MSVC)
 
     # Enable SIMD optimizations
     add_compile_options(/arch:AVX2)
-    add_compile_options(/wd4577)  # Disable the warning for deleted destructors
+    add_compile_options(/wd6424)  # Disable the warning for deleted destructors
 
     # Disable CRT secure warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)

@@ -10,12 +10,12 @@ void main() {
 	llvm::InitializeNativeTargetAsmPrinter();
 	llvm::InitializeNativeTargetAsmParser();
 
+	// x ^ (0.5) / (x ^ 2) causes crash (negative x)
+	// x ^ (0.5) / (2 ) doesn't crash
 
+	std::string input = "x / (x ^ 2)";
 
-	std::string input = "(x-5)^(0.5)";
-
-
-	// std::getline(std::cin, input);
+	std::getline(std::cin, input);
 	Parser parser(input);
 	ExpressionNode* tree = parser.parserParseExpression(Precedence::MIN);
 	parser.parserDebugDumpTree(tree, 0);
@@ -23,7 +23,8 @@ void main() {
 	JITCompiler jit;
 	auto func = jit.compile(tree);
 
-	for (double i = 1; i < 6; i++) {
+
+	for (double i = -1; i <= 2; i++) {
 		std::cout << func(i) << '\n';
 	}
 	
