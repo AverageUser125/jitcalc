@@ -24,10 +24,10 @@ struct ExpressionNode;
 class JITCompiler {
   public:
 	JITCompiler();
-	double compileAndRun(ExpressionNode* expr);
+	double (*compile(ExpressionNode* expr))(double);
 
   private:
-	llvm::Value* generateCode(ExpressionNode* expr);
+	llvm::Value* generateCode(ExpressionNode* expr, llvm::Value* variable);
 	llvm::Function* getPowFunction();
 
 	std::unique_ptr<llvm::LLVMContext> context;

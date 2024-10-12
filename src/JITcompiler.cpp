@@ -11,71 +11,73 @@ JITCompiler::JITCompiler() {
 	builder = std::make_unique<llvm::IRBuilder<>>(*context);
 }
 
-double JITCompiler::compileAndRun(ExpressionNode* expr) {
-	// Create a function for evaluating the expression
-	auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), false);
+
+double (*JITCompiler::compile(ExpressionNode* expr))(double) {
+	// Create a function with a double parameter for the variable
+	auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy()}, false);
 	auto func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "evaluate", module.get());
 	llvm::BasicBlock* block = llvm::BasicBlock::Create(*context, "entry", func);
 	builder->SetInsertPoint(block);
 
+	// Set the function's argument as the variable
+	llvm::Value* variable = func->getArg(0);
+
 	// Generate code for the expression and return the result
-	llvm::Value* result = generateCode(expr);
+	llvm::Value* result = generateCode(expr, variable);
 	builder->CreateRet(result);
 
 	// Now that the module is fully constructed, create the JIT execution engine
 	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
 	if (!engine) {
 		std::cerr << "Failed to create execution engine." << std::endl;
-		return 0.0;
+		return nullptr;
 	}
 
 	// Finalize the JIT object
 	engine->finalizeObject();
 
-	// Get the pointer to the JIT compiled function and execute it
-	auto evalFunc = (double (*)())engine->getPointerToFunction(func);
-	if (!evalFunc) {
-		std::cerr << "Failed to get function pointer." << std::endl;
-		return 0.0;
-	}
-
-	return evalFunc();
+	// Return the pointer to the compiled function
+	return (double (*)(double))engine->getPointerToFunction(func);
 }
 
-llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
+llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variable) {
 	switch (expr->type) {
 	case NodeType::Number:
 		return llvm::ConstantFP::get(*context, llvm::APFloat(expr->number));
 	case NodeType::Positive:
-		return generateCode(expr->unary.operand);
+		return generateCode(expr->unary.operand, variable);
 	case NodeType::Negative: {
-		llvm::Value* operand = generateCode(expr->unary.operand);
+		llvm::Value* operand = generateCode(expr->unary.operand, variable);
 		return builder->CreateFNeg(operand);
 	}
 	case NodeType::Add: {
-		llvm::Value* left = generateCode(expr->binary.left);
-		llvm::Value* right = generateCode(expr->binary.right);
+		llvm::Value* left = generateCode(expr->binary.left, variable);
+		llvm::Value* right = generateCode(expr->binary.right, variable);
 		return builder->CreateFAdd(left, right, "addtmp");
 	}
 	case NodeType::Sub: {
-		llvm::Value* left = generateCode(expr->binary.left);
-		llvm::Value* right = generateCode(expr->binary.right);
+		llvm::Value* left = generateCode(expr->binary.left, variable);
+		llvm::Value* right = generateCode(expr->binary.right, variable);
 		return builder->CreateFSub(left, right, "subtmp");
 	}
 	case NodeType::Mul: {
-		llvm::Value* left = generateCode(expr->binary.left);
-		llvm::Value* right = generateCode(expr->binary.right);
+		llvm::Value* left = generateCode(expr->binary.left, variable);
+		llvm::Value* right = generateCode(expr->binary.right, variable);
 		return builder->CreateFMul(left, right, "multmp");
 	}
 	case NodeType::Div: {
-		llvm::Value* left = generateCode(expr->binary.left);
-		llvm::Value* right = generateCode(expr->binary.right);
+		llvm::Value* left = generateCode(expr->binary.left, variable);
+		llvm::Value* right = generateCode(expr->binary.right, variable);
 		return builder->CreateFDiv(left, right, "divtmp");
 	}
 	case NodeType::Pow: {
-		llvm::Value* left = generateCode(expr->binary.left);
-		llvm::Value* right = generateCode(expr->binary.right);
+		llvm::Value* left = generateCode(expr->binary.left, variable);
+		llvm::Value* right = generateCode(expr->binary.right, variable);
 		return builder->CreateCall(getPowFunction(), {left, right}, "powtmp");
+	}
+	case NodeType::Variable: {
+		// Return the variable (the function's argument)
+		return variable;
 	}
 	default:
 		return nullptr;
