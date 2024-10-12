@@ -2,8 +2,12 @@
 #include "parser.hpp"
 #include "eval.hpp"
 #include <string>
+#include <llvm/Support/TargetSelect.h>
 
 void main() {
+	llvm::InitializeNativeTarget();
+	llvm::InitializeNativeTargetAsmPrinter();
+
 	std::string input = "1+1";
 	// std::getline(std::cin, input);
 	Parser parser(input);

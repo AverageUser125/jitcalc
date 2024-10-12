@@ -19,6 +19,23 @@ if(POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW)
 endif()
 
+set(LLVM_DIR "D:/apps/LLVM/build/lib/cmake/llvm")
+find_package(LLVM REQUIRED CONFIG)
+
+# If LLVM is found, include the required directories and link the libraries
+if(LLVM_FOUND)
+    llvm_map_components_to_libnames(LLVM_LIBS support core native orcjit)
+    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+    message(STATUS "Found LLVM: ${LLVM_VERSION}")
+    message(STATUS "LLVM Include Directories: ${LLVM_INCLUDE_DIRS}")
+    message(STATUS "LLVM Libraries: ${LLVM_LIBS}")
+
+    include_directories(${LLVM_INCLUDE_DIRS})
+    add_definitions(${LLVM_DEFINITIONS})
+else()
+    message(FATAL_ERROR "LLVM not found!")
+endif()
+
 if(MSVC)
     # Set MSVC runtime library
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
@@ -29,6 +46,7 @@ if(MSVC)
 
     # Enable SIMD optimizations
     add_compile_options(/arch:AVX2)
+    add_compile_options(/wd4577)  # Disable the warning for deleted destructors
 
     # Disable CRT secure warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
@@ -68,6 +86,10 @@ endif()
 # add .h and .hpp files
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
+target_link_libraries(${PROJECT_NAME}
+    LLVMMCJIT
+    ${LLVM_LIBS}  # Keep this line to ensure any additional LLVM libraries found are also linked
+)
 # Specify the output directory for the build (/bin directory)
 # set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 # Specify the output directory for the build (/build/bin directory)
