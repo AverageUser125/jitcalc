@@ -5,11 +5,11 @@
 
 void main() {
 	std::string input = "1+1";
-	// std::getline(std::cin, input);	
+	// std::getline(std::cin, input);
 	Parser parser(input);
 	ExpressionNode* tree = parser.parserParseExpression(Precedence::MIN);
 	parser.parserDebugDumpTree(tree, 0);
-	// double answer = evaluate(&tree);
-	// std::cout << answer;
+	double answer = evaluate(tree);
+	std::cout << answer;
 	
 }

@@ -25,6 +25,7 @@ struct Token {
 };
 
 struct Lexer {
+	std::string cleanExpression = "";
 	const char* start = nullptr;
 	const char* current = nullptr;
 
@@ -45,7 +46,6 @@ struct Lexer {
 	}
 
 	Token lexerNextToken();
-	Token lexerPeek();
 
 	static void lexerDebugPrintToken(Token token);
 };

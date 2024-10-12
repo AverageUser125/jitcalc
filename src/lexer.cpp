@@ -3,29 +3,26 @@
 #include <string_view>
 #include <ctype.h>
 #include <iostream>
+#include <algorithm>
 
 #pragma region helperFunction
 [[nodiscard]] inline Token Lexer::lexerMakeToken(TokenType type) {
 	return {type, std::string_view(start, static_cast<size_t>(current - start))};
 }
 
-
-Token Lexer::lexerPeek() {
-	const char* temp1 = start;
-	const char* temp2 = current;
-	Token tk = lexerNextToken();
-	start = temp1;
-	current = temp2;
-	return tk;
-}
-
 #pragma endregion
 
 #pragma region majorFunctions
 
-Lexer::Lexer(const std::string& expression)
-{
-	start = expression.c_str();
+Lexer::Lexer(const std::string& expression) {
+	cleanExpression = expression;
+	cleanExpression.reserve(expression.size());
+	for (char c : expression) {
+		if (!std::isspace(c)) {
+			cleanExpression += c;
+		}
+	}
+	start = cleanExpression.c_str();
 	current = start;
 }
 
