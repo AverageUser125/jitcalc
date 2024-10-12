@@ -1,12 +1,91 @@
 #include "parser.hpp"
-#include <cstdlib>
-#include <cassert>
-#include "arena.h"
 
-void Parser::parserAdvance() {
+//~ Helpers
+
+inline void Parser::parserAdvance() {
 	curr = next;
 	next = lexer.lexerNextToken();
 }
+
+ExpressionNode* Parser::allocateExpressionNode() {
+	return (ExpressionNode*)arena_alloc(&nodePool, sizeof(ExpressionNode));
+};
+
+ExpressionNode* Parser::parserParseNumber() {
+	double value = strtod((const char*)curr.lexme.data(), nullptr);
+	parserAdvance();
+
+	ExpressionNode* ret = allocateExpressionNode();
+	ret->type = NodeType::Number;
+	ret->number = value;
+	return ret;
+}
+
+ExpressionNode* Parser::parserParsePrefixExpr() {
+	ExpressionNode* ret = nullptr;
+
+	if (curr.type == TokenType::Number) {
+		ret = parserParseNumber();
+	} else if (curr.type == TokenType::OpenParenthesis) {
+		parserAdvance();
+		ret = parserParseExpression(Precedence::MIN);
+		if (curr.type == TokenType::CloseParenthesis) {
+			parserAdvance();
+		}
+	} else if (curr.type == TokenType::Plus) {
+		parserAdvance();
+		ret = allocateExpressionNode();
+		ret->type = NodeType::Positive;
+		ret->unary.operand = parserParsePrefixExpr();
+	} else if (curr.type == TokenType::Minus) {
+		parserAdvance();
+		ret = allocateExpressionNode();
+		ret->type = NodeType::Negative;
+		ret->unary.operand = parserParsePrefixExpr();
+	}
+
+	if (!ret) {
+		ret = allocateExpressionNode();
+		ret->type = NodeType::Error;
+	}
+
+	if (curr.type == TokenType::Number || curr.type == TokenType::OpenParenthesis) {
+		ExpressionNode* new_ret = allocateExpressionNode();
+		new_ret->type = NodeType::Mul;
+		new_ret->binary.left = ret;
+		new_ret->binary.right = parserParseExpression(Precedence::Div);
+		ret = new_ret;
+	}
+
+	return ret;
+}
+
+ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
+	ExpressionNode* ret = allocateExpressionNode();
+
+	switch (tk.type) {
+	case TokenType::Plus:
+		ret->type = NodeType::Add;
+		break;
+	case TokenType::Minus:
+		ret->type = NodeType::Sub;
+		break;
+	case TokenType::Star:
+		ret->type = NodeType::Mul;
+		break;
+	case TokenType::Slash:
+		ret->type = NodeType::Div;
+		break;
+	case TokenType::Caret:
+		ret->type = NodeType::Pow;
+		break;
+	}
+	ret->binary.left = left;
+	ret->binary.right = parserParseExpression(getPrecedence(tk.type));
+  return ret;
+}
+
+//~ Main things
 
 Parser::Parser(std::string& expression) : lexer(expression), nodePool({}) {
 	arena_init(&nodePool);
@@ -18,61 +97,8 @@ Parser::~Parser() {
 	arena_free(&nodePool);
 }
 
-ExpressionNode* Parser::allocateExpressionNode() {
-	return (ExpressionNode*)arena_alloc(&nodePool, sizeof(ExpressionNode));
-};
-
-ExpressionNode& Parser::parserParsePrefixExpr() {
-
-	ExpressionNode* ret = nullptr;
-
-	switch (curr.type) {
-		case (TokenType::Number): {
-			double value = std::stod(curr.lexme.data(), nullptr);
-			parserAdvance();
-
-			ret = allocateExpressionNode();
-			ret->type = NodeType::Number;
-			ret->number = value;
-			break;
-		} case (TokenType::OpenParenthesis): {
-			parserAdvance();
-			ret = &parserParseExpression(Precedence::MIN);
-			if (curr.type == TokenType::CloseParenthesis) {
-				parserAdvance();
-			}
-			break;
-		} case (TokenType::Plus): {
-			parserAdvance();
-			ret = allocateExpressionNode();
-			ret->type = NodeType::Positive;
-			ret->unary.operand = &parserParsePrefixExpr();
-			break;
-		} case (TokenType::Minus): {
-			parserAdvance();
-			ret = allocateExpressionNode();
-			ret->type = NodeType::Negative;
-			ret->unary.operand = &parserParsePrefixExpr();
-			break;
-		}
-		default:
-		{
-			ret = allocateExpressionNode();
-			ret->type = NodeType::Error;
-		}
-	}
-
-	if (0 || curr.type == TokenType::Number || curr.type == TokenType::OpenParenthesis) {
-		ExpressionNode* newRet = allocateExpressionNode();
-		newRet->type = NodeType::Mul;
-		newRet->binary.left = ret;
-		newRet->binary.right = &parserParseExpression(Precedence::Div);
-	}
-	return *ret;
-}
-
-ExpressionNode& Parser::parserParseExpression(Precedence curr_operator_prec) {
-	ExpressionNode& left = parserParsePrefixExpr();
+ExpressionNode* Parser::parserParseExpression(Precedence curr_operator_prec) {
+	ExpressionNode* left = parserParsePrefixExpr();
 	Token next_operator = curr;
 	Precedence next_operator_prec = getPrecedence(curr.type);
 
@@ -90,31 +116,6 @@ ExpressionNode& Parser::parserParseExpression(Precedence curr_operator_prec) {
 	}
 
 	return left;
-}
-
-ExpressionNode& Parser::parserParseInfixExpr(Token tk, ExpressionNode& left) {
-	ExpressionNode& ret = *allocateExpressionNode();
-
-	switch (tk.type) {
-	case TokenType::Plus:
-		ret.type = NodeType::Add;
-		break;
-	case TokenType::Minus:
-		ret.type = NodeType::Sub;
-		break;
-	case TokenType::Star:
-		ret.type = NodeType::Mul;
-		break;
-	case TokenType::Slash:
-		ret.type = NodeType::Div;
-		break;
-	case TokenType::Caret:
-		ret.type = NodeType::Pow;
-		break;
-	}
-	ret.binary.left = &left;
-	ret.binary.right = &parserParseExpression(getPrecedence(tk.type));
-	return ret;
 }
 
 void Parser::parserDebugDumpTree(ExpressionNode* node, size_t indent) {

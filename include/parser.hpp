@@ -74,9 +74,11 @@ typedef struct Parser {
 
 	ExpressionNode* allocateExpressionNode();
 
-	ExpressionNode& parserParsePrefixExpr();
-	ExpressionNode& parserParseExpression(Precedence curr_operator_prec);
-	ExpressionNode& parserParseInfixExpr(Token tk, ExpressionNode& left);
+	ExpressionNode* parserParseNumber();
+
+	ExpressionNode* parserParsePrefixExpr();
+	ExpressionNode* parserParseExpression(Precedence curr_operator_prec);
+	ExpressionNode* parserParseInfixExpr(Token tk, ExpressionNode* left);
 
 	static void parserDebugDumpTree(ExpressionNode* node, size_t indent);
 } Parser;
