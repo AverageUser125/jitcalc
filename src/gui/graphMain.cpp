@@ -1,9 +1,13 @@
-#include "displayPoints.hpp"
+#include "graphMain.hpp"
 #include "platformInput.h"
 #include "mainGui.hpp"
 #include "parser.hpp"
 #include "JITcompiler.hpp"
 #include <iostream>
+
+bool gameInit() {
+
+}
 
 bool gameLogic(float deltaTime) {
 	if (platform::isButtonPressedOn(platform::Button::A)) {
@@ -34,4 +38,9 @@ bool gameLogic(float deltaTime) {
 
 
 	return true;
+}
+
+
+bool gameEnd() {
+
 }

@@ -1,4 +1,4 @@
-#include "displayPoints.hpp"
+#include "graphMain.hpp"
 #include "GLFW/glfw3.h"
 #include "mainGui.hpp"
 #include "opterPlatformFunctions.hpp"
@@ -215,7 +215,51 @@ bool readEntireFile(const char* name, void* buffer, size_t size) {
 
 #pragma endregion
 
-void guiLoop() {
+int guiLoop() {
+#pragma region init stuff
+#if PLATFORM_WIN
+#if PRODUCTION_BUILD == 0
+	AllocConsole();
+	(void)freopen("conin$", "r", stdin);
+	(void)freopen("conout$", "w", stdout);
+	(void)freopen("conout$", "w", stderr);
+	std::cout.sync_with_stdio();
+#endif
+#endif
+
+	if (!glfwInit()) {
+		std::cerr << "Failed to initialize GLFW" << std::endl;
+		return EXIT_FAILURE;
+	}
+	glfwWindowHint(GLFW_SAMPLES, 4);
+
+	window = glfwCreateWindow(1280, 720, "Graph calculator", NULL, NULL);
+	if (!window) {
+		std::cerr << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return EXIT_FAILURE;
+	}
+	glfwMakeContextCurrent(window);
+
+	glfwSwapInterval(1); // Enable vsync
+
+	glfwSetKeyCallback(window, keyCallback);
+	glfwSetMouseButtonCallback(window, mouseCallback);
+	glfwSetWindowFocusCallback(window, windowFocusCallback);
+	glfwSetWindowSizeCallback(window, windowSizeCallback);
+	glfwSetCursorPosCallback(window, cursorPositionCallback);
+	glfwSetCharCallback(window, characterCallback);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		std::cerr << "Failed to initialize GLAD" << std::endl;
+		return EXIT_FAILURE;
+	}
+	// enable error reporting
+	enableReportGlErrors();
+
+	gameInit();
+	#pragma endregion
+
 	auto stop = std::chrono::high_resolution_clock::now();
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -283,7 +327,7 @@ void guiLoop() {
 #pragma endregion
 
 		if (!gameLogic(augmentedDeltaTime)) {
-			return;
+			return EXIT_FAILURE;
 		}
 
 		int display_w, display_h;
@@ -293,56 +337,13 @@ void guiLoop() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		glfwSwapBuffers(window);
 	}
-}
 
-bool guiInit() {
-
-#if PLATFORM_WIN
-#if PRODUCTION_BUILD == 0
-	AllocConsole();
-	(void)freopen("conin$", "r", stdin);
-	(void)freopen("conout$", "w", stdout);
-	(void)freopen("conout$", "w", stderr);
-	std::cout.sync_with_stdio();
-#endif
-#endif
-
-	if (!glfwInit()) {
-		std::cerr << "Failed to initialize GLFW" << std::endl;
-		return false;
-	}
-	glfwWindowHint(GLFW_SAMPLES, 4);
-
-	window = glfwCreateWindow(1280, 720, "Graph calculator", NULL, NULL);
-	if (!window) {
-		std::cerr << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return false;
-	}
-	glfwMakeContextCurrent(window);
-
-	glfwSwapInterval(1); // Enable vsync
-
-	glfwSetKeyCallback(window, keyCallback);
-	glfwSetMouseButtonCallback(window, mouseCallback);
-	glfwSetWindowFocusCallback(window, windowFocusCallback);
-	glfwSetWindowSizeCallback(window, windowSizeCallback);
-	glfwSetCursorPosCallback(window, cursorPositionCallback);
-	glfwSetCharCallback(window, characterCallback);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cerr << "Failed to initialize GLAD" << std::endl;
-		return false;
-	}
-	// enable error reporting
-	enableReportGlErrors();
-
-	return true;
-}
-
-void guiCleanup() {
+#pragma region cleanup
+	gameEnd();
 	if (window) {
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	}
+	#pragma endregion
+	return EXIT_SUCCESS;
 }

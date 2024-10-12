@@ -13,14 +13,8 @@ int main() {
 	llvm::InitializeNativeTargetAsmParser();
 
 	
-	if (!guiInit()) {
-		return EXIT_FAILURE;
-	}
-	guiLoop();
-	guiCleanup();
-	
-	/*
-	
-	return EXIT_SUCCESS;
-	*/
+	int returnCode = guiLoop();
+
+
+	return returnCode;
 }

@@ -1,17 +1,14 @@
 #pragma once
 
-bool guiInit();
-void guiLoop();
-void guiCleanup();
+int guiLoop();
 
-
+namespace platform
+{
 struct ivec2 {
 	int x;
 	int y;
 };
 
-namespace platform
-{
 ///sets the mouse pos relative to the window's drawing area
 void setRelMousePosition(int x, int y);
 
