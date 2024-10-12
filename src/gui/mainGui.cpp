@@ -1,14 +1,20 @@
-#include "mainGui.hpp"
-#include <glad/glad.h>
-#include "GLFW/glfw3.h"
-#include <iostream>
-#include <chrono>
-#include "platformInput.h"
-#include <fstream>
-#include "opterPlatformFunctions.hpp"
 #include "displayPoints.hpp"
+#include "GLFW/glfw3.h"
+#include "mainGui.hpp"
+#include "opterPlatformFunctions.hpp"
+#include "platformInput.h"
+#include <chrono>
+#include <defines.hpp>
+#include <fstream>
 #include <glad/errorReporting.hpp>
-
+#include <glad/glad.h>
+#include <iostream>
+#if PLATFORM_WIN
+#define WIN32_LEAN_AN_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#endif
+#include <cstdio>
 static GLFWwindow* window = nullptr;
 static bool currentFullScreen = 0;
 static bool fullScreen = 0;
@@ -287,6 +293,17 @@ void guiLoop() {
 }
 
 bool guiInit() {
+
+#if PLATFORM_WIN
+#if PRODUCTION_BUILD == 0
+	AllocConsole();
+	(void)freopen("conin$", "r", stdin);
+	(void)freopen("conout$", "w", stdout);
+	(void)freopen("conout$", "w", stderr);
+	std::cout.sync_with_stdio();
+#endif
+#endif
+
 	if (!glfwInit()) {
 		std::cerr << "Failed to initialize GLFW" << std::endl;
 		return false;

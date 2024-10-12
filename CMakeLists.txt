@@ -56,6 +56,7 @@ if(MSVC)
 
     # Disable CRT secure warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+
 else()
     # Show all warnings, just nice to have
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -89,6 +90,12 @@ else()
     # This is useful to get an ASSETS_PATH in your IDE during development
     target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/")
     target_compile_definitions(${PROJECT_NAME} PUBLIC PRODUCTION_BUILD=0) 
+endif()
+
+if(MSVC)
+	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC _CRT_SECURE_NO_WARNINGS)
+
+	set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC GLFW_INCLUDE_NONE) 
