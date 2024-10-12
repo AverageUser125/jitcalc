@@ -10,7 +10,8 @@ inline Token Lexer::lexerMakeToken(TokenType type) {
 #pragma endregion
 
 #pragma region majorFunctions
-void Lexer::lexerInit(std::string expression) {
+
+Lexer::Lexer(std::string expression) {
 	start = expression.data();
 	current = start;
 }

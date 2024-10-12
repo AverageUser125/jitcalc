@@ -1,5 +1,6 @@
 #pragma once
 #include "lexer.hpp"
+#include <vector>
 
 enum class Precedence {
 	MIN,
@@ -24,6 +25,10 @@ const static Precedence precedenceLookup[static_cast<int>(TokenType::MAX)] = {
 	Precedence::MIN,   // TokenType::Comma
 };
 
+// Utility function to access array with enum
+constexpr Precedence getPrecedence(TokenType type) {
+	return precedenceLookup[static_cast<int>(type)];
+}
 
 enum class NodeType {
 	Error,
@@ -54,14 +59,20 @@ struct ExpressionNode {
 	};
 };
 
-/*
 typedef struct Parser {
-	M_Pool node_pool;
+	std::vector<ExpressionNode> nodes;
 
 	Token curr;
 	Token next;
 	Lexer lexer;
 
+	Parser::Parser(std::string expression);
+	
+	inline void parserAdvance();
 
+	ExpressionNode* pushNodeAndGetPointer();
+
+	ExpressionNode& parserParsePrefixExpr();
+	ExpressionNode& parserParseExpression(Precedence curr_operator_prec);
+	ExpressionNode& parserParseInfixExpr(Token tk, ExpressionNode& left);
 } Parser;
-*/

@@ -28,6 +28,8 @@ struct Lexer {
 	char* start;
 	char* current;
 
+	Lexer(std::string expression);
+
 	inline Token lexerMakeToken(TokenType type);	
 	// Template function that accepts multiple conditions and checks them in the loop
 	template <typename... Conditions> inline void lexerAdvanceTillConditionFail(Conditions... conditions) {
@@ -42,7 +44,6 @@ struct Lexer {
 		}
 	}
 
-	void lexerInit(std::string expression);
 	Token lexerNextToken();
 };
 
