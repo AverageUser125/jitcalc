@@ -9,8 +9,8 @@ void Parser::parserAdvance() {
 }
 
 Parser::Parser(std::string& expression) : lexer(expression), nodePool({}) {
-	curr = lexer.lexerNextToken();
-	next = lexer.lexerNextToken();
+	parserAdvance();
+	parserAdvance();
 	arena_init(&nodePool);
 }
 
@@ -28,11 +28,10 @@ ExpressionNode& Parser::parserParsePrefixExpr() {
 
 	switch (curr.type) {
 		case (TokenType::Number): {
-			double value = std::stod(std::string(curr.lexme));
+			double value = std::stod(curr.lexme.data(), nullptr);
 			parserAdvance();
 
 			ret = allocateExpressionNode();
-
 			ret->type = NodeType::Number;
 			ret->number = value;
 			break;
@@ -45,7 +44,6 @@ ExpressionNode& Parser::parserParsePrefixExpr() {
 			break;
 		} case (TokenType::Plus): {
 			parserAdvance();
-
 			ret = allocateExpressionNode();
 			ret->type = NodeType::Positive;
 			ret->unary.operand = &parserParsePrefixExpr();
@@ -64,7 +62,7 @@ ExpressionNode& Parser::parserParsePrefixExpr() {
 		}
 	}
 
-	if (curr.type == TokenType::Number || curr.type == TokenType::OpenParenthesis) {
+	if (0 || curr.type == TokenType::Number || curr.type == TokenType::OpenParenthesis) {
 		ExpressionNode* newRet = allocateExpressionNode();
 		newRet->type = NodeType::Mul;
 		newRet->binary.left = ret;

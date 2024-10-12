@@ -101,6 +101,8 @@ void arena_init(Arena* a) {
 	size_t capacity = REGION_DEFAULT_CAPACITY;
 	a->end = new_region(capacity);
 	a->begin = a->end;
+
+	memset(a->begin, 0, REGION_DEFAULT_CAPACITY);
 }
 
 void* arena_alloc(Arena* a, size_t size_bytes) {

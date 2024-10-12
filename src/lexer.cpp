@@ -5,7 +5,7 @@
 #include <iostream>
 
 #pragma region helperFunction
-inline Token Lexer::lexerMakeToken(TokenType type) {
+[[nodiscard]] inline Token Lexer::lexerMakeToken(TokenType type) {
 	return {type, std::string_view(start, static_cast<size_t>(current - start))};
 }
 #pragma endregion
@@ -22,7 +22,7 @@ Token Lexer::lexerNextToken() {
 	// lexerAdvanceTillConditionFail(std::isspace);
 	start = current;
 	if (*current == '\0')
-		lexerMakeToken(TokenType::EOF);
+		return lexerMakeToken(TokenType::EOF);
 
 	current++;
 	char currentChar = current[-1];
@@ -65,9 +65,6 @@ Token Lexer::lexerNextToken() {
 			if (std::isalpha(currentChar)) {
 				lexerAdvanceTillConditionFail(std::isdigit, std::isalpha);
 				return lexerMakeToken(TokenType::Ident);
-			} else if (*current == '\0') {
-				current++;
-				return lexerMakeToken(TokenType::EOF);
 			}else {
 				current++;
 				return lexerMakeToken(TokenType::Error);
