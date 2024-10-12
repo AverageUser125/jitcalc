@@ -4,15 +4,24 @@
 #include <string>
 #include <llvm/Support/TargetSelect.h>
 #include "JITcompiler.hpp"
+#include "mainGui.hpp"
 
-void main() {
+
+int main() {
 	llvm::InitializeNativeTarget();
 	llvm::InitializeNativeTargetAsmPrinter();
 	llvm::InitializeNativeTargetAsmParser();
 
+
+	if (!guiInit()) {
+		return EXIT_FAILURE;
+	}
+	guiLoop();
+	guiCleanup();
+
+	/*
 	// x ^ (0.5) / (x ^ 2) causes crash (negative x)
 	// x ^ (0.5) / (2 ) doesn't crash
-
 	std::string input = "x / (x ^ 2)";
 
 	std::getline(std::cin, input);
@@ -27,5 +36,7 @@ void main() {
 	for (double i = -1; i <= 2; i++) {
 		std::cout << func(i) << '\n';
 	}
-	
+	*/
+
+	return EXIT_SUCCESS;
 }

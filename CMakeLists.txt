@@ -20,7 +20,6 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_WAYLAND TRUE CACHE BOOL "" FORCE)
-
 # Set the CMP0069 policy, because warning annoying
 if(POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW)
@@ -92,6 +91,7 @@ else()
     target_compile_definitions(${PROJECT_NAME} PUBLIC PRODUCTION_BUILD=0) 
 endif()
 
+target_compile_definitions(${PROJECT_NAME} PUBLIC GLFW_INCLUDE_NONE) 
 # add .h and .hpp files
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 

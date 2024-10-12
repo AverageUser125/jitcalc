@@ -3,6 +3,9 @@
 #include <cmath>
 #include <iostream>
 
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
 
 JITCompiler::JITCompiler() {
 	// Initialize the LLVM context, module, and builder
