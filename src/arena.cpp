@@ -1,4 +1,5 @@
 #include "arena.h"
+#include "defines.hpp"
 
 #if ARENA_BACKEND == ARENA_BACKEND_LIBC_MALLOC
 #include <stdlib.h>
@@ -13,6 +14,8 @@ Region* new_region(size_t capacity) {
 	r->next = NULL;
 	r->count = 0;
 	r->capacity = capacity;
+
+	memset(r->data, 0, capacity);
 	return r;
 }
 
@@ -25,11 +28,13 @@ void free_region(Region* r) {
 
 Region* new_region(size_t capacity) {
 	size_t size_bytes = sizeof(Region) + sizeof(uintptr_t) * capacity;
-	Region* r = mmap(NULL, size_bytes, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+	Region* r = (Region*)mmap(NULL, size_bytes, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 	ARENA_ASSERT(r != MAP_FAILED);
 	r->next = NULL;
 	r->count = 0;
 	r->capacity = capacity;
+
+	memset(r->data, 0, capacity);
 	return r;
 }
 
@@ -41,10 +46,11 @@ void free_region(Region* r) {
 
 #elif ARENA_BACKEND == ARENA_BACKEND_WIN32_VIRTUALALLOC
 
-#if !defined(_WIN32)
+#if !defined(PLATFORM_WIN)
 #error "Current platform is not Windows"
 #endif
 
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -52,7 +58,7 @@ void free_region(Region* r) {
 
 Region* new_region(size_t capacity) {
 	SIZE_T size_bytes = sizeof(Region) + sizeof(uintptr_t) * capacity;
-	Region* r = VirtualAllocEx(GetCurrentProcess(),		 /* Allocate in current process address space */
+	Region* r = (Region*)VirtualAllocEx(GetCurrentProcess(),		 /* Allocate in current process address space */
 							   NULL,					 /* Unknown position */
 							   size_bytes,				 /* Bytes to allocate */
 							   MEM_COMMIT | MEM_RESERVE, /* Reserve and commit allocated page */
@@ -64,6 +70,7 @@ Region* new_region(size_t capacity) {
 	r->next = NULL;
 	r->count = 0;
 	r->capacity = capacity;
+	memset(r->data, 0, capacity);
 	return r;
 }
 
@@ -101,8 +108,6 @@ void arena_init(Arena* a) {
 	size_t capacity = REGION_DEFAULT_CAPACITY;
 	a->end = new_region(capacity);
 	a->begin = a->end;
-
-	memset(a->begin, 0, REGION_DEFAULT_CAPACITY);
 }
 
 void* arena_alloc(Arena* a, size_t size_bytes) {
