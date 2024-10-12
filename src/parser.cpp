@@ -7,7 +7,7 @@ void Parser::parserAdvance() {
 	next = lexer.lexerNextToken();
 }
 
-Parser::Parser(std::string expression) : lexer(expression) {
+Parser::Parser(std::string& expression) : lexer(expression) {
 	parserAdvance();
 	parserAdvance();
 }
@@ -113,4 +113,59 @@ ExpressionNode& Parser::parserParseInfixExpr(Token tk, ExpressionNode& left) {
 	ret.binary.left = &left;
 	ret.binary.right = &parserParseExpression(getPrecedence(tk.type));
 	return ret;
+}
+
+void Parser::parserDebugDumpTree(ExpressionNode* node, size_t indent) {
+	for (size_t i = 0; i < indent; i++)
+		printf("  ");
+
+	switch (node->type) {
+	case NodeType::Error:
+		printf("Error\n");
+		break;
+
+	case NodeType::Number: {
+		printf("%f\n", node->number);
+	} break;
+
+	case NodeType::Positive: {
+		printf("Unary +:\n");
+		parserDebugDumpTree(node->unary.operand, indent + 1);
+	} break;
+
+	case NodeType::Negative: {
+		printf("Unary -:\n");
+		parserDebugDumpTree(node->unary.operand, indent + 1);
+	} break;
+
+	case NodeType::Add: {
+		printf("+:\n");
+		parserDebugDumpTree(node->binary.left, indent + 1);
+		parserDebugDumpTree(node->binary.right, indent + 1);
+	} break;
+
+	case NodeType::Sub: {
+		printf("-:\n");
+		parserDebugDumpTree(node->binary.left, indent + 1);
+		parserDebugDumpTree(node->binary.right, indent + 1);
+	} break;
+
+	case NodeType::Mul: {
+		printf("*:\n");
+		parserDebugDumpTree(node->binary.left, indent + 1);
+		parserDebugDumpTree(node->binary.right, indent + 1);
+	} break;
+
+	case NodeType::Div: {
+		printf("/:\n");
+		parserDebugDumpTree(node->binary.left, indent + 1);
+		parserDebugDumpTree(node->binary.right, indent + 1);
+	} break;
+
+	case NodeType::Pow: {
+		printf("^:\n");
+		parserDebugDumpTree(node->binary.left, indent + 1);
+		parserDebugDumpTree(node->binary.right, indent + 1);
+	} break;
+	}
 }

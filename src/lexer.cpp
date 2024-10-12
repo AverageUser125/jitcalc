@@ -2,6 +2,7 @@
 #include "defines.hpp"
 #include <string_view>
 #include <ctype.h>
+#include <iostream>
 
 #pragma region helperFunction
 inline Token Lexer::lexerMakeToken(TokenType type) {
@@ -11,13 +12,14 @@ inline Token Lexer::lexerMakeToken(TokenType type) {
 
 #pragma region majorFunctions
 
-Lexer::Lexer(std::string expression) {
+Lexer::Lexer(const std::string& expression)
+{
 	start = expression.data();
 	current = start;
 }
 
 Token Lexer::lexerNextToken() {
-	lexerAdvanceTillConditionFail(std::isspace);
+	// lexerAdvanceTillConditionFail(std::isspace);
 	start = current;
 	if (*current == '\0')
 		lexerMakeToken(TokenType::EOF);
@@ -69,6 +71,38 @@ Token Lexer::lexerNextToken() {
 			}
 	}
 	unreachable();
+}
+
+std::string lexerDebugGetTokenTypeName(TokenType type) {
+	switch (type) {
+	case TokenType::Error:
+		return "Error";
+	case TokenType::EOF:
+		return "EOF";
+	case TokenType::Number:
+		return "Number Literal";
+	case TokenType::Ident:
+		return "Identifier";
+	case TokenType::Plus:
+		return "+";
+	case TokenType::Minus:
+		return "-";
+	case TokenType::Star:
+		return "*";
+	case TokenType::Slash:
+		return "/";
+	case TokenType::Caret:
+		return "^";
+	case TokenType::OpenParenthesis:
+		return "(";
+	case TokenType::CloseParenthesis:
+		return ")";
+	}
+	return "unreachable";
+}
+
+void Lexer::lexerDebugPrintToken(Token token) {
+	std::cout << lexerDebugGetTokenTypeName(token.type) << "  " << token.lexme << '\n';
 }
 
 #pragma endregion

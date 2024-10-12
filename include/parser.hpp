@@ -46,7 +46,7 @@ struct ExpressionNode {
 	NodeType type;
 
 	union {
-		size_t number;
+		double number;
 
 		struct {
 			ExpressionNode* operand;
@@ -66,7 +66,7 @@ typedef struct Parser {
 	Token next;
 	Lexer lexer;
 
-	Parser::Parser(std::string expression);
+	Parser::Parser(std::string& expression);
 	
 	inline void parserAdvance();
 
@@ -75,4 +75,6 @@ typedef struct Parser {
 	ExpressionNode& parserParsePrefixExpr();
 	ExpressionNode& parserParseExpression(Precedence curr_operator_prec);
 	ExpressionNode& parserParseInfixExpr(Token tk, ExpressionNode& left);
+
+	static void parserDebugDumpTree(ExpressionNode* node, size_t indent);
 } Parser;

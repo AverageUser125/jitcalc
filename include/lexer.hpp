@@ -25,10 +25,10 @@ struct Token {
 };
 
 struct Lexer {
-	char* start;
-	char* current;
+	const char* start;
+	const char* current;
 
-	Lexer(std::string expression);
+	Lexer(const std::string& expression);
 
 	inline Token lexerMakeToken(TokenType type);	
 	// Template function that accepts multiple conditions and checks them in the loop
@@ -45,5 +45,7 @@ struct Lexer {
 	}
 
 	Token lexerNextToken();
+
+	static void lexerDebugPrintToken(Token token);
 };
 
