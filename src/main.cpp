@@ -12,19 +12,19 @@ int main() {
 	llvm::InitializeNativeTargetAsmPrinter();
 	llvm::InitializeNativeTargetAsmParser();
 
-
+	/*
 	if (!guiInit()) {
 		return EXIT_FAILURE;
 	}
 	guiLoop();
 	guiCleanup();
-
-	/*
+	*/
+	
 	// x ^ (0.5) / (x ^ 2) causes crash (negative x)
 	// x ^ (0.5) / (2 ) doesn't crash
-	std::string input = "x / (x ^ 2)";
+	std::string input = "x * x";
 
-	std::getline(std::cin, input);
+	// std::getline(std::cin, input);
 	Parser parser(input);
 	ExpressionNode* tree = parser.parserParseExpression(Precedence::MIN);
 	parser.parserDebugDumpTree(tree, 0);
@@ -36,7 +36,7 @@ int main() {
 	for (double i = -1; i <= 2; i++) {
 		std::cout << func(i) << '\n';
 	}
-	*/
+	
 
 	return EXIT_SUCCESS;
 }

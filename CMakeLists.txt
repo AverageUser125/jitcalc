@@ -20,6 +20,8 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_WAYLAND TRUE CACHE BOOL "" FORCE)
+set(ZLIB_FORCE_STATIC TRUE CACHE BOOL "" FORCE)
+
 # Set the CMP0069 policy, because warning annoying
 if(POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW)
@@ -70,8 +72,8 @@ endif()
 
 project("${PROJECT_NAME}")
 
-add_subdirectory("thirdparty/glfw")
-add_subdirectory("thirdparty/glad")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glfw")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glad")
 
 # Add source files recursively from the src directory
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")

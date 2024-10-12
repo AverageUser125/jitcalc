@@ -11,7 +11,7 @@ enum class Precedence {
 	Power,
 	MAX,
 };
-const static Precedence precedenceLookup[static_cast<int>(TokenType::MAX)] = {
+constexpr Precedence precedenceLookup[static_cast<int>(TokenType::MAX)] = {
 	Precedence::MIN,   // TokenType::Error
 	Precedence::MIN,   // TokenType::EOF
 	Precedence::MIN,   // TokenType::Ident
@@ -68,8 +68,8 @@ typedef struct Parser {
 	Token next{};
 	Lexer lexer;
 
-	Parser::Parser(std::string& expression);
-	Parser::~Parser();
+	Parser(std::string& expression);
+	~Parser();
 
 	inline void parserAdvance();
 

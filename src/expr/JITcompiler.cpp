@@ -1,4 +1,4 @@
-#include "JITCompiler.hpp"
+#include "JITcompiler.hpp"
 #include "parser.hpp"
 #include <cmath>
 #include <iostream>

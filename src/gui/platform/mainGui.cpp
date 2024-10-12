@@ -47,6 +47,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	} else if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
 		int index = key - GLFW_KEY_0;
 		platform::internal::setButtonState(platform::Button::NR0 + index, state);
+	} else if (key <= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
+		int index = key - GLFW_KEY_F1;
+		platform::internal::setButtonState(platform::Button::F1 + index, state);
 	} else {
 		//special keys
 		//GLFW_KEY_SPACE, GLFW_KEY_ENTER, GLFW_KEY_ESCAPE, GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT
@@ -213,7 +216,7 @@ bool readEntireFile(const char* name, void* buffer, size_t size) {
 #pragma endregion
 
 void guiLoop() {
-	auto stop = std::chrono::steady_clock::now();
+	auto stop = std::chrono::high_resolution_clock::now();
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 

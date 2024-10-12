@@ -15,5 +15,7 @@ bool gameLogic(float deltaTime) {
 			platform::setFullScreen(true);		
 		}
 	}
+
+
 	return true;
 }

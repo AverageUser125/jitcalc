@@ -59,18 +59,18 @@ Token Lexer::lexerNextToken() {
 		case '7':
 		case '8':
 		case '9': {
-			lexerAdvanceTillConditionFail(std::isdigit);
+			lexerAdvanceTillConditionFail(static_cast<int(*)(int)>(std::isdigit));
 
 			if (*current == '.') {
 				current++;
-				lexerAdvanceTillConditionFail(std::isdigit);
+				lexerAdvanceTillConditionFail(static_cast<int(*)(int)>(std::isdigit));
 			}
 			return lexerMakeToken(TokenType::Number);
 		}
 
 		default:
 			if (std::isalpha(currentChar)) {
-				lexerAdvanceTillConditionFail(std::isdigit, std::isalpha);
+				lexerAdvanceTillConditionFail(static_cast<int(*)(int)>(std::isdigit), static_cast<int(*)(int)>(std::isalpha));
 				return lexerMakeToken(TokenType::Ident);
 			}else {
 				current++;
