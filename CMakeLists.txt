@@ -14,6 +14,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED ON)
 
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_WAYLAND TRUE CACHE BOOL "" FORCE)
+
 # Set the CMP0069 policy, because warning annoying
 if(POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW)
@@ -46,7 +53,7 @@ if(MSVC)
 
     # Enable SIMD optimizations
     add_compile_options(/arch:AVX2)
-    add_compile_options(/wd6424)  # Disable the warning for deleted destructors
+    add_compile_options(/wd4624)  # Disable the warning for deleted destructors
 
     # Disable CRT secure warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
@@ -63,6 +70,8 @@ endif()
 
 project("${PROJECT_NAME}")
 
+add_subdirectory("thirdparty/glfw")
+add_subdirectory("thirdparty/glad")
 
 # Add source files recursively from the src directory
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -88,7 +97,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/i
 
 target_link_libraries(${PROJECT_NAME}
     LLVMMCJIT
-    ${LLVM_LIBS}  # Keep this line to ensure any additional LLVM libraries found are also linked
+    ${LLVM_LIBS}
+    glfw
+    glad
 )
 # Specify the output directory for the build (/bin directory)
 # set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
