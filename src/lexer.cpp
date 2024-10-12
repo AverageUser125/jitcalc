@@ -14,7 +14,7 @@ inline Token Lexer::lexerMakeToken(TokenType type) {
 
 Lexer::Lexer(const std::string& expression)
 {
-	start = expression.data();
+	start = expression.c_str();
 	current = start;
 }
 
@@ -65,7 +65,10 @@ Token Lexer::lexerNextToken() {
 			if (std::isalpha(currentChar)) {
 				lexerAdvanceTillConditionFail(std::isdigit, std::isalpha);
 				return lexerMakeToken(TokenType::Ident);
-			} else {
+			} else if (*current == '\0') {
+				current++;
+				return lexerMakeToken(TokenType::EOF);
+			}else {
 				current++;
 				return lexerMakeToken(TokenType::Error);
 			}
