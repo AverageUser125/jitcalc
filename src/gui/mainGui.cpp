@@ -17,12 +17,6 @@ bool windowFocus = true;
 constexpr int WINDOW_DEFAULT_WIDTH = 1280;
 constexpr int WINDOW_DEFAULT_HEIGHT = 720;
 
-
-struct ivec2 {
-	int x;
-	int y;
-};
-
 #pragma region glfwcallbacks
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
