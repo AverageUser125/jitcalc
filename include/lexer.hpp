@@ -25,7 +25,7 @@ struct Token {
 };
 
 struct Lexer {
-	std::string cleanExpression = "";
+	std::string cleanExpression;
 	const char* start = nullptr;
 	const char* current = nullptr;
 

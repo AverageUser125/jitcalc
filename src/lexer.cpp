@@ -15,7 +15,6 @@
 #pragma region majorFunctions
 
 Lexer::Lexer(const std::string& expression) {
-	cleanExpression = expression;
 	cleanExpression.reserve(expression.size());
 	for (char c : expression) {
 		if (!std::isspace(c)) {
