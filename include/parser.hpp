@@ -1,6 +1,7 @@
 #pragma once
 #include "lexer.hpp"
 #include <vector>
+#include "arena.h"
 
 enum class Precedence {
 	MIN,
@@ -60,17 +61,18 @@ struct ExpressionNode {
 };
 
 typedef struct Parser {
-	std::vector<ExpressionNode> nodes;
+	Arena nodePool;
 
 	Token curr;
 	Token next;
 	Lexer lexer;
 
 	Parser::Parser(std::string& expression);
-	
+	Parser::~Parser();
+
 	inline void parserAdvance();
 
-	ExpressionNode* pushNodeAndGetPointer();
+	ExpressionNode* allocateExpressionNode();
 
 	ExpressionNode& parserParsePrefixExpr();
 	ExpressionNode& parserParseExpression(Precedence curr_operator_prec);
