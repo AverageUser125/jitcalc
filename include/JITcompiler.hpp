@@ -31,7 +31,8 @@ class JITCompiler {
 	llvm::Function* getPowFunction();
 
 	std::unique_ptr<llvm::LLVMContext> context;
-	std::unique_ptr<llvm::Module> module;
 	std::unique_ptr<llvm::IRBuilder<>> builder;
-	llvm::ExecutionEngine* engine;
+	std::unique_ptr<llvm::Module> module;
 };
+
+int NOTMAIN();

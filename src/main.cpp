@@ -3,17 +3,22 @@
 #include "eval.hpp"
 #include <string>
 #include <llvm/Support/TargetSelect.h>
+#include "JITcompiler.hpp"
 
 void main() {
 	llvm::InitializeNativeTarget();
 	llvm::InitializeNativeTargetAsmPrinter();
-
-	std::string input = "1+1";
+	llvm::InitializeNativeTargetAsmParser();
+	std::string input = "1+5";
 	// std::getline(std::cin, input);
 	Parser parser(input);
 	ExpressionNode* tree = parser.parserParseExpression(Precedence::MIN);
 	parser.parserDebugDumpTree(tree, 0);
-	double answer = evaluate(tree);
-	std::cout << answer;
+
+	JITCompiler jit;
+	std::cout << jit.compileAndRun(tree);
+
+	//double answer = evaluate(tree);
+	//std::cout << answer;
 	
 }

@@ -5,25 +5,40 @@
 
 
 JITCompiler::JITCompiler() {
+	// Initialize the LLVM context, module, and builder
 	context = std::make_unique<llvm::LLVMContext>();
-	module = std::make_unique<llvm::Module>("expr_module", *context);
+	module = std::make_unique<llvm::Module>("calculator_module", *context);
 	builder = std::make_unique<llvm::IRBuilder<>>(*context);
-	engine = llvm::EngineBuilder(std::move(module)).create();
 }
 
 double JITCompiler::compileAndRun(ExpressionNode* expr) {
+	// Create a function for evaluating the expression
 	auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), false);
 	auto func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "evaluate", module.get());
 	llvm::BasicBlock* block = llvm::BasicBlock::Create(*context, "entry", func);
 	builder->SetInsertPoint(block);
 
+	// Generate code for the expression and return the result
 	llvm::Value* result = generateCode(expr);
 	builder->CreateRet(result);
 
+	// Now that the module is fully constructed, create the JIT execution engine
+	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
+	if (!engine) {
+		std::cerr << "Failed to create execution engine." << std::endl;
+		return 0.0;
+	}
+
+	// Finalize the JIT object
 	engine->finalizeObject();
 
-	// Create a pointer to the JIT compiled function
+	// Get the pointer to the JIT compiled function and execute it
 	auto evalFunc = (double (*)())engine->getPointerToFunction(func);
+	if (!evalFunc) {
+		std::cerr << "Failed to get function pointer." << std::endl;
+		return 0.0;
+	}
+
 	return evalFunc();
 }
 
@@ -62,11 +77,13 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
 		llvm::Value* right = generateCode(expr->binary.right);
 		return builder->CreateCall(getPowFunction(), {left, right}, "powtmp");
 	}
+	default:
+		return nullptr;
 	}
-	return nullptr;
 }
 
 llvm::Function* JITCompiler::getPowFunction() {
+	// Define the pow function for exponentiation
 	auto funcType =
 		llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy(), builder->getDoubleTy()}, false);
 	auto powFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "pow", module.get());
