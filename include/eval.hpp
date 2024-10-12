@@ -2,4 +2,4 @@
 
 struct ExpressionNode;
 
-double evaluate(ExpressionNode* expr);
+double evaluate(ExpressionNode* expr, double x);

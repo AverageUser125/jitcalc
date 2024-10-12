@@ -9,19 +9,17 @@ void main() {
 	llvm::InitializeNativeTarget();
 	llvm::InitializeNativeTargetAsmPrinter();
 	llvm::InitializeNativeTargetAsmParser();
-	std::string input = "x";
-	Lexer lex(input);
-	lex.lexerDebugPrintToken(lex.lexerNextToken());
 	
+	std::string input = "1 + x";
 	// std::getline(std::cin, input);
-	// Parser parser(input);
-	// ExpressionNode* tree = parser.parserParseExpression(Precedence::MIN);
-	// parser.parserDebugDumpTree(tree, 0);
+	Parser parser(input);
+	ExpressionNode* tree = parser.parserParseExpression(Precedence::MIN);
+	parser.parserDebugDumpTree(tree, 0);
 
 	// JITCompiler jit;
 	// std::cout << jit.compileAndRun(tree);
 
-	//double answer = evaluate(tree);
-	//std::cout << answer;
+	double answer = evaluate(tree, 5);
+	std::cout << answer;
 	
 }

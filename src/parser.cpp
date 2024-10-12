@@ -25,6 +25,7 @@ ExpressionNode* Parser::parserParseNumber() {
 
 ExpressionNode* Parser::parseIdent() {
 	ExpressionNode* ret = nullptr;
+
 	if (curr.lexme == "e") {
 		ret = allocateExpressionNode();
 		ret->type = NodeType::Number;
@@ -41,6 +42,7 @@ ExpressionNode* Parser::parseIdent() {
 		ret = allocateExpressionNode();
 		ret->type = NodeType::Error;
 	}
+	parserAdvance();
 
 	return ret;
 }
