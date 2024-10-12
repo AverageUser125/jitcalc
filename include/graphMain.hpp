@@ -2,4 +2,4 @@
 
 bool gameLogic(float deltaTime);
 bool gameInit();
-bool gameEnd();
+void gameEnd();

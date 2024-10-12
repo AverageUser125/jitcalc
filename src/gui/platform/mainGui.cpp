@@ -257,12 +257,17 @@ int guiLoop() {
 	// enable error reporting
 	enableReportGlErrors();
 
-	gameInit();
+	if (!gameInit()) {
+		if (window) {
+			glfwDestroyWindow(window);
+			glfwTerminate();
+		}
+		return EXIT_FAILURE;
+	}
 	#pragma endregion
 
 	auto stop = std::chrono::high_resolution_clock::now();
 	while (!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
 
 #pragma region deltaTime
 
@@ -333,13 +338,17 @@ int guiLoop() {
 		int display_w, display_h;
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
-		glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		//glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+		//glClear(GL_COLOR_BUFFER_BIT);
 		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
 #pragma region cleanup
+
 	gameEnd();
+
+cleanup:
 	if (window) {
 		glfwDestroyWindow(window);
 		glfwTerminate();
