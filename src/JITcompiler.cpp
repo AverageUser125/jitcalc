@@ -2,12 +2,7 @@
 #include "parser.hpp"
 #include <cmath>
 #include <iostream>
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include <llvm/ExecutionEngine/GenericValue.h>
-#include <llvm/ExecutionEngine/MCJIT.h>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
+
 
 JITCompiler::JITCompiler() {
 	context = std::make_unique<llvm::LLVMContext>();

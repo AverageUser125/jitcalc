@@ -3,6 +3,7 @@
 #include <memory>
 
 // Forward declarations of LLVM types
+/*
 namespace llvm
 {
 struct LLVMContext;
@@ -11,9 +12,14 @@ struct ExecutionEngine;
 struct Value;
 struct Function;
 } // namespace llvm
-
-struct ExpressionNode;
+*/
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
+struct ExpressionNode;
 
 class JITCompiler {
   public:
@@ -29,5 +35,3 @@ class JITCompiler {
 	std::unique_ptr<llvm::IRBuilder<>> builder;
 	llvm::ExecutionEngine* engine;
 };
-
-int NOTMAIN();
