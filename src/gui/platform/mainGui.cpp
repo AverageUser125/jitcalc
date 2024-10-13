@@ -283,7 +283,6 @@ int guiLoop() {
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;	// Enable Docking
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
-
 	ImGuiStyle& style = ImGui::GetStyle();
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
 		//style.WindowRounding = 0.0f;
@@ -293,7 +292,6 @@ int guiLoop() {
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
-
 
 	#pragma endregion
 	if (!gameInit()) {
@@ -329,8 +327,7 @@ int guiLoop() {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-		// ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+		ImGui::DockSpaceOverViewport();
 #pragma endregion
 
 #pragma region fullscreen
