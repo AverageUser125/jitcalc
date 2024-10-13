@@ -2,8 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
-extern bool windowFocus;
-
 namespace platform
 {
 	struct Button
