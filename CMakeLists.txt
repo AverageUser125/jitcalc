@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 # delete .out/CmakeFiles folder to make this work
-option(PRODUCTION_BUILD "Make this a production build" ON)
+option(PRODUCTION_BUILD "Make this a production build" OFF)
 
 # project name
 set(PROJECT_NAME "jitcalc")
