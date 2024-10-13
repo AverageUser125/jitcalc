@@ -11,6 +11,10 @@
 #include <iostream>
 #include <stb_image.h>
 #include <glm/glm.hpp>
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+#include "imguiThemes.h"
 
 #if PLATFORM_WIN
 #define WIN32_LEAN_AN_MEAN
@@ -229,7 +233,7 @@ int guiLoop() {
 	std::cout.sync_with_stdio();
 #endif
 #endif
-
+	#pragma region glfw and glad init
 	if (!glfwInit()) {
 		std::cerr << "Failed to initialize GLFW" << std::endl;
 		return EXIT_FAILURE;
@@ -266,7 +270,30 @@ int guiLoop() {
 	}
 	// enable error reporting
 	enableReportGlErrors();
+	#pragma endregion
 
+#pragma region imgui init
+	ImGui::CreateContext();
+	imguiThemes::embraceTheDarkness();
+	ImGuiIO& io = ImGui::GetIO();
+	(void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;	// Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+		//style.WindowRounding = 0.0f;
+		style.Colors[ImGuiCol_WindowBg].w = 0.f;
+		style.Colors[ImGuiCol_DockingEmptyBg].w = 0.f;
+	}
+
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 330");
+
+
+	#pragma endregion
 	if (!gameInit()) {
 		if (window) {
 			glfwDestroyWindow(window);
@@ -295,7 +322,13 @@ int guiLoop() {
 		}
 
 #pragma endregion
-		
+#pragma region imgui
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+#pragma endregion
+
 #pragma region fullscreen
 
 		if (platform::isFocused() && currentFullScreen != fullScreen) {
