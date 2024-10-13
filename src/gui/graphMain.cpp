@@ -52,13 +52,11 @@ bool setGraph(const std::string& equation) {
 	Parser parser(equation);
 	ExpressionNode* tree = parser.parserParseExpression();
 	parser.parserDebugDumpTree(tree);
-
+	if (parser.hasError) {
+		return false;
+	}
 	JITCompiler jit;
 	func = jit.compile(tree); // Compile the function
-
-	std::cout << func(1);
-	std::cout << func(2);
-	std::cout << func(3);
 
 	generateGraphData(func, -1.0f, 1.0f, 100); // Generate points from -2 to 2 with 100 points
 	setupVBO();

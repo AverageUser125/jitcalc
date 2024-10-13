@@ -41,6 +41,7 @@ ExpressionNode* Parser::parseIdent() {
 	} else {
 		ret = allocateExpressionNode();
 		ret->type = NodeType::Error;
+		hasError = true;
 	}
 	parserAdvance();
 
@@ -75,6 +76,7 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 	if (!ret) {
 		ret = allocateExpressionNode();
 		ret->type = NodeType::Error;
+		hasError = true;
 	}
 
 	if (curr.type == TokenType::Number || curr.type == TokenType::Ident || curr.type == TokenType::OpenParenthesis) {

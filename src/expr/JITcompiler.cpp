@@ -16,6 +16,8 @@ JITCompiler::JITCompiler() {
 
 
 double (*JITCompiler::compile(ExpressionNode* expr))(double) {
+	assert(module != nullptr);
+
 	// Create a function with a double parameter for the variable
 	auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy()}, false);
 	auto func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "evaluate", module.get());
@@ -81,6 +83,10 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 	case NodeType::Variable: {
 		// Return the variable (the function's argument)
 		return variable;
+	}
+	case NodeType::Error:
+	{
+		assert(0 && "ERROR WAS FOUND!, YOU PROBABLY FORGOT TO CHECK FOR IT");
 	}
 	default:
 		return nullptr;
