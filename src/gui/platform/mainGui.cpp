@@ -274,9 +274,11 @@ int guiLoop() {
 
 #pragma region imgui init
 	ImGui::CreateContext();
+
 	imguiThemes::embraceTheDarkness();
 	ImGuiIO& io = ImGui::GetIO();
 	(void)io;
+	io.IniFilename = nullptr;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;	// Enable Docking
@@ -305,6 +307,7 @@ int guiLoop() {
 
 	auto stop = std::chrono::high_resolution_clock::now();
 	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 
 #pragma region deltaTime
 
@@ -326,7 +329,8 @@ int guiLoop() {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+		// ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 #pragma endregion
 
 #pragma region fullscreen
@@ -377,21 +381,33 @@ int guiLoop() {
 		if (!gameLogic(augmentedDeltaTime)) {
 			return EXIT_FAILURE;
 		}
-
+		// Rendering
+		ImGui::Render();
 		int display_w, display_h;
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
-		//glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-		//glClear(GL_COLOR_BUFFER_BIT);
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		// Update and Render additional Platform Windows
+		// (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
+		//  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+			GLFWwindow* backup_current_context = glfwGetCurrentContext();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			glfwMakeContextCurrent(backup_current_context);
+		}
 		glfwSwapBuffers(window);
-		glfwPollEvents();
 	}
 
 #pragma region cleanup
 
 	gameEnd();
 
-cleanup:
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	if (window) {
 		glfwDestroyWindow(window);
 		glfwTerminate();

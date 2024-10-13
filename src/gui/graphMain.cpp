@@ -6,6 +6,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <vector>
+#include <imgui.h>
 
 GLuint vbo;
 std::vector<float> vertexData;
@@ -42,9 +43,10 @@ void drawGraph() {
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-double (*func)(double);
+std::function<double(double)> func;
 
 bool gameInit() {
+	return true;
 	std::string input; // Example function
 
 	std::getline(std::cin, input);
@@ -56,14 +58,13 @@ bool gameInit() {
 	JITCompiler jit;
 	func = jit.compile(tree); // Compile the function
 
-	generateGraphData(func, -1.0f, 2.0f, 100); // Generate points from -1 to 2 with 100 points
+	generateGraphData(func, -2.0f, 2.0f, 100); // Generate points from -2 to 2 with 100 points
 	setupVBO();
 
 	return true;
 }
 
 bool gameLogic(float deltaTime) {
-
 #pragma region init stuff
 	int w = 0;
 	int h = 0;
@@ -73,8 +74,8 @@ bool gameLogic(float deltaTime) {
 	glViewport(0, 0, w, h);
 	glClear(GL_COLOR_BUFFER_BIT); //clear screen
 #pragma endregion
-        
-	drawGraph();
+
+	ImGui::ShowDemoWindow();
 
 	if (platform::isButtonPressedOn(platform::Button::F11)) {
 		if (platform::isFullScreen()) {
