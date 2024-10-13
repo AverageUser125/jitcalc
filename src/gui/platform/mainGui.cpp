@@ -9,12 +9,12 @@
 #include <glad/errorReporting.hpp>
 #include <glad/glad.h>
 #include <iostream>
-#include <stb_image.h>
 #include <glm/glm.hpp>
-#include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "imguiThemes.h"
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <imguiThemes.h>
+#include "windowIcon.h"
 
 #if PLATFORM_WIN
 #define WIN32_LEAN_AN_MEAN
@@ -256,11 +256,7 @@ int guiLoop() {
 	glfwSetCursorPosCallback(window, cursorPositionCallback);
 	glfwSetCharCallback(window, characterCallback);
 
-	int x, y, comp;
-	GLFWimage windownIconImage{};
-	windownIconImage.pixels = stbi_load(RESOURCES_PATH "icon.png", &x, &y, &comp, 4);
-	windownIconImage.height = y;
-	windownIconImage.width = x;
+	const GLFWimage windownIconImage{windowIconHeight, windowIconWidth, const_cast<unsigned char*>(windowIcon)};
 	glfwSetWindowIcon(window, 1, &windownIconImage);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {

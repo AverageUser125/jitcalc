@@ -75,7 +75,7 @@ project("${PROJECT_NAME}")
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glfw")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glad")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stb_image")
+# add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stb_image")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glm")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/imgui")
 
@@ -119,9 +119,9 @@ target_link_libraries(${PROJECT_NAME}
     ${LLVM_LIBS}
     glfw
     glad
-    stb_image
     glm
     imgui
+#    stb_image
 )
 # Specify the output directory for the build (/bin directory)
 # set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
