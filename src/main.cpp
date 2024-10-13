@@ -15,6 +15,5 @@ int main() {
 	
 	int returnCode = guiLoop();
 
-
 	return returnCode;
 }

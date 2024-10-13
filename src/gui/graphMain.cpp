@@ -36,19 +36,6 @@ void setupVBO() {
 }
 
 void drawGraph() {
-	// Set the color of the line (RGB format, normalized between 0.0 and 1.0)
-	glColor3f(1.0f, 0.0f, 0.0f); // Red line
-
-	// Begin drawing lines
-	glBegin(GL_LINES);
-
-	// Define the two points of the line (in normalized device coordinates [-1, 1])
-	glVertex2f(-0.5f, 0.0f); // Start point
-	glVertex2f(0.5f, 0.0f);	 // End point
-
-	// End drawing
-	glEnd();
-	return;
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer

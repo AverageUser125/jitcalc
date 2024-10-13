@@ -77,7 +77,7 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glfw")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glad")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stb_image")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glm")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/imgui-docking")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/imgui")
 
 # Add source files recursively from the src directory
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")

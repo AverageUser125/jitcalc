@@ -279,15 +279,6 @@ int guiLoop() {
 	(void)io;
 	io.IniFilename = nullptr;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;	// Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
-	ImGuiStyle& style = ImGui::GetStyle();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-		//style.WindowRounding = 0.0f;
-		style.Colors[ImGuiCol_WindowBg].w = 0.f;
-		style.Colors[ImGuiCol_DockingEmptyBg].w = 0.f;
-	}
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
@@ -326,11 +317,11 @@ int guiLoop() {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		ImGui::DockSpaceOverViewport();
 #pragma endregion
 		if(!gameLogic(augmentedDeltaTime)) {
 			return EXIT_FAILURE;
 		}
+/*
 #pragma region fullscreen
 
 		if (platform::isFocused() && currentFullScreen != fullScreen) {
@@ -367,7 +358,7 @@ int guiLoop() {
 		}
 
 #pragma endregion
-
+*/
 #pragma region reset flags
 
 		mouseMovedFlag = 0;
@@ -383,15 +374,6 @@ int guiLoop() {
 		glViewport(0, 0, display_w, display_h);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		// Update and Render additional Platform Windows
-		// (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-		//  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
-		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -399,7 +381,6 @@ int guiLoop() {
 #pragma region cleanup
 
 	gameEnd();
-
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
