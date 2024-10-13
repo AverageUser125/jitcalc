@@ -4,6 +4,11 @@ platform::Button keyBoard[platform::Button::BUTTONS_COUNT];
 platform::Button leftMouse;
 platform::Button rightMouse;
 
+namespace platform
+{
+bool isFocused();
+}
+
 platform::ControllerButtons controllerButtons;
 std::string typedInput;
 
@@ -68,7 +73,7 @@ int platform::isRMouseHeld()
 
 platform::ControllerButtons platform::getControllerButtons()
 {
-	return windowFocus ? controllerButtons : platform::ControllerButtons{};
+	return isFocused() ? controllerButtons : platform::ControllerButtons{};
 }
 
 std::string platform::getTypedInput()

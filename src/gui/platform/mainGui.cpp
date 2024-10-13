@@ -21,7 +21,7 @@
 static GLFWwindow* window = nullptr;
 static bool currentFullScreen = 0;
 static bool fullScreen = 0;
-bool windowFocus = true;
+static bool windowFocus = true;
 
 constexpr int WINDOW_DEFAULT_WIDTH = 1280;
 constexpr int WINDOW_DEFAULT_HEIGHT = 720;
