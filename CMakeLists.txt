@@ -76,6 +76,7 @@ project("${PROJECT_NAME}")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glfw")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glad")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stb_image")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glm")
 
 # Add source files recursively from the src directory
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -118,6 +119,7 @@ target_link_libraries(${PROJECT_NAME}
     glfw
     glad
     stb_image
+    glm
 )
 # Specify the output directory for the build (/bin directory)
 # set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")

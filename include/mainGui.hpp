@@ -1,13 +1,10 @@
 #pragma once
+#include <glm/glm.hpp>
 
 int guiLoop();
 
 namespace platform
 {
-struct ivec2 {
-	int x;
-	int y;
-};
 
 ///sets the mouse pos relative to the window's drawing area
 void setRelMousePosition(int x, int y);
@@ -17,7 +14,7 @@ void setFullScreen(bool f);
 
 //gets the window size, can be different to the actual framebuffer size
 //you should use getFrameBufferSize if you want the actual ammount of pixels to give to your opengl routines
-ivec2 getWindowSize();
+glm::ivec2 getWindowSize();
 
 inline int getWindowSizeX() {
 	return getWindowSize().x;
@@ -29,7 +26,7 @@ inline int getWindowSizeY() {
 
 //usually is the same as getWindowSize unless you have things like zoom or rezolution.
 //You should use this function if you want to pass this data to glviewport
-ivec2 getFrameBufferSize();
+glm::ivec2 getFrameBufferSize();
 
 inline int getFrameBufferSizeX() {
 	return getFrameBufferSize().x;
@@ -40,7 +37,7 @@ inline int getFrameBufferSizeY() {
 }
 
 ///gets the mouse pos relative to the window's drawing area
-ivec2 getRelMousePosition();
+glm::ivec2 getRelMousePosition();
 
 void showMouse(bool show);
 bool isFocused();

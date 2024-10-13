@@ -10,6 +10,8 @@
 #include <glad/glad.h>
 #include <iostream>
 #include <stb_image.h>
+#include <glm/glm.hpp>
+
 #if PLATFORM_WIN
 #define WIN32_LEAN_AN_MEAN
 #define NOMINMAX
@@ -146,20 +148,20 @@ void setFullScreen(bool f) {
 	fullScreen = f;
 }
 
-ivec2 getFrameBufferSize() {
+glm::ivec2 getFrameBufferSize() {
 	int x = 0;
 	int y = 0;
 	glfwGetFramebufferSize(window, &x, &y);
 	return {x, y};
 }
 
-ivec2 getRelMousePosition() {
+glm::ivec2 getRelMousePosition() {
 	double x = 0, y = 0;
 	glfwGetCursorPos(window, &x, &y);
 	return {(int)x, (int)y};
 }
 
-ivec2 getWindowSize() {
+glm::ivec2 getWindowSize() {
 	int x = 0;
 	int y = 0;
 	glfwGetWindowSize(window, &x, &y);
