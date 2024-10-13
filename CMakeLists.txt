@@ -84,7 +84,7 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/imgui")
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 if(WIN32)
-    set(CMAKE_AUTORCC ON)
+    # set(CMAKE_AUTORCC ON)
     set(MY_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/resources/icon.rc" ${MY_SOURCES})
 endif()
 
