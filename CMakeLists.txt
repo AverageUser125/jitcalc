@@ -33,7 +33,7 @@ find_package(LLVM REQUIRED CONFIG)
 
 # If LLVM is found, include the required directories and link the libraries
 if(LLVM_FOUND)
-    llvm_map_components_to_libnames(LLVM_LIBS support core native orcjit asmparser)
+    llvm_map_components_to_libnames(LLVM_LIBS support core native mcjit asmparser)
     message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
     message(STATUS "Found LLVM: ${LLVM_VERSION}")
     message(STATUS "LLVM Include Directories: ${LLVM_INCLUDE_DIRS}")
@@ -116,7 +116,6 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC GLFW_INCLUDE_NONE)
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
 target_link_libraries(${PROJECT_NAME}
-    LLVMMCJIT
     ${LLVM_LIBS}
     glfw
     glad
