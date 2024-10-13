@@ -7,9 +7,12 @@
 #include <glad/glad.h>
 #include <vector>
 #include <imgui.h>
+#include <imgui_stdlib.h>
 
-GLuint vbo;
-std::vector<float> vertexData;
+static GLuint vbo;
+static std::vector<float> vertexData;
+static std::string input;
+static std::function<double(double)> func;
 
 // Function to generate vertex data for the graph
 void generateGraphData(const std::function<double(double)>& func, float startX, float endX, int numPoints) {
@@ -25,12 +28,27 @@ void generateGraphData(const std::function<double(double)>& func, float startX, 
 }
 
 void setupVBO() {
-	glGenBuffers(1, &vbo);
+	if (vbo == 0) {
+		glGenBuffers(1, &vbo); // Generate the VBO only if it doesn't exist
+	}
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 }
 
 void drawGraph() {
+	// Set the color of the line (RGB format, normalized between 0.0 and 1.0)
+	glColor3f(1.0f, 0.0f, 0.0f); // Red line
+
+	// Begin drawing lines
+	glBegin(GL_LINES);
+
+	// Define the two points of the line (in normalized device coordinates [-1, 1])
+	glVertex2f(-0.5f, 0.0f); // Start point
+	glVertex2f(0.5f, 0.0f);	 // End point
+
+	// End drawing
+	glEnd();
+	return;
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
@@ -43,26 +61,34 @@ void drawGraph() {
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-std::function<double(double)> func;
-
-bool gameInit() {
-	return true;
-	std::string input; // Example function
-
-	std::getline(std::cin, input);
-
-	Parser parser(input);
+bool setGraph(const std::string& equation) {
+	Parser parser(equation);
 	ExpressionNode* tree = parser.parserParseExpression();
 	parser.parserDebugDumpTree(tree);
 
 	JITCompiler jit;
 	func = jit.compile(tree); // Compile the function
 
-	generateGraphData(func, -2.0f, 2.0f, 100); // Generate points from -2 to 2 with 100 points
+	std::cout << func(1);
+	std::cout << func(2);
+	std::cout << func(3);
+
+	generateGraphData(func, -1.0f, 1.0f, 100); // Generate points from -2 to 2 with 100 points
 	setupVBO();
+	return true;
+}
+
+bool gameInit() {
+	glEnable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+	setGraph("x*x");
 
 	return true;
 }
+
 
 bool gameLogic(float deltaTime) {
 #pragma region init stuff
@@ -75,7 +101,16 @@ bool gameLogic(float deltaTime) {
 	glClear(GL_COLOR_BUFFER_BIT); //clear screen
 #pragma endregion
 
-	ImGui::ShowDemoWindow();
+	drawGraph();
+
+	//ImGui::ShowDemoWindow();
+	ImGui::Begin("Equation", nullptr, ImGuiWindowFlags_NoTitleBar);
+	ImGui::InputText("equation", &input);
+
+	if (ImGui::Button("parse", {100, 50})){
+		setGraph(input);
+	}
+	ImGui::End();
 
 	if (platform::isButtonPressedOn(platform::Button::F11)) {
 		if (platform::isFullScreen()) {
@@ -90,5 +125,9 @@ bool gameLogic(float deltaTime) {
 
 
 void gameEnd() {
+	if (vbo != 0) {
+		glDeleteBuffers(1, &vbo);
+		vbo = 0;
+	}
 	return;
 }

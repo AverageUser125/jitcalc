@@ -115,7 +115,7 @@ ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
 
 //~ Main things
 
-Parser::Parser(std::string& expression) : lexer(expression), nodePool({}) {
+Parser::Parser(const std::string& expression) : lexer(expression), nodePool({}) {
 	arena_init(&nodePool);
 	parserAdvance();
 	parserAdvance();

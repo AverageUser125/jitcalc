@@ -240,15 +240,14 @@ int guiLoop() {
 	}
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	window = glfwCreateWindow(1280, 720, "Graph calculator", NULL, NULL);
+	window = glfwCreateWindow(1280, 720, "Graph calculator", nullptr, nullptr);
 	if (!window) {
 		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
 	glfwMakeContextCurrent(window);
-
-	glfwSwapInterval(1); // Enable vsync
+	glfwSwapInterval(1);
 
 	glfwSetKeyCallback(window, keyCallback);
 	glfwSetMouseButtonCallback(window, mouseCallback);
@@ -304,8 +303,8 @@ int guiLoop() {
 	#pragma endregion
 
 	auto stop = std::chrono::high_resolution_clock::now();
+
 	while (!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
 
 #pragma region deltaTime
 
@@ -329,7 +328,9 @@ int guiLoop() {
 		ImGui::NewFrame();
 		ImGui::DockSpaceOverViewport();
 #pragma endregion
-
+		if(!gameLogic(augmentedDeltaTime)) {
+			return EXIT_FAILURE;
+		}
 #pragma region fullscreen
 
 		if (platform::isFocused() && currentFullScreen != fullScreen) {
@@ -375,9 +376,6 @@ int guiLoop() {
 
 #pragma endregion
 
-		if (!gameLogic(augmentedDeltaTime)) {
-			return EXIT_FAILURE;
-		}
 		// Rendering
 		ImGui::Render();
 		int display_w, display_h;
@@ -395,6 +393,7 @@ int guiLoop() {
 			glfwMakeContextCurrent(backup_current_context);
 		}
 		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
 #pragma region cleanup

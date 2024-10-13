@@ -68,7 +68,7 @@ typedef struct Parser {
 	Token next{};
 	Lexer lexer;
 
-	Parser(std::string& expression);
+	Parser(const std::string& expression);
 	~Parser();
 
 	inline void parserAdvance();
