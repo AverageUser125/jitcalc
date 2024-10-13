@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.20)
 # delete .out/CmakeFiles folder to make this work
-option(PRODUCTION_BUILD "Make this a production build" OFF)
+option(PRODUCTION_BUILD "Make this a production build" ON)
 
 # project name
 set(PROJECT_NAME "jitcalc")
@@ -21,6 +21,7 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_WAYLAND TRUE CACHE BOOL "" FORCE)
 set(ZLIB_FORCE_STATIC TRUE CACHE BOOL "" FORCE)
+set(LLVM_USE_STATIC_LIBS TRUE CACHE BOOL "" FORCE)
 
 # Set the CMP0069 policy, because warning annoying
 if(POLICY CMP0069)
