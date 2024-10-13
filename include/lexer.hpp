@@ -3,10 +3,9 @@
 #include <string>
 #include <string_view>
 
-#undef EOF
 enum class TokenType {
 	Error,
-	EOF,
+	tkEOF,
 	Ident,
 	Number,
 	Plus,

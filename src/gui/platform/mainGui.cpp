@@ -321,7 +321,7 @@ int guiLoop() {
 		if(!gameLogic(augmentedDeltaTime)) {
 			return EXIT_FAILURE;
 		}
-/*
+
 #pragma region fullscreen
 
 		if (platform::isFocused() && currentFullScreen != fullScreen) {
@@ -358,7 +358,7 @@ int guiLoop() {
 		}
 
 #pragma endregion
-*/
+
 #pragma region reset flags
 
 		mouseMovedFlag = 0;

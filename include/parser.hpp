@@ -13,7 +13,7 @@ enum class Precedence {
 };
 constexpr Precedence precedenceLookup[static_cast<int>(TokenType::MAX)] = {
 	Precedence::MIN,   // TokenType::Error
-	Precedence::MIN,   // TokenType::EOF
+	Precedence::MIN,   // TokenType::tkEOF
 	Precedence::MIN,   // TokenType::Ident
 	Precedence::MIN,   // TokenType::Number
 	Precedence::Term,  // TokenType::Plus

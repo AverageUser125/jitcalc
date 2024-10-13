@@ -29,7 +29,7 @@ Token Lexer::lexerNextToken() {
 	// lexerAdvanceTillConditionFail(std::isspace);
 	start = current;
 	if (*current == '\0')
-		return lexerMakeToken(TokenType::EOF);
+		return lexerMakeToken(TokenType::tkEOF);
 
 	current++;
 	char currentChar = current[-1];
@@ -84,8 +84,8 @@ std::string lexerDebugGetTokenTypeName(TokenType type) {
 	switch (type) {
 	case TokenType::Error:
 		return "Error";
-	case TokenType::EOF:
-		return "EOF";
+	case TokenType::tkEOF:
+		return "tkEOF";
 	case TokenType::Number:
 		return "Number Literal";
 	case TokenType::Ident:
