@@ -9,6 +9,7 @@
 #include <glad/errorReporting.hpp>
 #include <glad/glad.h>
 #include <iostream>
+#include <stb_image.h>
 #if PLATFORM_WIN
 #define WIN32_LEAN_AN_MEAN
 #define NOMINMAX
@@ -249,6 +250,13 @@ int guiLoop() {
 	glfwSetWindowSizeCallback(window, windowSizeCallback);
 	glfwSetCursorPosCallback(window, cursorPositionCallback);
 	glfwSetCharCallback(window, characterCallback);
+
+	int x, y, comp;
+	GLFWimage windownIconImage{};
+	windownIconImage.pixels = stbi_load(RESOURCES_PATH "icon.png", &x, &y, &comp, 4);
+	windownIconImage.height = y;
+	windownIconImage.width = x;
+	glfwSetWindowIcon(window, 1, &windownIconImage);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cerr << "Failed to initialize GLAD" << std::endl;
