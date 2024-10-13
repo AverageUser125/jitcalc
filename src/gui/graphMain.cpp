@@ -58,7 +58,7 @@ bool setGraph(const std::string& equation) {
 	JITCompiler jit;
 	func = jit.compile(tree); // Compile the function
 
-	generateGraphData(func, -1.0f, 1.0f, 100); // Generate points from -2 to 2 with 100 points
+	generateGraphData(func, -2.0f, 2.0f, 100); // Generate points from -2 to 2 with 100 points
 	setupVBO();
 	return true;
 }
@@ -74,6 +74,17 @@ bool gameInit() {
 	return true;
 }
 
+// Custom callback function to call setGraph when input changes
+int inputTextCallback(ImGuiInputTextCallbackData* data) {
+	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
+		// Trigger graph update whenever the text is modified
+		if (data->Buf == nullptr || *data->Buf == '/0')
+			return 0;
+		input = data->Buf; // Update the input string
+		setGraph(input);   // Update the graph
+	}
+	return 0;
+}
 
 bool gameLogic(float deltaTime) {
 #pragma region init stuff
@@ -87,10 +98,9 @@ bool gameLogic(float deltaTime) {
 #pragma endregion
 
 	drawGraph();
-
 	//ImGui::ShowDemoWindow();
 	ImGui::Begin("Equation", nullptr, ImGuiWindowFlags_NoTitleBar);
-	ImGui::InputText("equation", &input);
+	ImGui::InputText("equation", &input, ImGuiInputTextFlags_CallbackEdit, inputTextCallback);
 
 	if (ImGui::Button("parse", {100, 50})){
 		setGraph(input);
