@@ -1,5 +1,6 @@
 #include "parser.hpp"
 
+constexpr double pi = 3.14159265358979323846;
 constexpr double E = 2.718281828459045235360;
 //~ Helpers
 
@@ -29,6 +30,10 @@ ExpressionNode* Parser::parseIdent() {
 		ret = allocateExpressionNode();
 		ret->type = NodeType::Number;
 		ret->number = E;
+	} else if (curr.lexme == "pi") {
+		ret = allocateExpressionNode();
+		ret->type = NodeType::Number;
+		ret->number = pi;	
 	} else if (curr.lexme == "x"){
 		ret = allocateExpressionNode();
 		ret->type = NodeType::Variable;

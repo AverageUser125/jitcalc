@@ -35,7 +35,7 @@ struct Lexer {
 	template <typename... Conditions> inline void lexerAdvanceTillConditionFail(Conditions... conditions) {
 		// Lambda to check all conditions
 		auto allConditionsPass = [&](char c) -> bool {
-			return (... && conditions(c)); // Fold expression to apply all conditions
+			return (... || conditions(c)); // Fold expression to apply all conditions
 		};
 
 		// Advance lexer until one condition fails
