@@ -87,6 +87,9 @@ Index of this file:
 
 // Helper Macros
 #ifndef IM_ASSERT
+#if !PRODUCTION_BUILD
+#undef NDEBUG
+#endif
 #include <assert.h>
 #define IM_ASSERT(_EXPR)            assert(_EXPR)                               // You can override the default assert handler by editing imconfig.h
 #endif

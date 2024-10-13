@@ -32,6 +32,9 @@
 #endif // ARENA_NOSTDIO
 
 #ifndef ARENA_ASSERT
+#if !PRODUCTION_BUILD
+#undef NDEBUG
+#endif
 #include <assert.h>
 #define ARENA_ASSERT assert
 #endif
