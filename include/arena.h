@@ -32,7 +32,7 @@
 #endif // ARENA_NOSTDIO
 
 #ifndef ARENA_ASSERT
-#if !PRODUCTION_BUILD
+#if PRODUCTION_BUILD == 0
 #undef NDEBUG
 #endif
 #include <assert.h>

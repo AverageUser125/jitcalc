@@ -87,7 +87,7 @@ Index of this file:
 
 // Helper Macros
 #ifndef IM_ASSERT
-#if !PRODUCTION_BUILD
+#if PRODUCTION_BUILD == 0
 #undef NDEBUG
 #endif
 #include <assert.h>
