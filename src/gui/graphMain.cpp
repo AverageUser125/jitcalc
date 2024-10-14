@@ -191,14 +191,15 @@ bool gameLogic(float deltaTime) {
 #pragma endregion
 
 #pragma region display equations
-	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
+	ImGui::Begin("Equations", nullptr,
+				 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
 	for (size_t i = 0; i < inputs.size(); i++) {
-		ImGui::InputText(std::to_string(i).c_str(), 
+		ImGui::InputText(("##" + std::to_string(i)).c_str(), 
 			&inputs[i], 
 			ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
 			(void*)(i + 1));
 	}
-	if (ImGui::Button("add equation", {75.0f, 25.0f})) {
+	if (ImGui::Button("add equation", {100.0f, 25.0f})) {
 		inputs.resize(inputs.size() + 1);
 		funcs.resize(funcs.size() + 1);
 		vbos.resize(vbos.size() + 1);
