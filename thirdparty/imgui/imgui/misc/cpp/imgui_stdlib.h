@@ -11,6 +11,12 @@
 
 #include <string>
 
+struct InputTextCallback_UserData {
+	std::string* Str;
+	ImGuiInputTextCallback ChainCallback;
+	void* ChainCallbackUserData;
+};
+
 namespace ImGui
 {
     // ImGui::InputText() with std::string

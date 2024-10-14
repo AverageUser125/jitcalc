@@ -11,7 +11,7 @@
 
 static GLuint vbo;
 static std::vector<float> vertexData;
-static std::string input;
+static std::string input = "x*x";
 static std::function<double(double)> func;
 
 // Function to generate vertex data for the graph
@@ -69,19 +69,19 @@ bool gameInit() {
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-	setGraph("x*x");
+	setGraph(input);
 
 	return true;
 }
 
 // Custom callback function to call setGraph when input changes
 int inputTextCallback(ImGuiInputTextCallbackData* data) {
+	// InputTextCallback_UserData* user_data = (InputTextCallback_UserData*)data->UserData;
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
 		// Trigger graph update whenever the text is modified
-		if (data->Buf == nullptr || *data->Buf == '/0')
+		if (data->Buf == nullptr || (*data->Buf) == '/0')
 			return 0;
-		input = data->Buf; // Update the input string
-		setGraph(input);   // Update the graph
+		setGraph(data->Buf);   // Update the graph
 	}
 	return 0;
 }
