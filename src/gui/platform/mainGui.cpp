@@ -291,12 +291,14 @@ int guiLoop() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 #pragma endregion
+
+	auto stop = std::chrono::high_resolution_clock::now();
+
 	if (!gameInit()) {
 		result = EXIT_FAILURE;
 		goto defer;
 	}
 
-	auto stop = std::chrono::high_resolution_clock::now();
 	while (!glfwWindowShouldClose(window)) {
 
 #pragma region deltaTime

@@ -76,7 +76,7 @@ bool setGraph(const std::array<std::string, amount>& equations) {
 
 // Custom callback function to call setGraph when input changes
 int inputTextCallback(ImGuiInputTextCallbackData* data) {
-	int index = (int)data->UserData - 1;
+	size_t index = reinterpret_cast<size_t>(data->UserData) - 1;
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
 		// Trigger graph update whenever the text is modified
 		std::array<std::string, inputs.size()> inputsClone = inputs;
@@ -187,12 +187,12 @@ bool gameLogic(float deltaTime) {
 	}
 #pragma endregion
 
-#pragma display equations
+#pragma region display equations
 	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar);
 	// FIXME: this code looks very strange..
 	// but it is just numbering label code
 	for (size_t i = 0; i < inputs.size(); i++) {
-		char str[2] = {i + '0', 0};
+		char str[2] = {static_cast<char>(i) + '0', 0};
 		ImGui::InputText(str, &inputs[i], ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
 						 (void*)(i + 1));
 	}
