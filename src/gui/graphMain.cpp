@@ -178,7 +178,7 @@ bool gameInit() {
 	return true;
 }
 
-bool gameLogic(float deltaTime) {
+bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
 
 	bool shouldRecalculateEverything = false;
@@ -211,13 +211,20 @@ bool gameLogic(float deltaTime) {
 	}
 	if (platform::isRMouseHeld()) {
 		glm::ivec2 currentMousePos = platform::getRelMousePosition();
-		origin = static_cast<glm::vec2>(originMousePos - currentMousePos) / mouseSensitivity + originOrigin;
+		// Calculate the pixel movement of the cursor
+		glm::vec2 delta = static_cast<glm::vec2>(currentMousePos - originMousePos);
+		// Update origin directly based on cursor movement
+		origin = originOrigin - delta; // Subtract delta to move the graph in the opposite direction
+
+		// Update the originMousePos for the next frame
+		originMousePos = currentMousePos;
+
 		shouldRecalculateEverything = true;
 	}
 
 	double scrollSize = platform::getScrollSize();
 	if (scrollSize != 0) {
-		scale -= scrollSize / scrollSensitivity;
+		scale *= exp(scrollSize / scrollSensitivity);
 		scale = std::clamp(scale, 0.001f, 1000.0f);
 		shouldRecalculateEverything = true;
 	}

@@ -322,7 +322,11 @@ int guiLoop() {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 #pragma endregion
-		if(!gameLogic(augmentedDeltaTime)) {
+
+		int display_w, display_h;
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+
+		if (!gameLogic(augmentedDeltaTime, display_w, display_h)) {
 			return EXIT_FAILURE;
 		}
 
@@ -373,8 +377,6 @@ int guiLoop() {
 
 		// Rendering
 		ImGui::Render();
-		int display_w, display_h;
-		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
