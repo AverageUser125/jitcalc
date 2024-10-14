@@ -9,6 +9,8 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
+static constexpr int mouseSensitivity = 30;
+
 static GLuint vbo;
 static std::vector<float> vertexData;
 static std::string input = "x*x";
@@ -52,19 +54,6 @@ void drawAxis() {
 
 }
 
-void drawGraph() {
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
-
-	// Set the color for the line
-	glColor3f(0.0f, 1.0f, 0.0f); // Set line color to green (R, G, B)
-
-	glDrawArrays(GL_LINE_STRIP, 0, vertexData.size() / 2); // Draw the line strip
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
 bool setGraph(const std::string& equation) {
 	Parser parser(equation);
 	ExpressionNode* tree = parser.parserParseExpression();
@@ -104,17 +93,43 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 
 bool gameLogic(float deltaTime) {
 #pragma region init stuff
-	int w = 0;
-	int h = 0;
-	w = platform::getFrameBufferSizeX(); //window w
-	h = platform::getFrameBufferSizeY(); //window h
-
-	glViewport(0, 0, w, h);
 	glClear(GL_COLOR_BUFFER_BIT); //clear screen
 #pragma endregion
 
 	drawAxis();
-	drawGraph();
+#pragma region draw graph
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
+
+	// Set the color for the line
+	glColor3f(0.0f, 1.0f, 0.0f); // Set line color to green (R, G, B)
+
+	glDrawArrays(GL_LINE_STRIP, 0, vertexData.size() / 2); // Draw the line strip
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+#pragma endregion
+	
+
+
+#pragma region move with cursor
+
+	static glm::ivec2 originMousePos = {0, 0};
+	static glm::ivec2 originOrigin = {0, 0};
+
+	if (platform::isLMousePressed()) {
+		originOrigin = origin;
+		originMousePos = platform::getRelMousePosition();
+	}
+	if (platform::isLMouseHeld()) {
+		glm::ivec2 currentMousePos = platform::getRelMousePosition(); 
+		origin = (int)scale * (originMousePos - currentMousePos) / mouseSensitivity + originOrigin;
+	}
+
+	double scrollSize = platform::getScrollSize();
+	scale += scrollSize;
+
+#pragma endregion
 	//ImGui::ShowDemoWindow();
 	ImGui::Begin("Equation", nullptr, ImGuiWindowFlags_NoTitleBar);
 	ImGui::InputText("equ", &input, ImGuiInputTextFlags_CallbackEdit, inputTextCallback);

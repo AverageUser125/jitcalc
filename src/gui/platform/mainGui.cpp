@@ -26,6 +26,7 @@ static GLFWwindow* window = nullptr;
 static bool currentFullScreen = 0;
 static bool fullScreen = 0;
 static bool windowFocus = true;
+static double scrollSize = 0.0;
 
 constexpr int WINDOW_DEFAULT_WIDTH = 1280;
 constexpr int WINDOW_DEFAULT_HEIGHT = 720;
@@ -132,6 +133,10 @@ void characterCallback(GLFWwindow* window, unsigned int codepoint) {
 	}
 }
 
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+	scrollSize = yoffset;
+}
+
 #pragma endregion
 
 
@@ -142,6 +147,10 @@ namespace platform
 
 void setRelMousePosition(int x, int y) {
 	glfwSetCursorPos(window, x, y);
+}
+
+double getScrollSize() {
+	return scrollSize;
 }
 
 bool isFullScreen() {
@@ -162,7 +171,7 @@ glm::ivec2 getFrameBufferSize() {
 glm::ivec2 getRelMousePosition() {
 	double x = 0, y = 0;
 	glfwGetCursorPos(window, &x, &y);
-	return {(int)x, (int)y};
+	return {(int)floor(x), (int)floor(y)};
 }
 
 glm::ivec2 getWindowSize() {
@@ -257,6 +266,7 @@ int guiLoop() {
 	glfwSetWindowSizeCallback(window, windowSizeCallback);
 	glfwSetCursorPosCallback(window, cursorPositionCallback);
 	glfwSetCharCallback(window, characterCallback);
+	glfwSetScrollCallback(window, scrollCallback);
 
 	const GLFWimage windownIconImage{windowIconHeight, windowIconWidth, const_cast<unsigned char*>(windowIcon)};
 	glfwSetWindowIcon(window, 1, &windownIconImage);
@@ -352,7 +362,7 @@ int guiLoop() {
 #pragma endregion
 
 #pragma region reset flags
-
+		scrollSize = 0;
 		mouseMovedFlag = 0;
 		platform::internal::updateAllButtons(deltaTime);
 		platform::internal::resetTypedInput();

@@ -9,6 +9,9 @@ namespace platform
 ///sets the mouse pos relative to the window's drawing area
 void setRelMousePosition(int x, int y);
 
+// gets the vertical scroll amount
+double getScrollSize();
+
 bool isFullScreen();
 void setFullScreen(bool f);
 
