@@ -92,7 +92,9 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 		}
 	}
 	
-	// support implicit multiplication such as 5(1 + 5), which means 5*(1+5)
+	// support implicit multiplication such as:
+	// 5(1 + 5), which means 5*(1+5)
+	// 5pi, which means 5*pi
 	if (curr.type == TokenType::Number || curr.type == TokenType::Ident ||
 		curr.type == TokenType::OpenParenthesis) {
 		ExpressionNode* new_ret = allocateExpressionNode();
@@ -103,7 +105,6 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 	}
 
 	return ret;
-	
 }
 
 ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
