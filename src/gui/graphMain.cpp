@@ -207,17 +207,13 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 	if (platform::isRMousePressed()) {
 		originOrigin = origin;
+		// originMousePos = static_cast<glm::vec2>(platform::getRelMousePosition()) / glm::vec2({w, h});
 		originMousePos = platform::getRelMousePosition();
 	}
 	if (platform::isRMouseHeld()) {
 		glm::ivec2 currentMousePos = platform::getRelMousePosition();
-		// Calculate the pixel movement of the cursor
-		glm::vec2 delta = static_cast<glm::vec2>(currentMousePos - originMousePos);
-		// Update origin directly based on cursor movement
-		origin = originOrigin - delta; // Subtract delta to move the graph in the opposite direction
-
-		// Update the originMousePos for the next frame
-		originMousePos = currentMousePos;
+		glm::vec2 delta = 2.0f * static_cast<glm::vec2>(originMousePos - currentMousePos); // Delta in pixels
+		origin = originOrigin + (delta / scale) / glm::vec2({w, h});				// Scale and update the origin
 
 		shouldRecalculateEverything = true;
 	}
