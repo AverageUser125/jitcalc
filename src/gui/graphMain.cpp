@@ -191,6 +191,7 @@ bool gameLogic(float deltaTime) {
 	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar);
 	// FIXME: this code looks very strange..
 	// but it is just numbering label code
+	// also, it will fail if there are more then 255 inputs
 	for (size_t i = 0; i < inputs.size(); i++) {
 		char str[2] = {static_cast<char>(i) + '0', 0};
 		ImGui::InputText(str, &inputs[i], ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
