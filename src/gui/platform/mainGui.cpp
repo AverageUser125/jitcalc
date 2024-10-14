@@ -223,7 +223,7 @@ bool readEntireFile(const char* name, void* buffer, size_t size) {
 #pragma endregion
 
 int guiLoop() {
-#pragma region init stuff
+#pragma region windows console
 #if PLATFORM_WIN
 #if PRODUCTION_BUILD == 0
 	AllocConsole();
@@ -233,8 +233,9 @@ int guiLoop() {
 	std::cout.sync_with_stdio();
 #endif
 #endif
+	#pragma endregion
 	int result = EXIT_SUCCESS;
-	#pragma region glfw and glad init
+#pragma region glfw and glad init
 	if (!glfwInit()) {
 		std::cerr << "Failed to initialize GLFW" << std::endl;
 		return EXIT_FAILURE;
@@ -279,16 +280,13 @@ int guiLoop() {
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
-
-	#pragma endregion
+#pragma endregion
 	if (!gameInit()) {
 		result = EXIT_FAILURE;
 		goto defer;
 	}
-	#pragma endregion
 
 	auto stop = std::chrono::high_resolution_clock::now();
-
 	while (!glfwWindowShouldClose(window)) {
 
 #pragma region deltaTime
