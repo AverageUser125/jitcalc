@@ -175,7 +175,7 @@ bool gameLogic(float deltaTime) {
 	}
 	if (platform::isRMouseHeld()) {
 		glm::ivec2 currentMousePos = platform::getRelMousePosition();
-		origin = scale * static_cast<glm::vec2>(originMousePos - currentMousePos) / mouseSensitivity + originOrigin;
+		origin = static_cast<glm::vec2>(originMousePos - currentMousePos) / mouseSensitivity + originOrigin;
 		shouldRecalculateEverything = true;
 	}
 
