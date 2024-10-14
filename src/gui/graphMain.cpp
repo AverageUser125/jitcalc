@@ -55,7 +55,7 @@ void drawAxis() {
 	// Axis drawing logic can be added here
 }
 
-bool setGraph(const std::array<std::string, 2>& equations) {
+bool setGraph(const std::array<std::string, amount>& equations) {
 	for (size_t i = 0; i < equations.size(); ++i) {
 		Parser parser(equations[i]);
 		ExpressionNode* tree = parser.parserParseExpression();
