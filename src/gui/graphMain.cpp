@@ -91,6 +91,7 @@ bool gameInit() {
 	glDisable(GL_DEPTH_TEST);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
 	setGraph(inputs); // Initial call with both inputs
 
@@ -189,11 +190,10 @@ bool gameLogic(float deltaTime) {
 #pragma region display equations
 	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar);
 	for (size_t i = 0; i < inputs.size(); i++) {
-			ImGui::InputText(
-				std::to_string(i).c_str(), 
-				&inputs[i], 
-				ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
-				(void*)(i + 1));
+		ImGui::InputText(std::to_string(i).c_str(), 
+			&inputs[i], 
+			ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
+			(void*)(i + 1));
 	}
 	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.01f, 10.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);

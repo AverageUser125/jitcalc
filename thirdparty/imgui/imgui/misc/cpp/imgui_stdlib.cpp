@@ -37,9 +37,8 @@ static int InputTextCallback(ImGuiInputTextCallbackData* data)
     }
     else if (user_data->ChainCallback)
     {
-        // DON'T Forward to user callback, if any
-        // Allows the callback to actually get the string
-        // data->UserData = user_data->ChainCallbackUserData;
+        // Forward to user callback, if any
+        data->UserData = user_data->ChainCallbackUserData;
         return user_data->ChainCallback(data);
     }
     return 0;
