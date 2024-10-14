@@ -40,9 +40,9 @@ void generateGraphData() {
 			// Evaluate the function at the scaled X value
 			float y = funcs[i](x); // Evaluate the function
 
-			float scaledY = (y / scale) + origin.y; // Apply scaling (zoom) to the Y value
+			float scaledY = (y * scale) + origin.y; // Apply scaling (zoom) to the Y value
 			vertexData[i].push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
-			vertexData[i].push_back(scaledY);		// Scaled Y
+			vertexData[i].push_back(scaledY);	  // Scaled Y
 		}
 
 		if (vbos[i] == 0) {
@@ -181,7 +181,8 @@ bool gameLogic(float deltaTime) {
 
 	double scrollSize = platform::getScrollSize();
 	if (scrollSize != 0) {
-		scale += scrollSize / scrollSensitivity;
+		scale -= scrollSize / scrollSensitivity;
+		scale = std::clamp(scale, 0.01f, 1000.0f);
 		shouldRecalculateEverything = true;
 	}
 #pragma endregion
