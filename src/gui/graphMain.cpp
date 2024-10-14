@@ -182,7 +182,7 @@ bool gameLogic(float deltaTime) {
 	double scrollSize = platform::getScrollSize();
 	if (scrollSize != 0) {
 		scale -= scrollSize / scrollSensitivity;
-		scale = std::clamp(scale, 0.01f, 1000.0f);
+		scale = std::clamp(scale, 0.001f, 1000.0f);
 		shouldRecalculateEverything = true;
 	}
 #pragma endregion
@@ -195,7 +195,7 @@ bool gameLogic(float deltaTime) {
 			ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
 			(void*)(i + 1));
 	}
-	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.01f, 10.0f);
+	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.001f, 10.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -5.0f, 5.0f);
 #pragma endregion
