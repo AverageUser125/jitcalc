@@ -5,11 +5,14 @@
 #include <llvm/Support/TargetSelect.h>
 #include "JITcompiler.hpp"
 #include "mainGui.hpp"
+#include <random>
+#include <chrono>
 
 int main() {
 	llvm::InitializeNativeTarget();
 	llvm::InitializeNativeTargetAsmPrinter();
 	llvm::InitializeNativeTargetAsmParser();
+
 
 	int returnCode = guiLoop();
 

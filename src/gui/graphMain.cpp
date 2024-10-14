@@ -10,6 +10,7 @@
 #include <imgui_stdlib.h>
 #include <array>
 #include <random>
+#include <chrono>
 
 using calcFunc = std::function<double(double)>;
 
@@ -23,6 +24,7 @@ static std::vector<GLuint> vbos(amount);						  // Store two VBOs
 static std::vector<std::vector<float>> vertexData(amount);				 // Store vertex data for two functions
 static std::vector<std::string> inputs = {"x*x", "x^3-0.1", "x"}; // Input for the equations
 static std::vector<calcFunc> funcs(amount);								  // Store two functions
+static std::vector<glm::vec3> colors(amount);
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
 
@@ -60,6 +62,79 @@ void drawAxis() {
 	// Axis drawing logic can be added here
 }
 
+float getDoubleRand() {
+	std::mt19937_64 rng;
+	// initialize the random number generator with time-dependent seed
+	uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
+	rng.seed(ss);
+	std::uniform_real_distribution<double> unif(0, 1);
+	return unif(rng);
+}
+
+// TODO: reconsider the entire method of this function
+glm::vec3 generateColor(int index) {
+	static float rndStart = getDoubleRand();
+	// Helper lambda to convert HSV to RGB
+	static const auto hsvToRgb = [](float h, float s, float v) -> glm::vec3 {
+		float c = v * s;
+		float x = c * (1 - std::fabs(fmod(h / 60.0f, 2) - 1));
+		float m = v - c;
+
+		float r = 0, g = 0, b = 0;
+
+		if (h >= 0 && h < 60) {
+			r = c;
+			g = x;
+			b = 0;
+		} else if (h >= 60 && h < 120) {
+			r = x;
+			g = c;
+			b = 0;
+		} else if (h >= 120 && h < 180) {
+			r = 0;
+			g = c;
+			b = x;
+		} else if (h >= 180 && h < 240) {
+			r = 0;
+			g = x;
+			b = c;
+		} else if (h >= 240 && h < 300) {
+			r = x;
+			g = 0;
+			b = c;
+		} else if (h >= 300 && h < 360) {
+			r = c;
+			g = 0;
+			b = x;
+		}
+
+		return glm::vec3(r + m, g + m, b + m);
+	};
+
+	// Simple hash function to generate consistent pseudo-random values based on the index
+	static const auto hash = [](int idx) -> float {
+		const int prime = 31;							   // A small prime number
+		return fmod((idx * prime * rndStart), 1.0f); // Modulo 1 to get a float between 0 and 1
+	};
+
+	// Generate hue using hash based on the index
+	float hue = 360.0f * hash(index);
+
+	// For even indexes, generate a hue opposite to the previous index
+	if (index > 0 && index % 2 == 0) {
+		float previousHue = 360.0f * hash(index - 1); // Get the hue for the previous index
+		hue = fmod(previousHue + 180.0f, 360.0f);	  // Opposite hue
+	}
+
+	// Full saturation and value for fully saturated colors
+	float saturation = 1.0f;
+	float value = 1.0f;
+
+	// Return the RGB color generated from the HSV values
+	return hsvToRgb(hue, saturation, value);
+}
+
 bool setGraph(const std::vector<std::string>& equations) {
 	for (size_t i = 0; i < equations.size(); ++i) {
 		Parser parser(equations[i]);
@@ -71,6 +146,8 @@ bool setGraph(const std::vector<std::string>& equations) {
 
 		JITCompiler jit;
 		funcs[i] = jit.compile(tree); // Compile the function
+
+		colors[i] = generateColor(i);
 	}
 
 	generateGraphData();
@@ -101,50 +178,6 @@ bool gameInit() {
 	return true;
 }
 
-glm::vec3 getColor(size_t index) {
-	static size_t currentTime = time(nullptr);
-	std::mt19937 generator(index + currentTime);									// Mersenne Twister PRNG seeded with the index
-	std::uniform_real_distribution<float> distribution(0.0f, 1.0f); // Distribution between 0 and 1
-
-	// Ensure saturation is maximum
-	float s = 1.0f;
-	float v = 1.0f;
-	float h = distribution(generator);
-	// Convert HSV to RGB
-	glm::vec3 rgb(0.0f);
-	int i = static_cast<int>(h * 6); // Sector 0 to 5
-	float f = h * 6 - i;			 // Factor in the current sector
-	float p = v * (1 - s);
-	float q = v * (1 - f * s);
-	float t = v * (1 - (1 - f) * s);
-
-	i = i % 6; // Wrap the sector index
-
-	// Use glm::vec3 operations to set the RGB values based on the sector
-	switch (i) {
-	case 0:
-		rgb = glm::vec3(v, t, p);
-		break; // Red
-	case 1:
-		rgb = glm::vec3(q, v, p);
-		break; // Yellow
-	case 2:
-		rgb = glm::vec3(p, v, t);
-		break; // Green
-	case 3:
-		rgb = glm::vec3(p, q, v);
-		break; // Cyan
-	case 4:
-		rgb = glm::vec3(t, p, v);
-		break; // Blue
-	case 5:
-		rgb = glm::vec3(v, p, q);
-		break; // Magenta
-	}
-
-	return rgb; // Return the RGB color
-}
-
 bool gameLogic(float deltaTime) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
 
@@ -159,7 +192,7 @@ bool gameLogic(float deltaTime) {
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
 		
 		// Set the color for the line
-		glm::vec3 color = getColor(i);
+		glm::vec3 color = colors[i];
 		glColor3f(color.x, color.y, color.z); // Set different color for each function
 
 		glDrawArrays(GL_LINE_STRIP, 0, vertexData[i].size() / 2); // Draw the line strip
@@ -204,6 +237,7 @@ bool gameLogic(float deltaTime) {
 		funcs.resize(funcs.size() + 1);
 		vbos.resize(vbos.size() + 1);
 		vertexData.resize(vertexData.size() + 1);
+		colors.resize(colors.size() + 1);
 	}
 	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.001f, 10.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
