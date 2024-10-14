@@ -19,16 +19,19 @@ static constexpr float scrollSensitivity = 30;
 static constexpr int amount = 3;
 static constexpr float initialNumPoints = 100;
 
-static std::array<GLuint, amount> vbos;						   // Store two VBOs
-static std::array<std::vector<float>, amount> vertexData;	   // Store vertex data for two functions
-static std::array<std::string, amount> inputs = {"x*x", "x^3-0.1", "x"}; // Input for the equations
-static std::array<calcFunc, amount> funcs;							// Store two functions
+static std::vector<GLuint> vbos(amount);						  // Store two VBOs
+static std::vector<std::vector<float>> vertexData(amount);				 // Store vertex data for two functions
+static std::vector<std::string> inputs = {"x*x", "x^3-0.1", "x"}; // Input for the equations
+static std::vector<calcFunc> funcs(amount);								  // Store two functions
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
 
 // Function to generate vertex data for the graph
 void generateGraphData() {
 	for (size_t i = 0; i < funcs.size(); ++i) {
+		if (funcs[i] == nullptr) {
+			break;
+		}
 		vertexData[i].clear(); // Clear vertex data for the current function
 
 		int numPoints = std::max(initialNumPoints, initialNumPoints / scale);
@@ -57,7 +60,7 @@ void drawAxis() {
 	// Axis drawing logic can be added here
 }
 
-bool setGraph(const std::array<std::string, amount>& equations) {
+bool setGraph(const std::vector<std::string>& equations) {
 	for (size_t i = 0; i < equations.size(); ++i) {
 		Parser parser(equations[i]);
 		ExpressionNode* tree = parser.parserParseExpression();
@@ -79,7 +82,7 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 	size_t index = reinterpret_cast<size_t>(data->UserData) - 1;
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
 		// Trigger graph update whenever the text is modified
-		std::array<std::string, inputs.size()> inputsClone = inputs;
+		std::vector<std::string> inputsClone = inputs;
 		inputsClone[index] = data->Buf;
 		setGraph(inputsClone); // Update the graph with both inputs
 	}
@@ -188,12 +191,18 @@ bool gameLogic(float deltaTime) {
 #pragma endregion
 
 #pragma region display equations
-	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar);
+	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
 	for (size_t i = 0; i < inputs.size(); i++) {
 		ImGui::InputText(std::to_string(i).c_str(), 
 			&inputs[i], 
 			ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
 			(void*)(i + 1));
+	}
+	if (ImGui::Button("add equation", {75.0f, 25.0f})) {
+		inputs.resize(inputs.size() + 1);
+		funcs.resize(funcs.size() + 1);
+		vbos.resize(vbos.size() + 1);
+		vertexData.resize(vertexData.size() + 1);
 	}
 	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.001f, 10.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
