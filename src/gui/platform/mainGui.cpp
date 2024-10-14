@@ -233,6 +233,7 @@ int guiLoop() {
 	std::cout.sync_with_stdio();
 #endif
 #endif
+	int result = EXIT_SUCCESS;
 	#pragma region glfw and glad init
 	if (!glfwInit()) {
 		std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -281,11 +282,8 @@ int guiLoop() {
 
 	#pragma endregion
 	if (!gameInit()) {
-		if (window) {
-			glfwDestroyWindow(window);
-			glfwTerminate();
-		}
-		return EXIT_FAILURE;
+		result = EXIT_FAILURE;
+		goto defer;
 	}
 	#pragma endregion
 
@@ -378,6 +376,7 @@ int guiLoop() {
 
 	gameEnd();
 
+	defer:
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
@@ -386,5 +385,5 @@ int guiLoop() {
 		glfwTerminate();
 	}
 	#pragma endregion
-	return EXIT_SUCCESS;
+	return result;
 }
