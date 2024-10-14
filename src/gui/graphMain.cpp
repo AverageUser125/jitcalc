@@ -9,17 +9,19 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <array>
+#include <random>
 
 using calcFunc = std::function<double(double)>;
 
 static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
 
-static constexpr int amount = 2;
+static constexpr int amount = 3;
+static constexpr float initialNumPoints = 100;
 
 static std::array<GLuint, amount> vbos;						   // Store two VBOs
 static std::array<std::vector<float>, amount> vertexData;	   // Store vertex data for two functions
-static std::array<std::string, amount> inputs = {"x*x", "x^3-0.1"}; // Input for the equations
+static std::array<std::string, amount> inputs = {"x*x", "x^3-0.1", "x"}; // Input for the equations
 static std::array<calcFunc, amount> funcs;							// Store two functions
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
@@ -29,7 +31,7 @@ void generateGraphData() {
 	for (size_t i = 0; i < funcs.size(); ++i) {
 		vertexData[i].clear(); // Clear vertex data for the current function
 
-		int numPoints = std::max(100.0f, 100 / scale);
+		int numPoints = std::max(initialNumPoints, initialNumPoints / scale);
 		float step = 2.0f / numPoints; // Step through X space from -1 to 1
 		for (int j = 0; j <= numPoints; ++j) {
 			float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
@@ -89,10 +91,55 @@ bool gameInit() {
 	glDisable(GL_DEPTH_TEST);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
+	
+	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
 	setGraph(inputs); // Initial call with both inputs
 
 	return true;
+}
+
+glm::vec3 getColor(size_t index) {
+	static size_t currentTime = time(nullptr);
+	std::mt19937 generator(index + currentTime);									// Mersenne Twister PRNG seeded with the index
+	std::uniform_real_distribution<float> distribution(0.0f, 1.0f); // Distribution between 0 and 1
+
+	// Ensure saturation is maximum
+	float s = 1.0f;
+	float v = 1.0f;
+	float h = distribution(generator);
+	// Convert HSV to RGB
+	glm::vec3 rgb(0.0f);
+	int i = static_cast<int>(h * 6); // Sector 0 to 5
+	float f = h * 6 - i;			 // Factor in the current sector
+	float p = v * (1 - s);
+	float q = v * (1 - f * s);
+	float t = v * (1 - (1 - f) * s);
+
+	i = i % 6; // Wrap the sector index
+
+	// Use glm::vec3 operations to set the RGB values based on the sector
+	switch (i) {
+	case 0:
+		rgb = glm::vec3(v, t, p);
+		break; // Red
+	case 1:
+		rgb = glm::vec3(q, v, p);
+		break; // Yellow
+	case 2:
+		rgb = glm::vec3(p, v, t);
+		break; // Green
+	case 3:
+		rgb = glm::vec3(p, q, v);
+		break; // Cyan
+	case 4:
+		rgb = glm::vec3(t, p, v);
+		break; // Blue
+	case 5:
+		rgb = glm::vec3(v, p, q);
+		break; // Magenta
+	}
+
+	return rgb; // Return the RGB color
 }
 
 bool gameLogic(float deltaTime) {
@@ -107,9 +154,10 @@ bool gameLogic(float deltaTime) {
 		glBindBuffer(GL_ARRAY_BUFFER, vbos[i]);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
-
+		
 		// Set the color for the line
-		glColor3f(0.0f, 1.0f - i * 0.5f, 0.0f); // Set different color for each function
+		glm::vec3 color = getColor(i);
+		glColor3f(color.x, color.y, color.z); // Set different color for each function
 
 		glDrawArrays(GL_LINE_STRIP, 0, vertexData[i].size() / 2); // Draw the line strip
 
