@@ -53,35 +53,48 @@ ExpressionNode* Parser::parseIdent() {
 ExpressionNode* Parser::parserParsePrefixExpr() {
 	ExpressionNode* ret = nullptr;
 
-	if (curr.type == TokenType::Number) {
-		ret = parserParseNumber();
-	} else if (curr.type == TokenType::Ident) {
-		ret = parseIdent();
-	} else if (curr.type == TokenType::OpenParenthesis) {
-		parserAdvance();
-		ret = parserParseExpression(Precedence::MIN);
-		if (curr.type == TokenType::CloseParenthesis) {
-			parserAdvance();
+	switch (curr.type) {
+		case TokenType::Number: {
+			ret = parserParseNumber();
+			break;
 		}
-	} else if (curr.type == TokenType::Plus) {
-		parserAdvance();
-		ret = allocateExpressionNode();
-		ret->type = NodeType::Positive;
-		ret->unary.operand = parserParsePrefixExpr();
-	} else if (curr.type == TokenType::Minus) {
-		parserAdvance();
-		ret = allocateExpressionNode();
-		ret->type = NodeType::Negative;
-		ret->unary.operand = parserParsePrefixExpr();
-	}
+		case TokenType::Ident: {
+			ret = parseIdent();
+			break;
+		}
+		case TokenType::OpenParenthesis: {
+			parserAdvance();
+			ret = parserParseExpression(Precedence::MIN);
+			if (curr.type == TokenType::CloseParenthesis) {
+				parserAdvance();
+			}
+			break;
+		}
+		case TokenType::Plus: {
+			parserAdvance();
+			ret = allocateExpressionNode();
+			ret->type = NodeType::Positive;
+			ret->unary.operand = parserParsePrefixExpr();
+			break;
+		}
+		case TokenType::Minus: {
+			parserAdvance();
+			ret = allocateExpressionNode();
+			ret->type = NodeType::Negative;
+			ret->unary.operand = parserParsePrefixExpr();
+			break;
+		}
+		default: {
 
-	if (!ret) {
-		ret = allocateExpressionNode();
-		ret->type = NodeType::Error;
-		hasError = true;
+			ret = allocateExpressionNode();
+			ret->type = NodeType::Error;
+			hasError = true;
+		}
 	}
-
-	if (curr.type == TokenType::Number || curr.type == TokenType::Ident || curr.type == TokenType::OpenParenthesis) {
+	
+	// support implicit multiplication such as 5(1 + 5), which means 5*(1+5)
+	if (curr.type == TokenType::Number || curr.type == TokenType::Ident ||
+		curr.type == TokenType::OpenParenthesis) {
 		ExpressionNode* new_ret = allocateExpressionNode();
 		new_ret->type = NodeType::Mul;
 		new_ret->binary.left = ret;
@@ -90,6 +103,7 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 	}
 
 	return ret;
+	
 }
 
 ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
