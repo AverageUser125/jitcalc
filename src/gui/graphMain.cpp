@@ -13,26 +13,43 @@ static GLuint vbo;
 static std::vector<float> vertexData;
 static std::string input = "x*x";
 static std::function<double(double)> func;
+static glm::vec2 origin = {0, 0};
+static float scale = 1;
 
 // Function to generate vertex data for the graph
-void generateGraphData(const std::function<double(double)>& func, float startX, float endX, int numPoints) {
+void generateGraphData() {
 	vertexData.clear();
-	float step = (endX - startX) / numPoints;
 
+	int numPoints = 100 / scale;
+	// We want X to go from -1 to 1, with scaling applied
+	float step = 2.0f / numPoints; // Step through X space from -1 to 1
 	for (int i = 0; i <= numPoints; ++i) {
-		float x = startX + i * step;
-		float y = func(x); // Call the JIT-compiled function
-		vertexData.push_back(x);
-		vertexData.push_back(y);
-	}
-}
+		// Generate normalized X in the range [-1, 1]
+		float normalizedX = -1.0f + i * step;
 
-void setupVBO() {
+		// Apply scaling (zoom) to X and Y
+		float x = (normalizedX / scale) + origin.x;
+
+		// Evaluate the function at the scaled X value
+		float y = func(x);
+
+		// Apply scaling (zoom) to the Y value
+		float scaledY = (y / scale) + origin.y;
+
+		// Store the scaled X and Y coordinates
+		vertexData.push_back(normalizedX); // Keep normalized X for OpenGL [-1, 1] range
+		vertexData.push_back(scaledY);	   // Scaled Y
+	}
+
 	if (vbo == 0) {
 		glGenBuffers(1, &vbo); // Generate the VBO only if it doesn't exist
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
+}
+
+void drawAxis() {
+
 }
 
 void drawGraph() {
@@ -58,8 +75,7 @@ bool setGraph(const std::string& equation) {
 	JITCompiler jit;
 	func = jit.compile(tree); // Compile the function
 
-	generateGraphData(func, -2.0f, 2.0f, 100); // Generate points from -2 to 2 with 100 points
-	setupVBO();
+	generateGraphData();
 	return true;
 }
 
@@ -97,13 +113,17 @@ bool gameLogic(float deltaTime) {
 	glClear(GL_COLOR_BUFFER_BIT); //clear screen
 #pragma endregion
 
+	drawAxis();
 	drawGraph();
 	//ImGui::ShowDemoWindow();
 	ImGui::Begin("Equation", nullptr, ImGuiWindowFlags_NoTitleBar);
-	ImGui::InputText("equation", &input, ImGuiInputTextFlags_CallbackEdit, inputTextCallback);
+	ImGui::InputText("equ", &input, ImGuiInputTextFlags_CallbackEdit, inputTextCallback);
 
-	if (ImGui::Button("parse", {100, 50})){
-		setGraph(input);
+
+	if (ImGui::SliderFloat("Scale", &scale, 0.01, 10) || 
+		ImGui::SliderFloat("OriginX", &origin.x, -5, 5) || 
+		ImGui::SliderFloat("OriginY", &origin.y, -5, 5)) {
+		generateGraphData();
 	}
 	ImGui::End();
 
