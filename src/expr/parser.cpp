@@ -4,6 +4,8 @@ constexpr double pi = 3.14159265358979323846;
 constexpr double E = 2.718281828459045235360;
 //~ Helpers
 
+Arena Parser::nodePool{};
+
 inline void Parser::parserAdvance() {
 	curr = next;
 	next = lexer.lexerNextToken();
@@ -117,14 +119,13 @@ ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
 
 //~ Main things
 
-Parser::Parser(const std::string& expression) : lexer(expression), nodePool({}) {
-	arena_init(&nodePool);
+Parser::Parser(const std::string& expression) : lexer(expression) {
 	parserAdvance();
 	parserAdvance();
 }
 
 Parser::~Parser() {
-	arena_free(&nodePool);
+	arena_reset(&nodePool);
 }
 
 ExpressionNode* Parser::parserParseExpression(Precedence curr_operator_prec) {

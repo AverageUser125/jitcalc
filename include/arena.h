@@ -54,8 +54,6 @@
 #endif
 #endif // ARENA_BACKEND
 
-typedef struct Region Region;
-
 struct Region {
 	Region* next;
 	size_t count;
@@ -63,9 +61,16 @@ struct Region {
 	uintptr_t data[];
 };
 
-typedef struct {
+struct Arena;
+void arena_init(Arena* a);
+
+struct Arena {
 	Region *begin, *end;
-} Arena;
+
+	Arena() {
+		arena_init(this);
+	}
+};
 
 #define REGION_DEFAULT_CAPACITY (8 * 1024)
 
@@ -84,7 +89,6 @@ void* arena_memdup(Arena* a, void* data, size_t size);
 char* arena_sprintf(Arena* a, const char* format, ...);
 #endif // ARENA_NOSTDIO
 
-void arena_init(Arena* a);
 void arena_reset(Arena* a);
 void arena_free(Arena* a);
 

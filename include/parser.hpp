@@ -62,7 +62,7 @@ struct ExpressionNode {
 };
 
 typedef struct Parser {
-	Arena nodePool;
+	static Arena nodePool;
 	bool hasError = false;
 
 	Token curr{};

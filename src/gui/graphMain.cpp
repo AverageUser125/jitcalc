@@ -20,7 +20,7 @@ static float scale = 1;
 void generateGraphData() {
 	vertexData.clear();
 
-	int numPoints = 100 / scale;
+	int numPoints = std::max(100.0f, 100 / scale);
 	// We want X to go from -1 to 1, with scaling applied
 	float step = 2.0f / numPoints; // Step through X space from -1 to 1
 	for (int i = 0; i <= numPoints; ++i) {
