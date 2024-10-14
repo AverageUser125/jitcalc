@@ -137,14 +137,20 @@ bool gameLogic(float deltaTime) {
 		shouldRecalculateEverything = true;
 	}
 #pragma endregion
-	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar);
-	ImGui::InputText("Equation 1", &inputs[0], ImGuiInputTextFlags_CallbackEdit, inputTextCallback, (void*)1);
-	ImGui::InputText("Equation 2", &inputs[1], ImGuiInputTextFlags_CallbackEdit, inputTextCallback, (void*)2);
-	
-	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.01f, 10.0f); // Call and ignore the result
-	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f); // Call and combine result
-	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -5.0f, 5.0f); // Call and combine result
 
+#pragma display equations
+	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar);
+	// FIXME: this code looks very strange..
+	// but it is just numbering label code
+	for (size_t i = 0; i < inputs.size(); i++) {
+		char str[2] = {i + '0', 0};
+		ImGui::InputText(str, &inputs[i], ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
+						 (void*)(i + 1));
+	}
+	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.01f, 10.0f);
+	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
+	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -5.0f, 5.0f);
+#pragma endregion
 	if (shouldRecalculateEverything) {
 		generateGraphData();
 	}
