@@ -189,13 +189,12 @@ bool gameLogic(float deltaTime) {
 
 #pragma region display equations
 	ImGui::Begin("Equations", nullptr, ImGuiWindowFlags_NoTitleBar);
-	// FIXME: this code looks very strange..
-	// but it is just numbering label code
-	// also, it will fail if there are more then 255 inputs
 	for (size_t i = 0; i < inputs.size(); i++) {
-		char str[2] = {static_cast<char>(i) + '0', 0};
-		ImGui::InputText(str, &inputs[i], ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
-						 (void*)(i + 1));
+			ImGui::InputText(
+				std::to_string(i).c_str(), 
+				&inputs[i], 
+				ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
+				(void*)(i + 1));
 	}
 	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.01f, 10.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
