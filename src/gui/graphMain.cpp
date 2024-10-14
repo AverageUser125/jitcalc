@@ -91,7 +91,6 @@ bool gameInit() {
 	glDisable(GL_DEPTH_TEST);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
 	setGraph(inputs); // Initial call with both inputs
 
