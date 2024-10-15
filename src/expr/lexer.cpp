@@ -37,6 +37,8 @@ std::optional<std::vector<Token>> Lexer::lexerLexAllTokens() {
 	if (parenthesesBalance != 0) {
 		return std::nullopt;
 	}
+	tokenArray.push_back({TokenType::tkEOF, ""});
+	tokenArray.push_back({TokenType::tkEOF, ""});
 
 	return tokenArray;
 }
@@ -128,9 +130,11 @@ std::string Lexer::lexerDebugGetTokenTypeName(TokenType type) {
 }
 
 void Lexer::lexerDebugPrintArray(const std::vector<Token>& tokenArray) {
+	std::cout << '\n';
 	for (const Token& tk : tokenArray) {
 		lexerDebugPrintToken(tk);
 	}
+	std::cout << '\n';
 }
 
 void Lexer::lexerDebugPrintToken(Token token) {

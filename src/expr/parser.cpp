@@ -2,15 +2,30 @@
 
 constexpr double pi = 3.14159265358979323846;
 constexpr double E = 2.718281828459045235360;
-//~ Helpers
 
 Arena Parser::nodePool{};
 
-inline void Parser::parserAdvance() {
-	curr = next;
-	next = tokenArray[tokenIndex];
-	tokenIndex++;
+Parser::Parser(const std::vector<Token>& arr) : tokenArray(arr), tokenIndex(0) {
+	if (!tokenArray.empty()) {
+		curr = tokenArray[tokenIndex];
+		parserAdvance();
+	}
 }
+
+
+Parser::~Parser() {
+	arena_reset(&nodePool);
+}
+
+inline void Parser::parserAdvance() {
+	if (tokenIndex < tokenArray.size()) {
+		curr = tokenArray[tokenIndex];
+		tokenIndex++;
+	} else {
+		curr = tokenArray.back(); // Keep curr pointing to the last token (tkEOF) if out of bounds
+	}
+}
+
 
 ExpressionNode* Parser::allocateExpressionNode() {
 	return (ExpressionNode*)arena_alloc(&nodePool, sizeof(ExpressionNode));
@@ -40,21 +55,19 @@ ExpressionNode* Parser::parseIdent() {
 	} else if (curr.lexme == "x"){
 		ret = allocateExpressionNode();
 		ret->type = NodeType::Variable;
-		ret->number = 0;
 	} else {
 		ret = allocateExpressionNode();
 		ret->type = NodeType::Error;
 		hasError = true;
 	}
 	parserAdvance();
-
 	return ret;
 }
 
 ExpressionNode* Parser::parserParsePrefixExpr() {
 	ExpressionNode* ret = nullptr;
 
-	switch (curr.type) {
+ 	switch (curr.type) {
 		case TokenType::Number: {
 			ret = parserParseNumber();
 			break;
@@ -87,7 +100,7 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 		}
 		default: {
 
-			ret = allocateExpressionNode();
+ 			ret = allocateExpressionNode();
 			ret->type = NodeType::Error;
 			hasError = true;
 			return ret;
@@ -126,21 +139,14 @@ ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
 	case TokenType::Caret:
 		ret->type = NodeType::Pow;
 		break;
+	default:
+		ret->type = NodeType::Error;
+		hasError = true;
+		return ret;
 	}
 	ret->binary.left = left;
 	ret->binary.right = parserParseExpression(getPrecedence(tk.type));
   return ret;
-}
-
-//~ Main things
-
-Parser::Parser(const std::vector<Token>& arr) : tokenArray(arr) {
-	parserAdvance();
-	parserAdvance();
-}
-
-Parser::~Parser() {
-	arena_reset(&nodePool);
 }
 
 ExpressionNode* Parser::parserParseExpression(Precedence curr_operator_prec) {

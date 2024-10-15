@@ -144,10 +144,11 @@ glm::vec3 generateColor(int index) {
 bool setGraph(GraphEquation& graph, int index) {
 	std::optional<std::vector<Token>> tokenArrayOpt;
 
-	{
-		Lexer lexer(graph.input);
-		tokenArrayOpt = lexer.lexerLexAllTokens();
-	}
+
+	Lexer lexer(graph.input);
+	tokenArrayOpt = lexer.lexerLexAllTokens();
+		// lexer.lexerDebugPrintArray(*tokenArrayOpt);
+	
 
 	if (!tokenArrayOpt.has_value()) {
 		return false;

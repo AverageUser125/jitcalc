@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#define ARENA_NOSTDIO
 #ifndef ARENA_NOSTDIO
 #include <stdarg.h>
 #include <stdio.h>
@@ -54,6 +55,8 @@
 #endif
 #endif // ARENA_BACKEND
 
+#define REGION_DEFAULT_CAPACITY (8 * 1024)
+
 struct Region {
 	Region* next;
 	size_t count;
@@ -61,18 +64,16 @@ struct Region {
 	uintptr_t data[];
 };
 
-struct Arena;
-void arena_init(Arena* a);
 
 struct Arena {
-	Region *begin, *end;
+	Region* begin = nullptr;
+	Region *end = nullptr;
 
-	Arena() {
-		arena_init(this);
+	Arena(): end(new_region(REGION_DEFAULT_CAPACITY)) {
+		begin = end;
 	}
 };
 
-#define REGION_DEFAULT_CAPACITY (8 * 1024)
 
 Region* new_region(size_t capacity);
 void free_region(Region* r);
