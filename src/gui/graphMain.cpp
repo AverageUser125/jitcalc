@@ -17,14 +17,19 @@ using calcFunc = std::function<double(double)>;
 static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
 
-static constexpr int amount = 3;
+static constexpr int StartEquationCount = 1;
 static constexpr float initialNumPoints = 100;
 
-static std::vector<GLuint> vbos(amount);						  // Store two VBOs
-static std::vector<std::vector<float>> vertexData(amount);				 // Store vertex data for two functions
-static std::vector<std::string> inputs = {"x*x", "x^3-0.1", "x"}; // Input for the equations
-static std::vector<calcFunc> funcs(amount);								  // Store two functions
-static std::vector<glm::vec3> colors(amount);
+struct VertexBufferData {
+	GLuint vbo;
+	size_t dataSize;
+};
+
+// use std::vector to allow dynamic amount of equations
+static std::vector<VertexBufferData> vbos(StartEquationCount);
+static std::vector<std::string> inputs = {"x*x"}; // Input for the equations
+static std::vector<calcFunc> funcs(StartEquationCount);					  
+static std::vector<glm::vec3> colors(StartEquationCount);
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
 
@@ -34,7 +39,7 @@ void generateGraphData() {
 		if (funcs[i] == nullptr) {
 			break;
 		}
-		vertexData[i].clear(); // Clear vertex data for the current function
+		std::vector<float> vertexData;
 
 		int numPoints = std::max(initialNumPoints, initialNumPoints / scale);
 		float step = 2.0f / numPoints; // Step through X space from -1 to 1
@@ -46,15 +51,16 @@ void generateGraphData() {
 			float y = funcs[i](x); // Evaluate the function
 
 			float scaledY = (y * scale) + origin.y; // Apply scaling (zoom) to the Y value
-			vertexData[i].push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
-			vertexData[i].push_back(scaledY);	  // Scaled Y
+			vertexData.push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
+			vertexData.push_back(scaledY);	  // Scaled Y
 		}
 
-		if (vbos[i] == 0) {
-			glGenBuffers(1, &vbos[i]); // Generate the VBO only if it doesn't exist
+		if (vbos[i].vbo == 0) {
+			glGenBuffers(1, &vbos[i].vbo); // Generate the VBO only if it doesn't exist
 		}
-		glBindBuffer(GL_ARRAY_BUFFER, vbos[i]);
-		glBufferData(GL_ARRAY_BUFFER, vertexData[i].size() * sizeof(float), vertexData[i].data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vbos[i].vbo);
+		vbos[i].dataSize = vertexData.size();
+		glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 	}
 }
 
@@ -186,8 +192,8 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 	#pragma region draw vertexdata
 	// Draw graph for each function
-	for (size_t i = 0; i < vertexData.size(); ++i) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbos[i]);
+	for (size_t i = 0; i < vbos.size(); ++i) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbos[i].vbo);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
 		
@@ -195,7 +201,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glm::vec3 color = colors[i];
 		glColor3f(color.x, color.y, color.z); // Set different color for each function
 
-		glDrawArrays(GL_LINE_STRIP, 0, vertexData[i].size() / 2); // Draw the line strip
+		glDrawArrays(GL_LINE_STRIP, 0, vbos[i].dataSize / 2); // Draw the line strip
 
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
@@ -239,7 +245,6 @@ bool gameLogic(float deltaTime, int w, int h) {
 		inputs.resize(inputs.size() + 1);
 		funcs.resize(funcs.size() + 1);
 		vbos.resize(vbos.size() + 1);
-		vertexData.resize(vertexData.size() + 1);
 		colors.resize(colors.size() + 1);
 	}
 	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.001f, 10.0f);
@@ -265,9 +270,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 void gameEnd() {
 	for (auto& vbo : vbos) {
-		if (vbo != 0) {
-			glDeleteBuffers(1, &vbo);
-			vbo = 0;
+		if (vbo.vbo != 0) {
+			glDeleteBuffers(1, &vbo.vbo);
+			vbo.vbo = 0;
 		}
 	}
 }
