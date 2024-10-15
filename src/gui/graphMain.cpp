@@ -25,18 +25,23 @@ struct VertexBufferData {
 	size_t dataSize;
 };
 
+struct GraphEquation {
+	std::string input;		  // Equation input as a string
+	calcFunc func;			  // Compiled function (calculated from input)
+	VertexBufferData vboData; // Vertex Buffer Object data (VBO ID and data size)
+	glm::vec3 color;		  // Color for the graph line
+};
+
+static std::vector<GraphEquation> graphEquations(StartEquationCount);
+
 // use std::vector to allow dynamic amount of equations
-static std::vector<VertexBufferData> vbos(StartEquationCount);
-static std::vector<std::string> inputs = {"x*x"}; // Input for the equations
-static std::vector<calcFunc> funcs(StartEquationCount);					  
-static std::vector<glm::vec3> colors(StartEquationCount);
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
 
 // Function to generate vertex data for the graph
 void generateGraphData() {
-	for (size_t i = 0; i < funcs.size(); ++i) {
-		if (funcs[i] == nullptr) {
+	for (auto& graph : graphEquations) {
+		if (graph.func == nullptr) {
 			break;
 		}
 		std::vector<float> vertexData;
@@ -48,18 +53,18 @@ void generateGraphData() {
 			float x = (normalizedX / scale) + origin.x; // Apply scaling (zoom) to X
 
 			// Evaluate the function at the scaled X value
-			float y = funcs[i](x); // Evaluate the function
+			float y = graph.func(x); // Evaluate the function
 
 			float scaledY = (y * scale) + origin.y; // Apply scaling (zoom) to the Y value
 			vertexData.push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
 			vertexData.push_back(scaledY);	  // Scaled Y
 		}
 
-		if (vbos[i].vbo == 0) {
-			glGenBuffers(1, &vbos[i].vbo); // Generate the VBO only if it doesn't exist
+		if (graph.vboData.vbo == 0) {
+			glGenBuffers(1, &graph.vboData.vbo); // Generate the VBO only if it doesn't exist
 		}
-		glBindBuffer(GL_ARRAY_BUFFER, vbos[i].vbo);
-		vbos[i].dataSize = vertexData.size();
+		glBindBuffer(GL_ARRAY_BUFFER, graph.vboData.vbo);
+		graph.vboData.dataSize = vertexData.size();
 		glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 	}
 }
@@ -151,9 +156,9 @@ bool setGraph(const std::vector<std::string>& equations) {
 		}
 
 		JITCompiler jit;
-		funcs[i] = jit.compile(tree); // Compile the function
+		graphEquations[i].func = jit.compile(tree); // Compile the function
 
-		colors[i] = generateColor(i);
+		graphEquations[i].color = generateColor(i);
 	}
 
 	generateGraphData();
@@ -165,6 +170,11 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 	size_t index = reinterpret_cast<size_t>(data->UserData) - 1;
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
 		// Trigger graph update whenever the text is modified
+		std::vector<std::string> inputs;
+		inputs.reserve(graphEquations.size());
+		for (const auto& graph : graphEquations) {
+			inputs.push_back(graph.input);
+		}
 		std::vector<std::string> inputsClone = inputs;
 		inputsClone[index] = data->Buf;
 		setGraph(inputsClone); // Update the graph with both inputs
@@ -179,6 +189,11 @@ bool gameInit() {
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
+	std::vector<std::string> inputs;
+	inputs.reserve(graphEquations.size());
+	for (const auto& graph : graphEquations) {
+		inputs.push_back(graph.input);
+	}
 	setGraph(inputs); // Initial call with both inputs
 
 	return true;
@@ -192,16 +207,16 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 	#pragma region draw vertexdata
 	// Draw graph for each function
-	for (size_t i = 0; i < vbos.size(); ++i) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbos[i].vbo);
+	for (const auto& graph : graphEquations) {
+		glBindBuffer(GL_ARRAY_BUFFER, graph.vboData.vbo);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
 		
 		// Set the color for the line
-		glm::vec3 color = colors[i];
+		glm::vec3 color = graph.color;
 		glColor3f(color.x, color.y, color.z); // Set different color for each function
 
-		glDrawArrays(GL_LINE_STRIP, 0, vbos[i].dataSize / 2); // Draw the line strip
+		glDrawArrays(GL_LINE_STRIP, 0, graph.vboData.dataSize / 2); // Draw the line strip
 
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
@@ -235,17 +250,14 @@ bool gameLogic(float deltaTime, int w, int h) {
 #pragma region display equations
 	ImGui::Begin("Equations", nullptr,
 				 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
-	for (size_t i = 0; i < inputs.size(); i++) {
+	for (size_t i = 0; i < graphEquations.size(); i++) {
 		ImGui::InputText(("##" + std::to_string(i)).c_str(), 
-			&inputs[i], 
+			&graphEquations[i].input, 
 			ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
 			(void*)(i + 1));
 	}
 	if (ImGui::Button("add equation", {100.0f, 25.0f})) {
-		inputs.resize(inputs.size() + 1);
-		funcs.resize(funcs.size() + 1);
-		vbos.resize(vbos.size() + 1);
-		colors.resize(colors.size() + 1);
+		graphEquations.resize(graphEquations.size() + 1);
 	}
 	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.001f, 10.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
@@ -269,10 +281,11 @@ bool gameLogic(float deltaTime, int w, int h) {
 }
 
 void gameEnd() {
-	for (auto& vbo : vbos) {
-		if (vbo.vbo != 0) {
-			glDeleteBuffers(1, &vbo.vbo);
-			vbo.vbo = 0;
+	for (auto& graph : graphEquations) {
+		GLuint vbo = graph.vboData.vbo;
+		if (vbo != 0) {
+			glDeleteBuffers(1, &vbo);
+			vbo = 0;
 		}
 	}
 }
