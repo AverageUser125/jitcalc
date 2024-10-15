@@ -25,18 +25,37 @@ Lexer::Lexer(const std::string& expression) {
 	current = start;
 }
 
+std::optional<std::vector<Token>> Lexer::lexerLexAllTokens() {
+	std::vector<Token> tokenArray;
+	tokenArray.reserve(cleanExpression.size()); // overkill, but still okay
+
+	Token tk;
+	do {
+		tk = lexerNextToken();
+		tokenArray.push_back(tk);
+	} while (tk.type != TokenType::tkEOF);
+	if (parenthesesBalance != 0) {
+		return std::nullopt;
+	}
+
+	return tokenArray;
+}
+
 Token Lexer::lexerNextToken() {
 	// lexerAdvanceTillConditionFail(std::isspace);
 	start = current;
-	if (*current == '\0')
+	if (*current == '\0') {
 		return lexerMakeToken(TokenType::tkEOF);
+	}
 
 	current++;
 	char currentChar = current[-1];
 	switch (currentChar){
 		case '(':
+			parenthesesBalance++;
 			return lexerMakeToken(TokenType::OpenParenthesis);
 		case ')':
+			parenthesesBalance--;
 			return lexerMakeToken(TokenType::CloseParenthesis);
 		case '+':
 			return lexerMakeToken(TokenType::Plus);

@@ -2,6 +2,8 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
+#include <optional>
 
 enum class TokenType {
 	Error,
@@ -27,10 +29,14 @@ struct Lexer {
 	std::string cleanExpression;
 	const char* start = nullptr;
 	const char* current = nullptr;
+	int parenthesesBalance = 0;
 
 	Lexer(const std::string& expression);
 
+	std::optional<std::vector<Token>> lexerLexAllTokens();
+
 	inline Token lexerMakeToken(TokenType type);	
+	
 	// Template function that accepts multiple conditions and checks them in the loop
 	template <typename... Conditions> inline void lexerAdvanceTillConditionFail(Conditions... conditions) {
 		// Lambda to check all conditions
