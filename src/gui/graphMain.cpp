@@ -157,7 +157,7 @@ bool setGraph(GraphEquation& graph, int index) {
 		Parser parser(*tokenArrayOpt);
 		// lifetime of tree pointer is the same as the parser object lifetime
 		ExpressionNode* tree = parser.parserParseExpression();
-		parser.parserDebugDumpTree(tree);
+		// parser.parserDebugDumpTree(tree);
 		if (parser.hasError) {
 			return false;
 		}

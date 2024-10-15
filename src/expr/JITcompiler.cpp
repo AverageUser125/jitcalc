@@ -3,15 +3,22 @@
 #include <cmath>
 #include <iostream>
 
+#undef NDEBUG
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/MCJIT.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/IR/LegacyPassManager.h> // Include for PassManager
+#include <llvm/Support/FileSystem.h>   // For file writing support
 
 JITCompiler::JITCompiler() {
 	// Initialize the LLVM context, module, and builder
 	context = std::make_unique<llvm::LLVMContext>();
 	module = std::make_unique<llvm::Module>("calculator_module", *context);
 	builder = std::make_unique<llvm::IRBuilder<>>(*context);
+	auto funcType =
+		llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy(), builder->getDoubleTy()}, false);
+	powFunction = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "pow", module.get());
 }
 
 
@@ -30,6 +37,11 @@ double (*JITCompiler::compile(ExpressionNode* expr))(double) {
 	// Generate code for the expression and return the result
 	llvm::Value* result = generateCode(expr, variable);
 	builder->CreateRet(result);
+
+    std::string llvmIR;
+	llvm::raw_string_ostream llvmIRStream(llvmIR);
+	module->print(llvmIRStream, nullptr);									// Print to standard output
+	std::cout << "Generated LLVM IR:\n" << llvmIRStream.str() << std::endl; // Print it to std::cout
 
 	// Now that the module is fully constructed, create the JIT execution engine
 	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
@@ -78,11 +90,10 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 	case NodeType::Pow: {
 		llvm::Value* left = generateCode(expr->binary.left, variable);
 		llvm::Value* right = generateCode(expr->binary.right, variable);
-		return builder->CreateCall(getPowFunction(), {left, right}, "powtmp");
+		return builder->CreateCall(powFunction, {left, right}, "powtmp");
 	}
 	case NodeType::Variable: {
-		// Return the variable (the function's argument)
-		return variable;
+		return variable; // Return the variable (the function's argument)
 	}
 	case NodeType::Error:
 	{
@@ -93,13 +104,6 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 		return nullptr;
 		break;
 	}
+	// llvm_unreachable();
 	unreachable();
-}
-
-llvm::Function* JITCompiler::getPowFunction() {
-	// Define the pow function for exponentiation
-	auto funcType =
-		llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy(), builder->getDoubleTy()}, false);
-	auto powFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "pow", module.get());
-	return powFunc;
 }

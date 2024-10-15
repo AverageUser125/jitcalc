@@ -26,11 +26,9 @@ class JITCompiler {
 
   private:
 	llvm::Value* generateCode(ExpressionNode* expr, llvm::Value* variable);
-	llvm::Function* getPowFunction();
+	llvm::Function* powFunction;
 
 	std::unique_ptr<llvm::LLVMContext> context;
 	std::unique_ptr<llvm::IRBuilder<>> builder;
 	std::unique_ptr<llvm::Module> module;
 };
-
-int NOTMAIN();
