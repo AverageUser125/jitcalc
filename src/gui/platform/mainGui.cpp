@@ -144,6 +144,30 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 
 namespace platform
 {
+#if PRODUCTION_BUILD == 0
+#if PLATFORM_WIN == 1
+void clearTerminal() {
+	COORD topLeft = {0, 0};
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO screen;
+	DWORD written;
+
+	GetConsoleScreenBufferInfo(console, &screen);
+	FillConsoleOutputCharacterA(console, ' ', screen.dwSize.X * screen.dwSize.Y, topLeft, &written);
+	FillConsoleOutputAttribute(console, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE,
+							   screen.dwSize.X * screen.dwSize.Y, topLeft, &written);
+	SetConsoleCursorPosition(console, topLeft);
+}
+#elif PLATFORM_LINUX == 1
+void clearTerminal() {
+	std::cout << "\x1B[2J\x1B[H";
+}
+#endif
+#else
+void clearTerminal() {
+	// does nothing
+}
+#endif
 
 void setRelMousePosition(int x, int y) {
 	glfwSetCursorPos(window, x, y);

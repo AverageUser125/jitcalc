@@ -247,7 +247,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	}
 #pragma endregion
 
-#pragma region display equations
+    #pragma region display equations
 	ImGui::Begin("Equations", nullptr,
 				 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
 	for (size_t i = 0; i < graphEquations.size(); i++) {
@@ -262,12 +262,12 @@ bool gameLogic(float deltaTime, int w, int h) {
 	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.001f, 10.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -5.0f, 5.0f);
+	ImGui::End();
 #pragma endregion
 	if (shouldRecalculateEverything) {
 		for (GraphEquation& graph : graphEquations)
-		generateGraphData(graph);
+			generateGraphData(graph);
 	}
-	ImGui::End();
     #pragma region fullscreen
 	if (platform::isButtonPressedOn(platform::Button::F11)) {
 		if (platform::isFullScreen()) {
@@ -277,6 +277,13 @@ bool gameLogic(float deltaTime, int w, int h) {
 		}
 	}
     #pragma endregion
+
+	#pragma region clearTerminal
+	if (platform::isButtonPressedOn(platform::Button::D) && platform::isButtonPressedOn(platform::Button::LeftCtrl)) {
+		platform::clearTerminal();
+	}
+
+	#pragma endregion
 
 	return true;
 }

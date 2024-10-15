@@ -6,6 +6,9 @@ int guiLoop();
 namespace platform
 {
 
+// clear terminal
+void clearTerminal();
+
 ///sets the mouse pos relative to the window's drawing area
 void setRelMousePosition(int x, int y);
 
