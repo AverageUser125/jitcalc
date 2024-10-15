@@ -35,34 +35,33 @@ static glm::vec2 origin = {0, 0};
 static float scale = 1;
 
 // Function to generate vertex data for the graph
-void generateGraphData() {
-	for (auto& graph : graphEquations) {
-		if (graph.func == nullptr) {
-			break;
-		}
-		std::vector<float> vertexData;
-
-		int numPoints = std::max(initialNumPoints, initialNumPoints / scale);
-		float step = 2.0f / numPoints; // Step through X space from -1 to 1
-		for (int j = 0; j <= numPoints; ++j) {
-			float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
-			float x = (normalizedX / scale) + origin.x; // Apply scaling (zoom) to X
-
-			// Evaluate the function at the scaled X value
-			float y = graph.func(x); // Evaluate the function
-
-			float scaledY = (y * scale) + origin.y; // Apply scaling (zoom) to the Y value
-			vertexData.push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
-			vertexData.push_back(scaledY);	  // Scaled Y
-		}
-
-		if (graph.vbo == 0) {
-			glGenBuffers(1, &graph.vbo); // Generate the VBO only if it doesn't exist
-		}
-		glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
-		graph.dataSize = vertexData.size();
-		glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
+void generateGraphData(GraphEquation& graph) {
+	if (graph.func == nullptr) {
+		return;
 	}
+	std::vector<float> vertexData;
+
+	int numPoints = std::max(initialNumPoints, initialNumPoints / scale);
+	float step = 2.0f / numPoints; // Step through X space from -1 to 1
+	for (int j = 0; j <= numPoints; ++j) {
+		float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
+		float x = (normalizedX / scale) + origin.x; // Apply scaling (zoom) to X
+
+		// Evaluate the function at the scaled X value
+		float y = graph.func(x); // Evaluate the function
+
+		float scaledY = (y * scale) + origin.y; // Apply scaling (zoom) to the Y value
+		vertexData.push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
+		vertexData.push_back(scaledY);	  // Scaled Y
+	}
+
+	if (graph.vbo == 0) {
+		glGenBuffers(1, &graph.vbo); // Generate the VBO only if it doesn't exist
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
+	graph.dataSize = vertexData.size();
+	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
+	
 }
 
 void drawAxis() {
@@ -142,22 +141,21 @@ glm::vec3 generateColor(int index) {
 	return hsvToRgb(hue, saturation, value);
 }
 
-bool setGraph(const std::vector<std::string>& equations) {
-	for (size_t i = 0; i < equations.size(); ++i) {
-		Parser parser(equations[i]);
-		ExpressionNode* tree = parser.parserParseExpression();
-		parser.parserDebugDumpTree(tree);
-		if (parser.hasError) {
-			return false;
-		}
-
-		JITCompiler jit;
-		graphEquations[i].func = jit.compile(tree); // Compile the function
-
-		graphEquations[i].color = generateColor(i);
+bool setGraph(GraphEquation& graph, int index) {
+	Parser parser(graph.input);
+	ExpressionNode* tree = parser.parserParseExpression();
+	parser.parserDebugDumpTree(tree);
+	if (parser.hasError) {
+		return false;
 	}
 
-	generateGraphData();
+	JITCompiler jit;
+	graph.func = jit.compile(tree); // Compile the function
+
+	graph.color = generateColor(index);
+
+	generateGraphData(graph);	
+	
 	return true;
 }
 
@@ -165,15 +163,8 @@ bool setGraph(const std::vector<std::string>& equations) {
 int inputTextCallback(ImGuiInputTextCallbackData* data) {
 	size_t index = reinterpret_cast<size_t>(data->UserData) - 1;
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
-		// Trigger graph update whenever the text is modified
-		std::vector<std::string> inputs;
-		inputs.reserve(graphEquations.size());
-		for (const auto& graph : graphEquations) {
-			inputs.push_back(graph.input);
-		}
-		std::vector<std::string> inputsClone = inputs;
-		inputsClone[index] = data->Buf;
-		setGraph(inputsClone); // Update the graph with both inputs
+		graphEquations[index].input = data->Buf;
+		setGraph(graphEquations[index], index); // Update the graph with both inputs
 	}
 	return 0;
 }
@@ -186,7 +177,7 @@ bool gameInit() {
 	
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
 	graphEquations[0].input = "x * x";
-	setGraph({graphEquations[0].input}); // Initial call with both inputs
+	setGraph(graphEquations[0], 0); // Initial call with both inputs
 
 	return true;
 }
@@ -256,7 +247,8 @@ bool gameLogic(float deltaTime, int w, int h) {
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -5.0f, 5.0f);
 #pragma endregion
 	if (shouldRecalculateEverything) {
-		generateGraphData();
+		for (GraphEquation& graph : graphEquations)
+		generateGraphData(graph);
 	}
 	ImGui::End();
     #pragma region fullscreen
