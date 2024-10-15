@@ -185,12 +185,8 @@ bool gameInit() {
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
-	std::vector<std::string> inputs;
-	inputs.reserve(graphEquations.size());
-	for (const auto& graph : graphEquations) {
-		inputs.push_back(graph.input);
-	}
-	setGraph(inputs); // Initial call with both inputs
+	graphEquations[0].input = "x * x";
+	setGraph({graphEquations[0].input}); // Initial call with both inputs
 
 	return true;
 }
