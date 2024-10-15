@@ -279,7 +279,7 @@ bool gameLogic(float deltaTime, int w, int h) {
     #pragma endregion
 
 	#pragma region clearTerminal
-	if (platform::isButtonPressedOn(platform::Button::D) && platform::isButtonPressedOn(platform::Button::LeftCtrl)) {
+	if (platform::isButtonPressedOn(platform::Button::D)) {
 		platform::clearTerminal();
 	}
 
