@@ -64,6 +64,9 @@ struct Region {
 	uintptr_t data[];
 };
 
+struct Arena;
+Region* new_region(size_t capacity);
+void arena_free(Arena* a);
 
 struct Arena {
 	Region* begin = nullptr;
@@ -72,11 +75,11 @@ struct Arena {
 	Arena(): end(new_region(REGION_DEFAULT_CAPACITY)) {
 		begin = end;
 	}
+
+	~Arena() {
+		arena_free(this);
+	}
 };
-
-
-Region* new_region(size_t capacity);
-void free_region(Region* r);
 
 // TODO: snapshot/rewind capability for the arena
 // - Snapshot should be combination of a->end and a->end->count.
@@ -91,7 +94,7 @@ char* arena_sprintf(Arena* a, const char* format, ...);
 #endif // ARENA_NOSTDIO
 
 void arena_reset(Arena* a);
-void arena_free(Arena* a);
+void free_region(Region* r);
 
 #define ARENA_DA_INIT_CAP 256
 
