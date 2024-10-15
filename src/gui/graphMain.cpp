@@ -143,15 +143,19 @@ glm::vec3 generateColor(int index) {
 
 bool setGraph(GraphEquation& graph, int index) {
 	std::optional<std::vector<Token>> tokenArrayOpt;
+
 	{
 		Lexer lexer(graph.input);
 		tokenArrayOpt = lexer.lexerLexAllTokens();
 	}
+
 	if (!tokenArrayOpt.has_value()) {
 		return false;
 	}
+
 	{
 		Parser parser(*tokenArrayOpt);
+		// lifetime of tree pointer is the same as the parser object lifetime
 		ExpressionNode* tree = parser.parserParseExpression();
 		parser.parserDebugDumpTree(tree);
 		if (parser.hasError) {
@@ -161,6 +165,7 @@ bool setGraph(GraphEquation& graph, int index) {
 		JITCompiler jit;
 		graph.func = jit.compile(tree); // Compile the function
 	}
+
 	graph.color = generateColor(index);
 
 	generateGraphData(graph);	
