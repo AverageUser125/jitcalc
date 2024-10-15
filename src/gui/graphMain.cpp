@@ -142,19 +142,18 @@ glm::vec3 generateColor(int index) {
 }
 
 bool setGraph(GraphEquation& graph, int index) {
-	std::optional<std::vector<Token>> tokenArrayOpt;
-
-
-	Lexer lexer(graph.input);
-	tokenArrayOpt = lexer.lexerLexAllTokens();
-		// lexer.lexerDebugPrintArray(*tokenArrayOpt);
+	{
+		// the tokens have a string_view to a member string of the lexer
+		// therfore you cannot call the destructor on the lexer before the parser has finished
+		Lexer lexer(graph.input);
+		std::optional<std::vector<Token>> tokenArrayOpt = lexer.lexerLexAllTokens();
+			// lexer.lexerDebugPrintArray(*tokenArrayOpt);
 	
 
-	if (!tokenArrayOpt.has_value()) {
-		return false;
-	}
+		if (!tokenArrayOpt.has_value()) {
+			return false;
+		}
 
-	{
 		Parser parser(*tokenArrayOpt);
 		// lifetime of tree pointer is the same as the parser object lifetime
 		ExpressionNode* tree = parser.parserParseExpression();
