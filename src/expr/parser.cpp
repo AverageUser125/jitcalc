@@ -8,7 +8,8 @@ Arena Parser::nodePool{};
 
 inline void Parser::parserAdvance() {
 	curr = next;
-	next = lexer.lexerNextToken();
+	next = tokenArray[tokenIndex];
+	tokenIndex++;
 }
 
 ExpressionNode* Parser::allocateExpressionNode() {
@@ -133,7 +134,7 @@ ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
 
 //~ Main things
 
-Parser::Parser(const std::string& expression) : lexer(expression) {
+Parser::Parser(const std::vector<Token>& arr) : tokenArray(arr) {
 	parserAdvance();
 	parserAdvance();
 }

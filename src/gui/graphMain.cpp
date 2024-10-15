@@ -142,7 +142,14 @@ glm::vec3 generateColor(int index) {
 }
 
 bool setGraph(GraphEquation& graph, int index) {
-	Parser parser(graph.input);
+	Lexer lexer(graph.input);
+	auto tokenArrayOpt = lexer.lexerLexAllTokens();
+	if (!tokenArrayOpt.has_value()) {
+		return false;
+	}
+	lexer.lexerDebugPrintArray(*tokenArrayOpt);
+	std::cout << '\n';
+	Parser parser(*tokenArrayOpt);
 	ExpressionNode* tree = parser.parserParseExpression();
 	parser.parserDebugDumpTree(tree);
 	if (parser.hasError) {

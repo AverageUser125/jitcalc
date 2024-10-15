@@ -99,7 +99,7 @@ Token Lexer::lexerNextToken() {
 	unreachable();
 }
 
-std::string lexerDebugGetTokenTypeName(TokenType type) {
+std::string Lexer::lexerDebugGetTokenTypeName(TokenType type) {
 	switch (type) {
 	case TokenType::Error:
 		return "Error";
@@ -125,6 +125,12 @@ std::string lexerDebugGetTokenTypeName(TokenType type) {
 		return ")";
 	}
 	return "unreachable";
+}
+
+void Lexer::lexerDebugPrintArray(const std::vector<Token>& tokenArray) {
+	for (const Token& tk : tokenArray) {
+		lexerDebugPrintToken(tk);
+	}
 }
 
 void Lexer::lexerDebugPrintToken(Token token) {

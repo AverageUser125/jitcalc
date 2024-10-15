@@ -67,9 +67,10 @@ typedef struct Parser {
 
 	Token curr{};
 	Token next{};
-	Lexer lexer;
+	const std::vector<Token>& tokenArray;
+	size_t tokenIndex = 0;
 
-	Parser(const std::string& expression);
+	Parser(const std::vector<Token>& arr);
 	~Parser();
 
 	inline void parserAdvance();

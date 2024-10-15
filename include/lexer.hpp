@@ -52,6 +52,8 @@ struct Lexer {
 
 	Token lexerNextToken();
 
+	static std::string lexerDebugGetTokenTypeName(TokenType type);
+	static void lexerDebugPrintArray(const std::vector<Token>& tokenArray);
 	static void lexerDebugPrintToken(Token token);
 };
 
