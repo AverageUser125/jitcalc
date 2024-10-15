@@ -87,10 +87,13 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 	case NodeType::Error:
 	{
 		assert(0 && "ERROR WAS FOUND!, YOU PROBABLY FORGOT TO CHECK FOR IT");
+		break;
 	}
 	default:
 		return nullptr;
+		break;
 	}
+	unreachable();
 }
 
 llvm::Function* JITCompiler::getPowFunction() {
