@@ -28,7 +28,7 @@ struct GraphEquation {
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 
-static std::vector<GraphEquation> graphEquations(StartEquationCount);
+static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
@@ -174,8 +174,9 @@ bool gameInit() {
 	glDisable(GL_DEPTH_TEST);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
+
+	graphEquations.resize(StartEquationCount);
 	graphEquations[0].input = "x * x";
 	graphEquations[0].func = [](double x) { return x * x; };
 	graphEquations[0].color = generateColor(0);

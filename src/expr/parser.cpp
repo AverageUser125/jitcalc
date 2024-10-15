@@ -89,9 +89,9 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 			ret = allocateExpressionNode();
 			ret->type = NodeType::Error;
 			hasError = true;
+			return ret;
 		}
 	}
-	
 	// support implicit multiplication such as:
 	// 5(1 + 5), which means 5*(1+5)
 	// 5pi, which means 5*pi
@@ -103,7 +103,6 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 		new_ret->binary.right = parserParseExpression(Precedence::Div);
 		ret = new_ret;
 	}
-
 	return ret;
 }
 
