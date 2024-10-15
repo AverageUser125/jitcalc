@@ -20,16 +20,12 @@ static constexpr float scrollSensitivity = 30;
 static constexpr int StartEquationCount = 1;
 static constexpr float initialNumPoints = 100;
 
-struct VertexBufferData {
-	GLuint vbo;
-	size_t dataSize;
-};
-
 struct GraphEquation {
 	std::string input;		  // Equation input as a string
 	calcFunc func;			  // Compiled function (calculated from input)
-	VertexBufferData vboData; // Vertex Buffer Object data (VBO ID and data size)
-	glm::vec3 color;		  // Color for the graph line
+	GLuint vbo;
+	size_t dataSize;
+	glm::vec3 color; // Color for the graph line
 };
 
 static std::vector<GraphEquation> graphEquations(StartEquationCount);
@@ -60,11 +56,11 @@ void generateGraphData() {
 			vertexData.push_back(scaledY);	  // Scaled Y
 		}
 
-		if (graph.vboData.vbo == 0) {
-			glGenBuffers(1, &graph.vboData.vbo); // Generate the VBO only if it doesn't exist
+		if (graph.vbo == 0) {
+			glGenBuffers(1, &graph.vbo); // Generate the VBO only if it doesn't exist
 		}
-		glBindBuffer(GL_ARRAY_BUFFER, graph.vboData.vbo);
-		graph.vboData.dataSize = vertexData.size();
+		glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
+		graph.dataSize = vertexData.size();
 		glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 	}
 }
@@ -208,7 +204,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	#pragma region draw vertexdata
 	// Draw graph for each function
 	for (const auto& graph : graphEquations) {
-		glBindBuffer(GL_ARRAY_BUFFER, graph.vboData.vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
 		
@@ -216,7 +212,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glm::vec3 color = graph.color;
 		glColor3f(color.x, color.y, color.z); // Set different color for each function
 
-		glDrawArrays(GL_LINE_STRIP, 0, graph.vboData.dataSize / 2); // Draw the line strip
+		glDrawArrays(GL_LINE_STRIP, 0, graph.dataSize / 2); // Draw the line strip
 
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
@@ -282,7 +278,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 void gameEnd() {
 	for (auto& graph : graphEquations) {
-		GLuint vbo = graph.vboData.vbo;
+		GLuint vbo = graph.vbo;
 		if (vbo != 0) {
 			glDeleteBuffers(1, &vbo);
 			vbo = 0;
