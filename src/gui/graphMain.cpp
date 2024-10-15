@@ -177,7 +177,9 @@ bool gameInit() {
 	
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
 	graphEquations[0].input = "x * x";
-	setGraph(graphEquations[0], 0); // Initial call with both inputs
+	graphEquations[0].func = [](double x) { return x * x; };
+	graphEquations[0].color = generateColor(0);
+	generateGraphData(graphEquations[0]);
 
 	return true;
 }
