@@ -21,11 +21,11 @@ static constexpr int StartEquationCount = 1;
 static constexpr float initialNumPoints = 100;
 
 struct GraphEquation {
-	std::string input;		  // Equation input as a string
-	calcFunc func;			  // Compiled function (calculated from input)
-	GLuint vbo;
-	size_t dataSize;
-	glm::vec3 color; // Color for the graph line
+	std::string input = "";
+	calcFunc func = nullptr;
+	GLuint vbo = 0;
+	size_t dataSize = 0;
+	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 
 static std::vector<GraphEquation> graphEquations(StartEquationCount);
@@ -277,11 +277,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 }
 
 void gameEnd() {
-	for (auto& graph : graphEquations) {
-		GLuint vbo = graph.vbo;
-		if (vbo != 0) {
-			glDeleteBuffers(1, &vbo);
-			vbo = 0;
+	for (const auto& graph : graphEquations) {
+		if (graph.vbo != 0) {
+			glDeleteBuffers(1, &graph.vbo);
 		}
 	}
 }
