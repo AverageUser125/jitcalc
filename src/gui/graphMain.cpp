@@ -10,6 +10,7 @@
 #include <imgui_stdlib.h>
 #include <random>
 #include <chrono>
+#include <cmath> // Include for std::log10 and std::floor
 #include <glm/gtc/type_ptr.hpp>
 
 using calcFunc = std::function<double(double)>;
@@ -42,9 +43,9 @@ static float scale = 1;
 
 void generateAxisData() {
 	std::vector<float> vertices;
-	// Fixed spacing of 1 unit in function space
-	float screenSpacing = 1.0f;
-	float worldSpacing = screenSpacing * scale;
+
+	// Define the desired number of lines
+	const int desiredLines = 10; // Set the desired number of lines
 
 	// Set screen-space boundaries in NDC (-1 to 1)
 	float screenMinX = -1.0f;
@@ -55,41 +56,67 @@ void generateAxisData() {
 	// Convert NDC to function space, factoring in origin and scale
 	float worldMinX = origin.x + screenMinX / scale;
 	float worldMaxX = origin.x + screenMaxX / scale;
-	float worldMinY = origin.y + screenMinY / scale; // Inverted for the NDC range
-	float worldMaxY = origin.y + screenMaxY / scale; // Inverted for the NDC range
+	float worldMinY = origin.y + screenMinY / scale;
+	float worldMaxY = origin.y + screenMaxY / scale;
+
+	// Calculate the width and height in world space
+	float width = worldMaxX - worldMinX;
+	float height = worldMaxY - worldMinY;
+
+	float numLinesX = width / (desiredLines * 0.5f);
+	float numLinesY = height / (desiredLines * 0.5f);
+
+	// Manually clamp the number of lines
+	while (numLinesX < 0.5f * desiredLines) {
+		numLinesX *= 2;
+	}
+	while (numLinesX > 2.0f * desiredLines) {
+		numLinesX /= 2;
+	}
+	while (numLinesY < 0.5f * desiredLines) {
+		numLinesY *= 2;
+	}
+	while (numLinesY > 2.0f * desiredLines) {
+		numLinesY /= 2;
+	}
+	
+	// Calculate world spacing based on the number of lines
+	float worldSpacingX = width / numLinesX;
+	float worldSpacingY = height / numLinesY;
 
 	// Ensure grid aligns with the real origin (0, 0)
-	float xStart = std::floor((worldMinX - 0.0f) / worldSpacing) * worldSpacing;
-	float yStart = std::floor((worldMinY - 0.0f) / worldSpacing) * worldSpacing;
+	float xStart = std::floor(worldMinX / worldSpacingX) * worldSpacingX;
+	float yStart = std::floor(worldMinY / worldSpacingY) * worldSpacingY;
 
-	// Generate vertical lines in world space (spacing of 1)
-	for (float x = xStart; x <= worldMaxX; x += worldSpacing) {
+	// ensure in NDC range of [-1, 1]
+	if (xStart < -1.0f) {
+		xStart += worldSpacingX;
+	}
+	if (yStart < -1.0f) {
+		yStart += worldSpacingY;
+	}
+
+	// Generate vertical lines in world space
+	for (float x = xStart; x <= worldMaxX; x += worldSpacingX) {
 		// Convert from function space to NDC
 		float ndcX = (x - origin.x) * scale;
 
-		// Only add the line if it’s within the NDC range [-1, 1]
-		if (ndcX >= screenMinX && ndcX <= screenMaxX) {
-			vertices.push_back(ndcX);		// x1
-			vertices.push_back(screenMinY); // y1
-			vertices.push_back(ndcX);		// x2
-			vertices.push_back(screenMaxY); // y2
-		}
+		vertices.push_back(ndcX);		// x1
+		vertices.push_back(screenMinY); // y1
+		vertices.push_back(ndcX);		// x2
+		vertices.push_back(screenMaxY); // y2
 	}
 
-	// Generate horizontal lines in world space (spacing of 1)
-	for (float y = yStart; y <= worldMaxY; y += worldSpacing) {
+	// Generate horizontal lines in world space
+	for (float y = yStart; y <= worldMaxY; y += worldSpacingY) {
 		// Correctly calculate ndcY using the origin and scale
 		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
 
-		// Only add the line if it’s within the NDC range [-1, 1]
-		if (ndcY >= screenMinY && ndcY <= screenMaxY) {
-			vertices.push_back(screenMinX); // x1
-			vertices.push_back(ndcY);		// y1
-			vertices.push_back(screenMaxX); // x2
-			vertices.push_back(ndcY);		// y2
-		}
+		vertices.push_back(screenMinX); // x1
+		vertices.push_back(ndcY);		// y1
+		vertices.push_back(screenMaxX); // x2
+		vertices.push_back(ndcY);		// y2
 	}
-
 	// Create and bind the VBO
 	glGenBuffers(1, &axis.vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, axis.vbo);
@@ -98,7 +125,6 @@ void generateAxisData() {
 	axis.dataSize = vertices.size();
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 }
-
 
 // Function to generate vertex data for the graph
 void generateGraphData(GraphEquation& graph) {
