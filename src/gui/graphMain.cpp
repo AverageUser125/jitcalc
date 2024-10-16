@@ -43,10 +43,9 @@ static float scale = 1;
 
 
 void generateAxisData() {
-	const auto roundToNearestPowerOf2 = [](float value) { return std::pow(2, std::round(std::log2(value))); };
+	constexpr auto roundToNearestPowerOf2 = [](float value) { return std::pow(2, std::round(std::log2(value))); };
 
-	// Define the desired number of lines
-	const int desiredLines = 25; // Set the desired number of lines
+	constexpr int desiredLines = 70;
 
 	// Set screen-space boundaries in NDC (-1 to 1)
 	constexpr float screenMinX = -1.0f;
@@ -62,10 +61,8 @@ void generateAxisData() {
 
 	// Calculate the width and height in world space
 	const float size = 2 / scale;
-	
-	const float numLines = desiredLines;
 	// Calculate world spacing based on the number of lines
-	float worldSpacing = roundToNearestPowerOf2(size / numLines);
+	const float worldSpacing = roundToNearestPowerOf2(size / desiredLines);
 
 	// Ensure grid aligns with the real origin (0, 0)
 	float xStart = std::floor(worldMinX / worldSpacing) * worldSpacing;
@@ -82,8 +79,8 @@ void generateAxisData() {
 	std::vector<float> verticesThick;
 	std::vector<float> verticesThin;
 	
-	verticesThick.reserve(numLines * 0.2);
-	verticesThin.reserve(numLines * 0.8);
+	verticesThick.reserve(desiredLines * 0.2);
+	verticesThin.reserve(desiredLines * 0.8);
 
 	// Generate vertical lines in world space
 
