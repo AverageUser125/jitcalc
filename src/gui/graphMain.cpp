@@ -45,7 +45,7 @@ static float scale = 1;
 void generateAxisData() {
 	constexpr auto roundToNearestPowerOf2 = [](float value) { return std::pow(2, std::round(std::log2(value))); };
 
-	constexpr int desiredLines = 70;
+	constexpr int desiredLines = 65;
 
 	// Set screen-space boundaries in NDC (-1 to 1)
 	constexpr float screenMinX = -1.0f;
@@ -295,7 +295,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 	#pragma region draw vertexdata
 	for (int i = 0; i < grid.size(); i++) {
-		glLineWidth(i + 1);
+		glLineWidth(1.5 * i + 1);
 		glColor3f(0.01f, 0.01f, 0.01f);
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, grid[i].vbo);
