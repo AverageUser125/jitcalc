@@ -25,8 +25,8 @@ Lexer::Lexer(const std::string& expression) {
 	current = start;
 }
 
-std::optional<std::vector<Token>> Lexer::lexerLexAllTokens() {
-	std::vector<Token> tokenArray;
+std::optional<std::vector<Token, ArenaAllocator<Token>>> Lexer::lexerLexAllTokens() {
+	std::vector<Token, ArenaAllocator<Token>> tokenArray;
 	tokenArray.reserve(cleanExpression.size()); // overkill, but still okay
 
 	Token tk;

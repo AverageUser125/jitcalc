@@ -4,6 +4,7 @@
 #include <string_view>
 #include <vector>
 #include <optional>
+#include <arenaAllocator.hpp>
 
 enum class TokenType {
 	Error,
@@ -33,7 +34,7 @@ struct Lexer {
 
 	Lexer(const std::string& expression);
 
-	std::optional<std::vector<Token>> lexerLexAllTokens();
+	std::optional<std::vector<Token, ArenaAllocator<Token>>> lexerLexAllTokens();
 
 	inline Token lexerMakeToken(TokenType type);	
 	

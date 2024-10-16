@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cmath> // Include for std::log10 and std::floor
 #include <array>
+#include "arenaAllocator.hpp"
 
 using calcFunc = std::function<double(double)>;
 
@@ -35,7 +36,7 @@ struct GraphEquation {
 
 
 static std::array<VertexBufferObject,2> grid;
-static std::vector<GraphEquation> graphEquations;
+static std::vector<GraphEquation, ArenaAllocator<GraphEquation>> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
@@ -76,8 +77,9 @@ void generateAxisData() {
 		yStart += worldSpacing;
 	}
 	
-	std::vector<float> verticesThick;
-	std::vector<float> verticesThin;
+	ArenaSnapshot snap = ArenaAllocator<float, false>::getSnapshot();
+	std::vector<float, ArenaAllocator<float, false>> verticesThick;
+	std::vector<float, ArenaAllocator<float, false>> verticesThin;
 	
 	verticesThick.reserve(desiredLines * 0.2);
 	verticesThin.reserve(desiredLines * 0.8);
@@ -126,6 +128,8 @@ void generateAxisData() {
 	glBufferData(GL_ARRAY_BUFFER, grid[0].dataSize * sizeof(float), verticesThin.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, grid[1].vbo);
 	glBufferData(GL_ARRAY_BUFFER, grid[1].dataSize * sizeof(float), verticesThick.data(), GL_STATIC_DRAW);
+
+	ArenaAllocator<float, false>::restoreSnapshot(snap);
 }
 
 // Function to generate vertex data for the graph
@@ -133,7 +137,7 @@ void generateGraphData(GraphEquation& graph) {
 	if (graph.func == nullptr) {
 		return;
 	}
-	std::vector<float> vertexData;
+	std::vector<float, ArenaAllocator<float>> vertexData;
 
 	int numPoints = std::max(initialNumPoints, initialNumPoints / scale);
 	float step = 2.0f / numPoints; // Step through X space from -1 to 1
@@ -236,7 +240,7 @@ bool setGraph(GraphEquation& graph, int index) {
 		// the tokens have a string_view to a member string of the lexer
 		// therfore you cannot call the destructor on the lexer before the parser has finished
 		Lexer lexer(graph.input);
-		std::optional<std::vector<Token>> tokenArrayOpt = lexer.lexerLexAllTokens();
+		std::optional<std::vector<Token, ArenaAllocator<Token>>> tokenArrayOpt = lexer.lexerLexAllTokens();
 			// lexer.lexerDebugPrintArray(*tokenArrayOpt);
 	
 

@@ -22,6 +22,7 @@ Region* new_region(size_t capacity) {
 void free_region(Region* r) {
 	free(r);
 }
+
 #elif ARENA_BACKEND == ARENA_BACKEND_LINUX_MMAP
 #include <unistd.h>
 #include <sys/mman.h>
@@ -165,6 +166,19 @@ char* arena_sprintf(Arena* a, const char* format, ...) {
 }
 #endif // ARENA_NOSTDIO
 
+void arena_init(Arena* a) {
+	assert(a->end == nullptr && a->begin == nullptr);
+	a->end = new_region(REGION_DEFAULT_CAPACITY);
+	a->begin = a->end;
+}
+
+Arena arena_init() {
+	Arena a;
+	a.end = new_region(REGION_DEFAULT_CAPACITY);
+	a.begin = a.end;
+	return a;
+}
+
 void arena_reset(Arena* a) {
 	for (Region* r = a->begin; r != NULL; r = r->next) {
 		r->count = 0;
@@ -182,4 +196,24 @@ void arena_free(Arena* a) {
 	}
 	a->begin = NULL;
 	a->end = NULL;
+}
+
+ArenaSnapshot arena_snapshot(Arena* a) {
+	ArenaSnapshot snapshot{};
+	snapshot.end = a->end;
+	snapshot.count = a->end->count;
+	return snapshot;
+}
+
+void arena_rewind(Arena* a, ArenaSnapshot snapshot) {
+	// Restore the end pointer and count
+	a->end = snapshot.end;
+	a->end->count = snapshot.count;
+
+	// Set the count of all regions after the restored `end` to zero
+	Region* current = a->end->next;
+	while (current != nullptr) {
+		current->count = 0;
+		current = current->next;
+	}
 }

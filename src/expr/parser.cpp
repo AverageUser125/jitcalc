@@ -3,9 +3,7 @@
 constexpr double pi = 3.14159265358979323846;
 constexpr double E = 2.718281828459045235360;
 
-Arena Parser::nodePool{};
-
-Parser::Parser(const std::vector<Token>& arr) : tokenArray(arr), tokenIndex(0) {
+Parser::Parser(const std::vector<Token, ArenaAllocator<Token>>& arr) : tokenArray(arr), tokenIndex(0) {
 	if (!tokenArray.empty()) {
 		curr = tokenArray[tokenIndex];
 		parserAdvance();
@@ -13,7 +11,6 @@ Parser::Parser(const std::vector<Token>& arr) : tokenArray(arr), tokenIndex(0) {
 }
 
 Parser::~Parser() {
-	arena_reset(&nodePool);
 }
 
 inline void Parser::parserAdvance() {
@@ -25,15 +22,11 @@ inline void Parser::parserAdvance() {
 	}
 }
 
-ExpressionNode* Parser::allocateExpressionNode() {
-	return (ExpressionNode*)arena_alloc(&nodePool, sizeof(ExpressionNode));
-};
-
 ExpressionNode* Parser::parserParseNumber() {
 	double value = strtod((const char*)curr.lexme.data(), nullptr);
 	parserAdvance();
 
-	ExpressionNode* ret = allocateExpressionNode();
+	ExpressionNode* ret = nodePool.allocate(1);
 	ret->type = NodeType::Number;
 	ret->number = value;
 	return ret;
@@ -43,18 +36,18 @@ ExpressionNode* Parser::parseIdent() {
 	ExpressionNode* ret = nullptr;
 
 	if (curr.lexme == "e") {
-		ret = allocateExpressionNode();
+		ret = nodePool.allocate(1);
 		ret->type = NodeType::Number;
 		ret->number = E;
 	} else if (curr.lexme == "pi") {
-		ret = allocateExpressionNode();
+		ret = nodePool.allocate(1);
 		ret->type = NodeType::Number;
 		ret->number = pi;	
 	} else if (curr.lexme == "x"){
-		ret = allocateExpressionNode();
+		ret = nodePool.allocate(1);
 		ret->type = NodeType::Variable;
 	} else {
-		ret = allocateExpressionNode();
+		ret = nodePool.allocate(1);
 		ret->type = NodeType::Error;
 		hasError = true;
 	}
@@ -84,21 +77,21 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 		}
 		case TokenType::Plus: {
 			parserAdvance();
-			ret = allocateExpressionNode();
+			ret = nodePool.allocate(1);
 			ret->type = NodeType::Positive;
 			ret->unary.operand = parserParsePrefixExpr();
 			break;
 		}
 		case TokenType::Minus: {
 			parserAdvance();
-			ret = allocateExpressionNode();
+			ret = nodePool.allocate(1);
 			ret->type = NodeType::Negative;
 			ret->unary.operand = parserParsePrefixExpr();
 			break;
 		}
 		default: {
 
- 			ret = allocateExpressionNode();
+ 			ret = nodePool.allocate(1);
 			ret->type = NodeType::Error;
 			hasError = true;
 			return ret;
@@ -109,7 +102,7 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 	// 5pi, which means 5*pi
 	if (curr.type == TokenType::Number || curr.type == TokenType::Ident ||
 		curr.type == TokenType::OpenParenthesis) {
-		ExpressionNode* new_ret = allocateExpressionNode();
+		ExpressionNode* new_ret = nodePool.allocate(1);
 		new_ret->type = NodeType::Mul;
 		new_ret->binary.left = ret;
 		new_ret->binary.right = parserParseExpression(Precedence::Div);
@@ -119,7 +112,7 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 }
 
 ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
-	ExpressionNode* ret = allocateExpressionNode();
+	ExpressionNode* ret = nodePool.allocate(1);
 
 	switch (tk.type) {
 	case TokenType::Plus:
