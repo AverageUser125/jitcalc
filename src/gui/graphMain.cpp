@@ -11,7 +11,7 @@
 #include <random>
 #include <chrono>
 #include <cmath> // Include for std::log10 and std::floor
-#include <glm/gtc/type_ptr.hpp>
+#include <array>
 
 using calcFunc = std::function<double(double)>;
 
@@ -34,7 +34,7 @@ struct GraphEquation {
 };
 
 
-static VertexBufferObject axis;
+static std::array<VertexBufferObject,2> grid;
 static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
@@ -43,12 +43,10 @@ static float scale = 1;
 
 
 void generateAxisData() {
-	std::vector<float> vertices;
-
 	const auto roundToNearestPowerOf2 = [](float value) { return std::pow(2, std::round(std::log2(value))); };
 
 	// Define the desired number of lines
-	const int desiredLines = 10; // Set the desired number of lines
+	const int desiredLines = 25; // Set the desired number of lines
 
 	// Set screen-space boundaries in NDC (-1 to 1)
 	float screenMinX = -1.0f;
@@ -99,34 +97,55 @@ void generateAxisData() {
 		yStart += worldSpacingY;
 	}
 
+	
+	std::vector<float> verticesThick;
+	std::vector<float> verticesThin;
+	std::vector<float> verticesMiddle;
+
 	// Generate vertical lines in world space
+
 	for (float x = xStart; x <= worldMaxX; x += worldSpacingX) {
 		// Convert from function space to NDC
 		float ndcX = (x - origin.x) * scale;
 
-		vertices.push_back(ndcX);		// x1
-		vertices.push_back(screenMinY); // y1
-		vertices.push_back(ndcX);		// x2
-		vertices.push_back(screenMaxY); // y2
+		if (fmod(x / worldSpacingX, 5) != 0) {
+			verticesThin.push_back(ndcX);		// x1
+			verticesThin.push_back(screenMinY); // y1
+			verticesThin.push_back(ndcX);		// x2
+			verticesThin.push_back(screenMaxY); // y2
+		} else {
+			verticesThick.push_back(ndcX);		// x1
+			verticesThick.push_back(screenMinY); // y1
+			verticesThick.push_back(ndcX);		 // x2
+			verticesThick.push_back(screenMaxY); // y2	
+		}
 	}
 
 	// Generate horizontal lines in world space
 	for (float y = yStart; y <= worldMaxY; y += worldSpacingY) {
 		// Correctly calculate ndcY using the origin and scale
 		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
-
-		vertices.push_back(screenMinX); // x1
-		vertices.push_back(ndcY);		// y1
-		vertices.push_back(screenMaxX); // x2
-		vertices.push_back(ndcY);		// y2
+		
+		if (fmod(y / worldSpacingY, 5) != 0) {
+			verticesThin.push_back(screenMinX); // x1
+			verticesThin.push_back(ndcY);		// y1
+			verticesThin.push_back(screenMaxX); // x2
+			verticesThin.push_back(ndcY);		// y2
+		} else {
+			verticesThick.push_back(screenMinX); // x1
+			verticesThick.push_back(ndcY);		 // y1
+			verticesThick.push_back(screenMaxX); // x2
+			verticesThick.push_back(ndcY);		 // y2
+		}
 	}
-	// Create and bind the VBO
-	glGenBuffers(1, &axis.vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, axis.vbo);
-
+	grid[0].dataSize = verticesThin.size();
+	grid[1].dataSize = verticesThick.size();
+	
 	// Transfer data to GPU
-	axis.dataSize = vertices.size();
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, grid[0].vbo);
+	glBufferData(GL_ARRAY_BUFFER, grid[0].dataSize * sizeof(float), verticesThin.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, grid[1].vbo);
+	glBufferData(GL_ARRAY_BUFFER, grid[1].dataSize * sizeof(float), verticesThick.data(), GL_STATIC_DRAW);
 }
 
 // Function to generate vertex data for the graph
@@ -276,6 +295,10 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
+
+	glGenBuffers(1, &grid[0].vbo);
+	glGenBuffers(1, &grid[1].vbo);
+
 	graphEquations.resize(1);
 	graphEquations[0].input = "x * x";
 	graphEquations[0].func = [](double x) { return x * x; };
@@ -291,15 +314,17 @@ bool gameLogic(float deltaTime, int w, int h) {
 	bool shouldRecalculateEverything = false;
 
 	#pragma region draw vertexdata
-	glLineWidth(1.0f);
-	glColor3f(0.01f, 0.01f, 0.01f);
-	glBindBuffer(GL_ARRAY_BUFFER, axis.vbo);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glDrawArrays(GL_LINES, 0, axis.dataSize / 2);
-	glDisableVertexAttribArray(0);
+	for (int i = 0; i < grid.size(); i++) {
+		glLineWidth(i + 1);
+		glColor3f(0.01f, 0.01f, 0.01f);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, grid[i].vbo);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+		glDrawArrays(GL_LINES, 0, grid[i].dataSize / 2);
+		glDisableVertexAttribArray(0);
+	}
 	// Draw graph for each function
-	glLineWidth(2.5f);
+	glLineWidth(4.0f);
 	for (const auto& graph : graphEquations) {
 
 		glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
