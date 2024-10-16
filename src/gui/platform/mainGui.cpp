@@ -35,7 +35,7 @@ static bool windowFocus = true;
 static double scrollSize = 0.0;
 
 constexpr int WINDOW_DEFAULT_WIDTH = 1280;
-constexpr int WINDOW_DEFAULT_HEIGHT = 720;
+constexpr int WINDOW_DEFAULT_HEIGHT = 1280;
 
 #pragma region glfwcallbacks
 
@@ -278,12 +278,13 @@ int guiLoop() {
 		return EXIT_FAILURE;
 	}
 	glfwWindowHint(GLFW_SAMPLES, 4);
-	wind = glfwCreateWindow(1280, 720, "Graph calculator", nullptr, nullptr);
+	wind = glfwCreateWindow(WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT, "Graph calculator", nullptr, nullptr);
 	if (!wind) {
 		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
+	glfwSetWindowAspectRatio(wind, 1, 1);
 	#if PLATFORM_WIN
 	// set window decoration to black
 	HWND hwnd = glfwGetWin32Window(wind);
