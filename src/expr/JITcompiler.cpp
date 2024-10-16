@@ -38,9 +38,12 @@ double (*JITCompiler::compile(ExpressionNode* expr))(double) {
 	llvm::Value* result = generateCode(expr, variable);
 	builder->CreateRet(result);
 
-    std::string llvmIR;
-	module->print(llvm::raw_string_ostream(llvmIR), nullptr);				// Print to standard output
-	std::cout << "Generated LLVM IR:\n" << llvmIR << std::endl; // Print it to std::cout
+	{
+		std::string llvmIR;
+		llvm::raw_string_ostream rso(llvmIR);						// Create an instance of raw_string_ostream
+		module->print(rso, nullptr);								// Print to standard output
+		std::cout << "Generated LLVM IR:\n" << llvmIR << std::endl; // Print it to std::cout
+	}
 
 	// Now that the module is fully constructed, create the JIT execution engine
 	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
