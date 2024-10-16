@@ -9,8 +9,8 @@ namespace platform
 bool isFocused();
 }
 
-platform::ControllerButtons controllerButtons;
-std::string typedInput;
+static platform::ControllerButtons controllerButtons{};
+static std::string typedInput{};
 
 int platform::isButtonHeld(int key)
 {
