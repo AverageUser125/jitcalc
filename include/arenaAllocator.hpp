@@ -1,21 +1,17 @@
 #pragma once
 #include "arena.h"
 
-template <typename T, bool enableSnapshot = true> class ArenaAllocator {
+template <typename T> class ArenaAllocator {
   public:
 	using value_type = T;
 
 	// Default constructor using the global static Arena
 	ArenaAllocator() noexcept {
-		if constexpr (enableSnapshot) {
-			snapshot = arena_snapshot(&global_arena());
-		}
+		snapshot = arena_snapshot(&global_arena());
 	};
 
 	~ArenaAllocator() noexcept {
-		if constexpr (enableSnapshot) {
-			arena_rewind(&global_arena(), snapshot);
-		}
+		arena_rewind(&global_arena(), snapshot);
 	}
 	// Rebind allocator to another type
 	template <typename U> struct rebind {

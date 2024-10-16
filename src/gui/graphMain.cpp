@@ -77,9 +77,9 @@ void generateAxisData() {
 		yStart += worldSpacing;
 	}
 	
-	ArenaSnapshot snap = ArenaAllocator<float, false>::getSnapshot();
-	std::vector<float, ArenaAllocator<float, false>> verticesThick;
-	std::vector<float, ArenaAllocator<float, false>> verticesThin;
+	ArenaAllocator<float> tempAllocator;
+	std::vector<float, ArenaAllocator<float>> verticesThick(tempAllocator);
+	std::vector<float, ArenaAllocator<float>> verticesThin(tempAllocator);
 	
 	verticesThick.reserve(desiredLines * 0.2);
 	verticesThin.reserve(desiredLines * 0.8);
@@ -128,8 +128,6 @@ void generateAxisData() {
 	glBufferData(GL_ARRAY_BUFFER, grid[0].dataSize * sizeof(float), verticesThin.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, grid[1].vbo);
 	glBufferData(GL_ARRAY_BUFFER, grid[1].dataSize * sizeof(float), verticesThick.data(), GL_STATIC_DRAW);
-
-	ArenaAllocator<float, false>::restoreSnapshot(snap);
 }
 
 // Function to generate vertex data for the graph
