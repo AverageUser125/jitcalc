@@ -125,8 +125,12 @@ std::string Lexer::lexerDebugGetTokenTypeName(TokenType type) {
 		return "(";
 	case TokenType::CloseParenthesis:
 		return ")";
+	case TokenType::Comma:
+		return ",";
+	case TokenType::MAX:
+		return "MAX";
 	}
-	return "unreachable";
+	unreachable();
 }
 
 void Lexer::lexerDebugPrintArray(const std::vector<Token>& tokenArray) {

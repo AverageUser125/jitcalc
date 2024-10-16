@@ -22,6 +22,8 @@ double evaluate(ExpressionNode* expr, double x) {
 		return evaluate(expr->binary.left, x) / evaluate(expr->binary.right, x);
 	case NodeType::Pow:
 		return pow(evaluate(expr->binary.left, x), evaluate(expr->binary.right, x));
+	case NodeType::Error:
+		return -INFINITY;
 	}
 	return 0.0;
 }

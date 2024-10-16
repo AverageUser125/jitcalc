@@ -76,7 +76,8 @@ if(WIN32)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
     # Show all warnings, just nice to have
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    add_compile_options(-Wall -Wextra)
+    add_compile_options("-Wno-unused-parameter" "-Wno-unused-variable" "-Wno-missing-field-initializers" "-Wno-sign-compare")
 endif()
 
 # Enable Hot Reload for MSVC compilers if supported, came with the default file
