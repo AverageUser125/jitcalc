@@ -8,7 +8,6 @@
 #include <vector>
 #include <imgui.h>
 #include <imgui_stdlib.h>
-#include <array>
 #include <random>
 #include <chrono>
 
@@ -17,7 +16,6 @@ using calcFunc = std::function<double(double)>;
 static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
 
-static constexpr int StartEquationCount = 1;
 static constexpr float initialNumPoints = 100;
 
 struct GraphEquation {
@@ -190,7 +188,7 @@ bool gameInit() {
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
 
-	graphEquations.resize(StartEquationCount);
+	graphEquations.resize(1);
 	graphEquations[0].input = "x * x";
 	graphEquations[0].func = [](double x) { return x * x; };
 	graphEquations[0].color = generateColor(0);
