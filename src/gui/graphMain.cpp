@@ -41,8 +41,11 @@ static std::vector<GraphEquation> graphEquations;
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
 
+
 void generateAxisData() {
 	std::vector<float> vertices;
+
+	const auto roundToNearestPowerOf2 = [](float value) { return std::pow(2, std::round(std::log2(value))); };
 
 	// Define the desired number of lines
 	const int desiredLines = 10; // Set the desired number of lines
@@ -81,8 +84,8 @@ void generateAxisData() {
 	}
 	
 	// Calculate world spacing based on the number of lines
-	float worldSpacingX = width / numLinesX;
-	float worldSpacingY = height / numLinesY;
+	float worldSpacingX = roundToNearestPowerOf2(width / numLinesX);
+	float worldSpacingY = roundToNearestPowerOf2(height / numLinesY);
 
 	// Ensure grid aligns with the real origin (0, 0)
 	float xStart = std::floor(worldMinX / worldSpacingX) * worldSpacingX;
@@ -272,8 +275,7 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 }
 
 bool gameInit() {
-	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
-
+	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
 	graphEquations.resize(1);
 	graphEquations[0].input = "x * x";
 	graphEquations[0].func = [](double x) { return x * x; };
@@ -289,7 +291,15 @@ bool gameLogic(float deltaTime, int w, int h) {
 	bool shouldRecalculateEverything = false;
 
 	#pragma region draw vertexdata
+	glLineWidth(1.0f);
+	glColor3f(0.01f, 0.01f, 0.01f);
+	glBindBuffer(GL_ARRAY_BUFFER, axis.vbo);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glDrawArrays(GL_LINES, 0, axis.dataSize / 2);
+	glDisableVertexAttribArray(0);
 	// Draw graph for each function
+	glLineWidth(2.5f);
 	for (const auto& graph : graphEquations) {
 
 		glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
@@ -301,12 +311,6 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glDrawArrays(GL_LINE_STRIP, 0, graph.dataSize / 2); // Draw the line strip
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glBindBuffer(GL_ARRAY_BUFFER, axis.vbo);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glDrawArrays(GL_LINES, 0, axis.dataSize / 2);
-	glDisableVertexAttribArray(0);
 	#pragma endregion
 	#pragma region move with cursor
 	// Move with cursor
@@ -333,7 +337,6 @@ bool gameLogic(float deltaTime, int w, int h) {
 		shouldRecalculateEverything = true;
 	}
 #pragma endregion
-
     #pragma region display equations
 	ImGui::Begin("Equations", nullptr,
 				 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
