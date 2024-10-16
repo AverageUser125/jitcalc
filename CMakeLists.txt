@@ -2,6 +2,9 @@
 # delete .out/CmakeFiles folder to make this work
 option(PRODUCTION_BUILD "Make this a production build" OFF)
 
+# FIXME: just using MSVC macro doesn't work for me
+set(USING_MSVC WIN32)
+
 # project name
 set(PROJECT_NAME "jitcalc")
 
@@ -43,19 +46,10 @@ if(LLVM_FOUND)
     add_definitions(${LLVM_DEFINITIONS})
 else()
     message(FATAL_ERROR "LLVM not found!")
-endif()    
+endif()
 
-if(WIN32)
-    # using if(MSVC) doesn't work for me
-    message(STATUS "FIXME: On windows, assuming MSVC")
-    
-    # Set MSVC runtime library Causes linker problems cause llvm has some of those
-    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
-    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
+if(${USING_MSVC})
     add_compile_options(/W3)
-    
-    # Enable SIMD optimizations
     add_compile_options(/arch:AVX2 /GA)
     add_compile_options(/wd4624  # Disable the warning for deleted destructors
                         /wd4533  # allow goto to skip variable decleration
@@ -71,7 +65,6 @@ if(WIN32)
                         /wd6326  # comparison of constants
     )
     add_compile_options(/permissive-)
-
     # Disable CRT secure warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
@@ -80,17 +73,10 @@ else()
     add_compile_options("-Wno-unused-parameter" "-Wno-unused-variable" "-Wno-missing-field-initializers" "-Wno-sign-compare")
 endif()
 
-# Enable Hot Reload for MSVC compilers if supported, came with the default file
-if(POLICY CMP0141)
-    cmake_policy(SET CMP0141 NEW)
-    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
-
 project("${PROJECT_NAME}")
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glfw")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glad")
-# add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stb_image")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glm")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/imgui")
 
@@ -119,10 +105,15 @@ else()
     target_compile_definitions(${PROJECT_NAME} PUBLIC PRODUCTION_BUILD=0) 
 endif()
 
-if(MSVC)
+if(${USING_MSVC})
+    target_compile_options(${PROJECT_NAME} PRIVATE "/analyze")
 	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC _CRT_SECURE_NO_WARNINGS)
-
 	set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE 
+    "-fanalyzer" 
+    "-Wno-analyzer-use-of-uninitialized-value" # platform::getTypedInput() raises the unintalized every time
+    )
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC GLFW_INCLUDE_NONE) 
