@@ -73,33 +73,34 @@ void generateAxisData() {
 	}
 
 	// Calculate world spacing based on the number of lines
-	float worldSpacingX = roundToNearestPowerOf2(size / numLines);
-	float worldSpacingY = roundToNearestPowerOf2(size / numLines);
+	float worldSpacing = roundToNearestPowerOf2(size / numLines);
 
 	// Ensure grid aligns with the real origin (0, 0)
-	float xStart = std::floor(worldMinX / worldSpacingX) * worldSpacingX;
-	float yStart = std::floor(worldMinY / worldSpacingY) * worldSpacingY;
+	float xStart = std::floor(worldMinX / worldSpacing) * worldSpacing;
+	float yStart = std::floor(worldMinY / worldSpacing) * worldSpacing;
 
 	// ensure in NDC range of [-1, 1]
 	if (xStart < -1.0f) {
-		xStart += worldSpacingX;
+		xStart += worldSpacing;
 	}
 	if (yStart < -1.0f) {
-		yStart += worldSpacingY;
+		yStart += worldSpacing;
 	}
-
 	
 	std::vector<float> verticesThick;
 	std::vector<float> verticesThin;
 	std::vector<float> verticesMiddle;
 
+	verticesThick.reserve(numLines * 0.2);
+	verticesThin.reserve(numLines * 0.8);
+
 	// Generate vertical lines in world space
 
-	for (float x = xStart; x <= worldMaxX; x += worldSpacingX) {
+	for (float x = xStart; x <= worldMaxX; x += worldSpacing) {
 		// Convert from function space to NDC
 		float ndcX = (x - origin.x) * scale;
 
-		if (fmod(x / worldSpacingX, 5) != 0) {
+		if (fmod(x / worldSpacing, 5) != 0) {
 			verticesThin.push_back(ndcX);		// x1
 			verticesThin.push_back(screenMinY); // y1
 			verticesThin.push_back(ndcX);		// x2
@@ -113,11 +114,11 @@ void generateAxisData() {
 	}
 
 	// Generate horizontal lines in world space
-	for (float y = yStart; y <= worldMaxY; y += worldSpacingY) {
+	for (float y = yStart; y <= worldMaxY; y += worldSpacing) {
 		// Correctly calculate ndcY using the origin and scale
 		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
 		
-		if (fmod(y / worldSpacingY, 5) != 0) {
+		if (fmod(y / worldSpacing, 5) != 0) {
 			verticesThin.push_back(screenMinX); // x1
 			verticesThin.push_back(ndcY);		// y1
 			verticesThin.push_back(screenMaxX); // x2
