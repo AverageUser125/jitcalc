@@ -28,7 +28,7 @@
 #include <Windows.h>
 #endif
 #include <cstdio>
-static GLFWwindow* window = nullptr;
+static GLFWwindow* wind = nullptr;
 static bool currentFullScreen = 0;
 static bool fullScreen = 0;
 static bool windowFocus = true;
@@ -174,7 +174,7 @@ void clearTerminal() {
 #endif
 
 void setRelMousePosition(int x, int y) {
-	glfwSetCursorPos(window, x, y);
+	glfwSetCursorPos(wind, x, y);
 }
 
 double getScrollSize() {
@@ -192,29 +192,29 @@ void setFullScreen(bool f) {
 glm::ivec2 getFrameBufferSize() {
 	int x = 0;
 	int y = 0;
-	glfwGetFramebufferSize(window, &x, &y);
+	glfwGetFramebufferSize(wind, &x, &y);
 	return {x, y};
 }
 
 glm::ivec2 getRelMousePosition() {
 	double x = 0, y = 0;
-	glfwGetCursorPos(window, &x, &y);
+	glfwGetCursorPos(wind, &x, &y);
 	return {(int)floor(x), (int)floor(y)};
 }
 
 glm::ivec2 getWindowSize() {
 	int x = 0;
 	int y = 0;
-	glfwGetWindowSize(window, &x, &y);
+	glfwGetWindowSize(wind, &x, &y);
 	return {x, y};
 }
 
 //todo test
 void showMouse(bool show) {
 	if (show) {
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		glfwSetInputMode(wind, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	} else {
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		glfwSetInputMode(wind, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	}
 }
 
@@ -278,31 +278,31 @@ int guiLoop() {
 		return EXIT_FAILURE;
 	}
 	glfwWindowHint(GLFW_SAMPLES, 4);
-	window = glfwCreateWindow(1280, 720, "Graph calculator", nullptr, nullptr);
-	if (!window) {
+	wind = glfwCreateWindow(1280, 720, "Graph calculator", nullptr, nullptr);
+	if (!wind) {
 		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
 	#if PLATFORM_WIN
 	// set window decoration to black
-	HWND hwnd = glfwGetWin32Window(window);
+	HWND hwnd = glfwGetWin32Window(wind);
 	BOOL value = TRUE;
 	DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
 	#endif
-	glfwMakeContextCurrent(window);	
+	glfwMakeContextCurrent(wind);	
 	glfwSwapInterval(1);
 
-	glfwSetKeyCallback(window, keyCallback);
-	glfwSetMouseButtonCallback(window, mouseCallback);
-	glfwSetWindowFocusCallback(window, windowFocusCallback);
-	glfwSetWindowSizeCallback(window, windowSizeCallback);
-	glfwSetCursorPosCallback(window, cursorPositionCallback);
-	glfwSetCharCallback(window, characterCallback);
-	glfwSetScrollCallback(window, scrollCallback);
+	glfwSetKeyCallback(wind, keyCallback);
+	glfwSetMouseButtonCallback(wind, mouseCallback);
+	glfwSetWindowFocusCallback(wind, windowFocusCallback);
+	glfwSetWindowSizeCallback(wind, windowSizeCallback);
+	glfwSetCursorPosCallback(wind, cursorPositionCallback);
+	glfwSetCharCallback(wind, characterCallback);
+	glfwSetScrollCallback(wind, scrollCallback);
 
 	const GLFWimage windownIconImage{windowIconHeight, windowIconWidth, const_cast<unsigned char*>(windowIcon)};
-	glfwSetWindowIcon(window, 1, &windownIconImage);
+	glfwSetWindowIcon(wind, 1, &windownIconImage);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cerr << "Failed to initialize GLAD" << std::endl;
@@ -321,7 +321,7 @@ int guiLoop() {
 	io.IniFilename = nullptr;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplGlfw_InitForOpenGL(wind, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 #pragma endregion
 
@@ -332,7 +332,7 @@ int guiLoop() {
 		goto defer;
 	}
 
-	while (!glfwWindowShouldClose(window)) {
+	while (!glfwWindowShouldClose(wind)) {
 
 #pragma region deltaTime
 
@@ -357,7 +357,7 @@ int guiLoop() {
 #pragma endregion
 
 		int display_w, display_h;
-		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glfwGetFramebufferSize(wind, &display_w, &display_h);
 
 		if (!gameLogic(augmentedDeltaTime, display_w, display_h)) {
 			return EXIT_FAILURE;
@@ -376,23 +376,23 @@ int guiLoop() {
 				lastH = WINDOW_DEFAULT_HEIGHT;
 
 				//glfwWindowHint(GLFW_DECORATED, NULL); // Remove the border and titlebar..
-				glfwGetWindowPos(window, &lastPosX, &lastPosY);
+				glfwGetWindowPos(wind, &lastPosX, &lastPosY);
 
 
 				//auto monitor = glfwGetPrimaryMonitor();
-				auto monitor = getCurrentMonitor(window);
+				auto monitor = getCurrentMonitor(wind);
 
 
 				const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
 				// switch to full screen
-				glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+				glfwSetWindowMonitor(wind, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
 
 				currentFullScreen = 1;
 
 			} else {
 				//glfwWindowHint(GLFW_DECORATED, GLFW_TRUE); //
-				glfwSetWindowMonitor(window, nullptr, lastPosX, lastPosY, lastW, lastH, 0);
+				glfwSetWindowMonitor(wind, nullptr, lastPosX, lastPosY, lastW, lastH, 0);
 
 				currentFullScreen = 0;
 			}
@@ -413,7 +413,7 @@ int guiLoop() {
 		glViewport(0, 0, display_w, display_h);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		glfwSwapBuffers(window);
+		glfwSwapBuffers(wind);
 		glfwPollEvents();
 	}
 
@@ -425,8 +425,8 @@ int guiLoop() {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-	if (window) {
-		glfwDestroyWindow(window);
+	if (wind) {
+		glfwDestroyWindow(wind);
 		glfwTerminate();
 	}
 	#pragma endregion
