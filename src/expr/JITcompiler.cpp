@@ -92,6 +92,19 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 	case NodeType::Pow: {
 		llvm::Value* left = generateCode(expr->binary.left, variable);
 		llvm::Value* right = generateCode(expr->binary.right, variable);
+		// Check if the right operand is another power expression
+		if (expr->binary.left->type == NodeType::Pow) {
+			// Get the base and inner exponent from the left power expression
+			ExpressionNode* innerPow = expr->binary.left; // This is the left Pow
+			llvm::Value* innerBase = generateCode(innerPow->binary.left, variable);
+			llvm::Value* innerExponent = generateCode(innerPow->binary.right, variable);
+
+			// Combine the inner exponent with the right exponent
+			llvm::Value* outerExponent = right; // Use the exponent from the current Pow
+			llvm::Value* newExponent = builder->CreateFMul(innerExponent, outerExponent, "exponentProduct");
+
+			return builder->CreateCall(powFunction, {innerBase, newExponent}, "powtmp");
+		}
 		return builder->CreateCall(powFunction, {left, right}, "powtmp");
 	}
 	case NodeType::Variable: {
