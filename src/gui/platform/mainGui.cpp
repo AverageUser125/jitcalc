@@ -1,5 +1,5 @@
 #include "graphMain.hpp"
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
 #include "mainGui.hpp"
 #include "opterPlatformFunctions.hpp"
 #include "platformInput.h"
@@ -17,6 +17,12 @@
 #include "windowIcon.h"
 
 #if PLATFORM_WIN
+#include <dwmapi.h>
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #define WIN32_LEAN_AN_MEAN
 #define NOMINMAX
 #include <Windows.h>
@@ -137,7 +143,6 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 }
 
 #pragma endregion
-
 
 #pragma region platform functions
 
@@ -273,14 +278,19 @@ int guiLoop() {
 		return EXIT_FAILURE;
 	}
 	glfwWindowHint(GLFW_SAMPLES, 4);
-
 	window = glfwCreateWindow(1280, 720, "Graph calculator", nullptr, nullptr);
 	if (!window) {
 		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
-	glfwMakeContextCurrent(window);
+	#if PLATFORM_WIN
+	// set window decoration to black
+	HWND hwnd = glfwGetWin32Window(window);
+	BOOL value = TRUE;
+	DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
+	#endif
+	glfwMakeContextCurrent(window);	
 	glfwSwapInterval(1);
 
 	glfwSetKeyCallback(window, keyCallback);

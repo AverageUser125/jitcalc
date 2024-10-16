@@ -116,14 +116,24 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC GLFW_INCLUDE_NONE)
 # add .h and .hpp files
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
-target_link_libraries(${PROJECT_NAME}
-    ${LLVM_LIBS}
-    glfw
-    glad
-    glm
-    imgui
-#    stb_image
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME}
+        ${LLVM_LIBS}
+        glfw
+        glad
+        glm
+        imgui
+        Dwmapi.lib
 )
+else()
+    target_link_libraries(${PROJECT_NAME}
+        ${LLVM_LIBS}
+        glfw
+        glad
+        glm
+        imgui
+)
+endif()
 # Specify the output directory for the build (/bin directory)
 # set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 # Specify the output directory for the build (/build/bin directory)
