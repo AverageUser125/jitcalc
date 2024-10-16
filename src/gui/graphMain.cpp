@@ -49,41 +49,32 @@ void generateAxisData() {
 	const int desiredLines = 25; // Set the desired number of lines
 
 	// Set screen-space boundaries in NDC (-1 to 1)
-	float screenMinX = -1.0f;
-	float screenMaxX = 1.0f;
-	float screenMinY = -1.0f;
-	float screenMaxY = 1.0f;
+	constexpr float screenMinX = -1.0f;
+	constexpr float screenMaxX = 1.0f;
+	constexpr float screenMinY = -1.0f;
+	constexpr float screenMaxY = 1.0f;
 
 	// Convert NDC to function space, factoring in origin and scale
-	float worldMinX = origin.x + screenMinX / scale;
-	float worldMaxX = origin.x + screenMaxX / scale;
-	float worldMinY = origin.y + screenMinY / scale;
-	float worldMaxY = origin.y + screenMaxY / scale;
+	const float worldMinX = origin.x + screenMinX / scale;
+	const float worldMaxX = origin.x + screenMaxX / scale;
+	const float worldMinY = origin.y + screenMinY / scale;
+	const float worldMaxY = origin.y + screenMaxY / scale;
 
 	// Calculate the width and height in world space
-	float width = worldMaxX - worldMinX;
-	float height = worldMaxY - worldMinY;
-
-	float numLinesX = width / (desiredLines * 0.5f);
-	float numLinesY = height / (desiredLines * 0.5f);
+	const float size = 2 / scale;
+	float numLines = 4 / (desiredLines * scale);
 
 	// Manually clamp the number of lines
-	while (numLinesX < 0.5f * desiredLines) {
-		numLinesX *= 2;
+	while (numLines < 0.5f * desiredLines) {
+		numLines *= 2;
 	}
-	while (numLinesX > 2.0f * desiredLines) {
-		numLinesX /= 2;
+	while (numLines > 2.0f * desiredLines) {
+		numLines /= 2;
 	}
-	while (numLinesY < 0.5f * desiredLines) {
-		numLinesY *= 2;
-	}
-	while (numLinesY > 2.0f * desiredLines) {
-		numLinesY /= 2;
-	}
-	
+
 	// Calculate world spacing based on the number of lines
-	float worldSpacingX = roundToNearestPowerOf2(width / numLinesX);
-	float worldSpacingY = roundToNearestPowerOf2(height / numLinesY);
+	float worldSpacingX = roundToNearestPowerOf2(size / numLines);
+	float worldSpacingY = roundToNearestPowerOf2(size / numLines);
 
 	// Ensure grid aligns with the real origin (0, 0)
 	float xStart = std::floor(worldMinX / worldSpacingX) * worldSpacingX;
@@ -114,7 +105,7 @@ void generateAxisData() {
 			verticesThin.push_back(ndcX);		// x2
 			verticesThin.push_back(screenMaxY); // y2
 		} else {
-			verticesThick.push_back(ndcX);		// x1
+			verticesThick.push_back(ndcX);		 // x1
 			verticesThick.push_back(screenMinY); // y1
 			verticesThick.push_back(ndcX);		 // x2
 			verticesThick.push_back(screenMaxY); // y2	
