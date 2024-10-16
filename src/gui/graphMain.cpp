@@ -62,16 +62,8 @@ void generateAxisData() {
 
 	// Calculate the width and height in world space
 	const float size = 2 / scale;
-	float numLines = 4 / (desiredLines * scale);
-
-	// Manually clamp the number of lines
-	while (numLines < 0.5f * desiredLines) {
-		numLines *= 2;
-	}
-	while (numLines > 2.0f * desiredLines) {
-		numLines /= 2;
-	}
-
+	
+	const float numLines = desiredLines;
 	// Calculate world spacing based on the number of lines
 	float worldSpacing = roundToNearestPowerOf2(size / numLines);
 
@@ -89,8 +81,7 @@ void generateAxisData() {
 	
 	std::vector<float> verticesThick;
 	std::vector<float> verticesThin;
-	std::vector<float> verticesMiddle;
-
+	
 	verticesThick.reserve(numLines * 0.2);
 	verticesThin.reserve(numLines * 0.8);
 
