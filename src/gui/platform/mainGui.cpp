@@ -48,7 +48,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	} else {
 		return;
 	}
-
 	if (key >= GLFW_KEY_A && key <= GLFW_KEY_Z) {
 		int index = key - GLFW_KEY_A;
 		platform::internal::setButtonState(platform::Button::A + index, state);

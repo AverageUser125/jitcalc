@@ -10,6 +10,7 @@
 #include <imgui_stdlib.h>
 #include <random>
 #include <chrono>
+#include <glm/gtc/type_ptr.hpp>
 
 using calcFunc = std::function<double(double)>;
 
@@ -17,6 +18,11 @@ static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
 
 static constexpr float initialNumPoints = 100;
+
+struct VertexBufferObject {
+	GLuint vbo;
+	size_t dataSize;
+};
 
 struct GraphEquation {
 	std::string input = "";
@@ -26,11 +32,73 @@ struct GraphEquation {
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 
+
+static VertexBufferObject axis;
 static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
+
+void generateAxisData() {
+	std::vector<float> vertices;
+	// Fixed spacing of 1 unit in function space
+	float screenSpacing = 1.0f;
+	float worldSpacing = screenSpacing * scale;
+
+	// Set screen-space boundaries in NDC (-1 to 1)
+	float screenMinX = -1.0f;
+	float screenMaxX = 1.0f;
+	float screenMinY = -1.0f;
+	float screenMaxY = 1.0f;
+
+	// Convert NDC to function space, factoring in origin and scale
+	float worldMinX = origin.x + screenMinX / scale;
+	float worldMaxX = origin.x + screenMaxX / scale;
+	float worldMinY = origin.y + screenMinY / scale; // Inverted for the NDC range
+	float worldMaxY = origin.y + screenMaxY / scale; // Inverted for the NDC range
+
+	// Ensure grid aligns with the real origin (0, 0)
+	float xStart = std::floor((worldMinX - 0.0f) / worldSpacing) * worldSpacing;
+	float yStart = std::floor((worldMinY - 0.0f) / worldSpacing) * worldSpacing;
+
+	// Generate vertical lines in world space (spacing of 1)
+	for (float x = xStart; x <= worldMaxX; x += worldSpacing) {
+		// Convert from function space to NDC
+		float ndcX = (x - origin.x) * scale;
+
+		// Only add the line if it’s within the NDC range [-1, 1]
+		if (ndcX >= screenMinX && ndcX <= screenMaxX) {
+			vertices.push_back(ndcX);		// x1
+			vertices.push_back(screenMinY); // y1
+			vertices.push_back(ndcX);		// x2
+			vertices.push_back(screenMaxY); // y2
+		}
+	}
+
+	// Generate horizontal lines in world space (spacing of 1)
+	for (float y = yStart; y <= worldMaxY; y += worldSpacing) {
+		// Correctly calculate ndcY using the origin and scale
+		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
+
+		// Only add the line if it’s within the NDC range [-1, 1]
+		if (ndcY >= screenMinY && ndcY <= screenMaxY) {
+			vertices.push_back(screenMinX); // x1
+			vertices.push_back(ndcY);		// y1
+			vertices.push_back(screenMaxX); // x2
+			vertices.push_back(ndcY);		// y2
+		}
+	}
+
+	// Create and bind the VBO
+	glGenBuffers(1, &axis.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, axis.vbo);
+
+	// Transfer data to GPU
+	axis.dataSize = vertices.size();
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+}
+
 
 // Function to generate vertex data for the graph
 void generateGraphData(GraphEquation& graph) {
@@ -48,7 +116,7 @@ void generateGraphData(GraphEquation& graph) {
 		// Evaluate the function at the scaled X value
 		float y = graph.func(x); // Evaluate the function
 
-		float scaledY = (y * scale) + origin.y; // Apply scaling (zoom) to the Y value
+		float scaledY = (y + origin.y) * scale; // Apply scaling (zoom) to the Y value
 		vertexData.push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
 		vertexData.push_back(scaledY);	  // Scaled Y
 	}
@@ -60,10 +128,6 @@ void generateGraphData(GraphEquation& graph) {
 	graph.dataSize = vertexData.size();
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 	
-}
-
-void drawAxis() {
-	// Axis drawing logic can be added here
 }
 
 float getDoubleRand() {
@@ -182,10 +246,6 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 }
 
 bool gameInit() {
-	glEnable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(0.01f, 0.01f, 0.01f, 0.1f);
 
 	graphEquations.resize(1);
@@ -193,7 +253,7 @@ bool gameInit() {
 	graphEquations[0].func = [](double x) { return x * x; };
 	graphEquations[0].color = generateColor(0);
 	generateGraphData(graphEquations[0]);
-
+	generateAxisData();
 	return true;
 }
 
@@ -201,23 +261,26 @@ bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
 
 	bool shouldRecalculateEverything = false;
-	drawAxis();
 
 	#pragma region draw vertexdata
 	// Draw graph for each function
 	for (const auto& graph : graphEquations) {
+
 		glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
-		
 		// Set the color for the line
 		glm::vec3 color = graph.color;
 		glColor3f(color.x, color.y, color.z); // Set different color for each function
-
 		glDrawArrays(GL_LINE_STRIP, 0, graph.dataSize / 2); // Draw the line strip
-
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glBindBuffer(GL_ARRAY_BUFFER, axis.vbo);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glDrawArrays(GL_LINES, 0, axis.dataSize / 2);
+	glDisableVertexAttribArray(0);
 	#pragma endregion
 	#pragma region move with cursor
 	// Move with cursor
@@ -263,6 +326,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	ImGui::End();
 #pragma endregion
 	if (shouldRecalculateEverything) {
+		generateAxisData();
 		for (GraphEquation& graph : graphEquations)
 			generateGraphData(graph);
 	}
