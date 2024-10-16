@@ -43,22 +43,34 @@ if(LLVM_FOUND)
     add_definitions(${LLVM_DEFINITIONS})
 else()
     message(FATAL_ERROR "LLVM not found!")
-endif()
+endif()    
 
 if(WIN32)
     # using if(MSVC) doesn't work for me
     message(STATUS "FIXME: On windows, assuming MSVC")
-    # Set MSVC runtime library
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    
+    # Set MSVC runtime library Causes linker problems cause llvm has some of those
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-    add_compile_options(/W4)
+    add_compile_options(/W3)
     
     # Enable SIMD optimizations
-    add_compile_options(/arch:AVX2)
-    add_compile_options(/wd4624)  # Disable the warning for deleted destructors
-    add_compile_options(/wd4533)  # allow goto to skip variable decleration
-    add_compile_options(/fpermissive-)
+    add_compile_options(/arch:AVX2 /GA)
+    add_compile_options(/wd4624  # Disable the warning for deleted destructors
+                        /wd4533  # allow goto to skip variable decleration
+                        /wd4244  # implicit conversion from return
+                        /wd4267  # implicit conversion
+                        /wd4273  # multiple definitions with different dllimport
+                        /wd4146  # unary stuff
+                        /wd4200  # arena.h use non-static size memberm which is a C and not CXX feature
+                        /wd6323  # Use of arithmatic with boolean
+                        /wd6031  # ignoring return values
+                        /wd28125 # try-excpet for windows functions?
+                        /wd6393  # array with 365 is not enough for leap years
+                        /wd6326  # comparison of constants
+    )
+    add_compile_options(/permissive-)
 
     # Disable CRT secure warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
