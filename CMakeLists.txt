@@ -45,14 +45,15 @@ else()
     message(FATAL_ERROR "LLVM not found!")
 endif()
 
-if(MSVC)
+if(WIN32)
+    # using if(MSVC) doesn't work for me
+    message(STATUS "FIXME: On windows, assuming MSVC")
     # Set MSVC runtime library
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-    # Show all warnings, but stupid ones
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -EHsc")
-
+    add_compile_options(/W4)
+    
     # Enable SIMD optimizations
     add_compile_options(/arch:AVX2)
     add_compile_options(/wd4624)  # Disable the warning for deleted destructors
@@ -61,10 +62,9 @@ if(MSVC)
 
     # Disable CRT secure warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-
 else()
     # Show all warnings, just nice to have
-    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
 
 # Enable Hot Reload for MSVC compilers if supported, came with the default file
