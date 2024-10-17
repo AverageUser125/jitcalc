@@ -1,40 +1,46 @@
 #pragma once
+#include <memory>
 #include "arena.h"
+
+extern Arena global_arena;
 
 template <typename T> class ArenaAllocator {
   public:
 	using value_type = T;
-
+	using size_type = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	
 	// Default constructor using the global static Arena
 	ArenaAllocator() noexcept {
-		snapshot = arena_snapshot(&global_arena());
 	};
 
 	~ArenaAllocator() noexcept {
-		arena_rewind(&global_arena(), snapshot);
 	}
 	// Rebind allocator to another type
 	template <typename U> struct rebind {
 		using other = ArenaAllocator<U>;
 	};
 
-	// Allocate memory for n objects of type T using the static Arena
-	[[nodiscard]] T* allocate(std::size_t n) {
-		void* ptr = arena_alloc(&global_arena(), n * sizeof(T));
+	[[nodiscard]] T* allocate(size_type n) {
+		void* ptr = arena_alloc(&global_arena, n * sizeof(T));
 		if (!ptr) {
 			throw std::bad_alloc();
 		}
 		return static_cast<T*>(ptr);
 	}
 
-	// Deallocate memory (no-op for this allocator)
-	void deallocate(T* p, std::size_t n) noexcept {
+	void deallocate(T* p, size_type n) noexcept {
 		// No-op, memory is managed by the global arena
+	}
+
+	size_type max_size() const noexcept {
+		assert(global_arena.end != nullptr);
+		return global_arena.end->capacity - global_arena.end->count;
 	}
 
 	// Equality comparison for allocators (always true as the arena is global)
 	bool operator==(const ArenaAllocator& other) const noexcept {
-		return true; // All ArenaAllocator instances use the same global arena
+		return true;
 	}
 
 	bool operator!=(const ArenaAllocator& other) const noexcept {
@@ -42,29 +48,14 @@ template <typename T> class ArenaAllocator {
 	}
 
 	static ArenaSnapshot getSnapshot() {
-		return arena_snapshot(&global_arena());
+		return arena_snapshot(&global_arena);
 	}
 
 	static void restoreSnapshot(const ArenaSnapshot snap) {
-		arena_rewind(&global_arena(), snap);
+		arena_rewind(&global_arena, snap);
 	}
 
 	static void reset() {
-		arena_reset(&global_arena());
-	}
-
-  private:
-	ArenaSnapshot snapshot;
-	// Static function to access the global arena
-	static Arena& global_arena() {
-		static Arena arena;
-		static bool initialized = false;
-
-		if (!initialized) {
-			arena_init(&arena);
-			initialized = true;
-		}
-
-		return arena;
+		arena_reset(&global_arena);
 	}
 };

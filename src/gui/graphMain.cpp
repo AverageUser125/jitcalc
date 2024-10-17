@@ -22,8 +22,8 @@ static constexpr float scrollSensitivity = 30;
 static constexpr float initialNumPoints = 100;
 
 struct VertexBufferObject {
-	GLuint vbo;
-	size_t dataSize;
+	GLuint vbo = 0;
+	size_t dataSize = 0;
 };
 
 struct GraphEquation {
@@ -36,7 +36,7 @@ struct GraphEquation {
 
 
 static std::array<VertexBufferObject,2> grid;
-static std::vector<GraphEquation, ArenaAllocator<GraphEquation>> graphEquations;
+static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
@@ -383,6 +383,8 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 	#pragma endregion
 
+
+	arena_reset(&global_arena);
 	return true;
 }
 

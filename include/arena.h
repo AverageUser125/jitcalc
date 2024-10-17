@@ -74,11 +74,6 @@ struct ArenaSnapshot {
 	size_t count; // The number of used slots in the end region
 };
 
-// TODO: snapshot/rewind capability for the arena
-// - Snapshot should be combination of a->end and a->end->count.
-// - Rewinding should be restoring a->end and a->end->count from the snapshot and
-// setting count-s of all the Region-s after the remembered a->end to 0.
-void* arena_alloc(Arena* a, size_t size_bytes);
 void* arena_realloc(Arena* a, void* oldptr, size_t oldsz, size_t newsz);
 char* arena_strdup(Arena* a, const char* cstr);
 void* arena_memdup(Arena* a, void* data, size_t size);
