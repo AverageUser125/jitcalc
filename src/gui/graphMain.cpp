@@ -34,7 +34,7 @@ struct GraphEquation {
 };
 #pragma endregion
 #pragma region shaders sources
-const char* const shaderSource =
+static const char* const shaderSource =
 	"#version 330 core\n"
 	"\n"
 	"layout(location = 0) in vec2 position;   // Line vertex position (NDC space)\n"
@@ -47,7 +47,7 @@ const char* const shaderSource =
 	"    fragLineThickness  = lineThickness;\n"
 	"}\n";
 
-const char* const geometryShaderSource =
+static const char* const geometryShaderSource =
 	"#version 330 core\n"
 	"\n"
 	"layout(lines) in; // Input: lines\n"
@@ -94,7 +94,7 @@ const char* const geometryShaderSource =
 	"    EndPrimitive();\n"
 	"}\n";
 
-const char* const fragmentShaderSource = "#version 330 core\n"
+static const char* const fragmentShaderSource = "#version 330 core\n"
 										 "out vec4 outColor;\n"
 										 "void main() {\n"
 										 "	outColor = vec4(0.01f, 0.01f, 0.01f, 1.0f);\n"
@@ -452,7 +452,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 			generateGraphData(graph.func, graph.vboObj, vertexData);
 		}
 	}
+    
     #pragma region fullscreen
+	/*
 	if (platform::isButtonPressedOn(platform::Button::F11)) {
 		if (platform::isFullScreen()) {
 			platform::setFullScreen(false);
@@ -460,6 +462,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 			platform::setFullScreen(true);
 		}
 	}
+	*/
     #pragma endregion
 
 	#pragma region clearTerminal
