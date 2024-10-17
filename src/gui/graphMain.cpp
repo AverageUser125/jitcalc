@@ -33,8 +33,9 @@ struct GraphEquation {
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 
-
-static std::array<VertexBufferObject,2> grid;
+static std::array<VertexBufferObject,2> grids;
+#define gridThin grids[0]
+#define gridThick grids[1]
 static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
@@ -119,14 +120,14 @@ void generateAxisData() {
 			verticesThick.push_back(ndcY);		 // y2
 		}
 	}
-	grid[0].dataSize = verticesThin.size();
-	grid[1].dataSize = verticesThick.size();
+	gridThin.dataSize = verticesThin.size();
+	gridThick.dataSize = verticesThick.size();
 	
 	// Transfer data to GPU
-	glBindBuffer(GL_ARRAY_BUFFER, grid[0].vbo);
-	glBufferData(GL_ARRAY_BUFFER, grid[0].dataSize * sizeof(float), verticesThin.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, grid[1].vbo);
-	glBufferData(GL_ARRAY_BUFFER, grid[1].dataSize * sizeof(float), verticesThick.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, gridThin.vbo);
+	glBufferData(GL_ARRAY_BUFFER, gridThin.dataSize * sizeof(float), verticesThin.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, gridThick.vbo);
+	glBufferData(GL_ARRAY_BUFFER, gridThick.dataSize * sizeof(float), verticesThick.data(), GL_STATIC_DRAW);
 }
 
 // Function to generate vertex data for the graph
@@ -281,9 +282,9 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
 
-	glGenBuffers(1, &grid[0].vbo);
-	glGenBuffers(1, &grid[1].vbo);
-
+	for (auto& grid : grids) {
+		glGenBuffers(1, &grid.vbo);
+	}
 	graphEquations.resize(1);
 	graphEquations[0].input = "x * x";
 	graphEquations[0].func = [](double x) { return x * x; };
@@ -300,13 +301,13 @@ bool gameLogic(float deltaTime, int w, int h) {
 	bool shouldRecalculateEverything = false;
 
 	#pragma region draw vertexdata
-	for (int i = 0; i < grid.size(); i++) {
+	for (int i = 0; i < grids.size(); i++) {
 		glLineWidth(1.5 * i + 1);
 		glColor3f(0.01f, 0.01f, 0.01f);
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, grid[i].vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, grids[i].vbo);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-		glDrawArrays(GL_LINES, 0, grid[i].dataSize / 2);
+		glDrawArrays(GL_LINES, 0, grids[i].dataSize / 2);
 		glDisableVertexAttribArray(0);
 	}
 	// Draw graph for each function
