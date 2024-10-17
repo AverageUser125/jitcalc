@@ -74,6 +74,7 @@ struct ArenaSnapshot {
 	size_t count; // The number of used slots in the end region
 };
 
+void* arena_alloc(Arena* a, size_t size_bytes);
 void* arena_realloc(Arena* a, void* oldptr, size_t oldsz, size_t newsz);
 char* arena_strdup(Arena* a, const char* cstr);
 void* arena_memdup(Arena* a, void* data, size_t size);
@@ -81,8 +82,8 @@ void* arena_memdup(Arena* a, void* data, size_t size);
 char* arena_sprintf(Arena* a, const char* format, ...);
 #endif // ARENA_NOSTDIO
 
-void arena_init(Arena* a);
-Arena arena_init();
+void arena_init(Arena* a, size_t reservedCapacity = REGION_DEFAULT_CAPACITY);
+Arena arena_init(size_t reservedCapacity = REGION_DEFAULT_CAPACITY);
 Region* new_region(size_t capacity);
 void arena_free(Arena* a);
 void arena_reset(Arena* a);

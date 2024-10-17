@@ -33,11 +33,6 @@ template <typename T> class ArenaAllocator {
 		// No-op, memory is managed by the global arena
 	}
 
-	size_type max_size() const noexcept {
-		assert(global_arena.end != nullptr);
-		return global_arena.end->capacity - global_arena.end->count;
-	}
-
 	// Equality comparison for allocators (always true as the arena is global)
 	bool operator==(const ArenaAllocator& other) const noexcept {
 		return true;

@@ -65,9 +65,9 @@ Region* new_region(size_t capacity) {
 							   MEM_COMMIT | MEM_RESERVE, /* Reserve and commit allocated page */
 							   PAGE_READWRITE			 /* Permissions ( Read/Write )*/
 	);
-	if (INV_HANDLE(r))
+	if (INV_HANDLE(r)) {
 		ARENA_ASSERT(0 && "VirtualAllocEx() failed.");
-
+	}
 	r->next = NULL;
 	r->count = 0;
 	r->capacity = capacity;
@@ -166,15 +166,15 @@ char* arena_sprintf(Arena* a, const char* format, ...) {
 }
 #endif // ARENA_NOSTDIO
 
-void arena_init(Arena* a) {
+void arena_init(Arena* a, size_t reservedCapacity) {
 	assert(a->end == nullptr && a->begin == nullptr);
-	a->end = new_region(REGION_DEFAULT_CAPACITY);
+	a->end = new_region(reservedCapacity);
 	a->begin = a->end;
 }
 
-Arena arena_init() {
+Arena arena_init(size_t reservedCapacity) {
 	Arena a;
-	a.end = new_region(REGION_DEFAULT_CAPACITY);
+	a.end = new_region(reservedCapacity);
 	a.begin = a.end;
 	return a;
 }

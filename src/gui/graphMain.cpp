@@ -131,13 +131,15 @@ void generateAxisData() {
 }
 
 // Function to generate vertex data for the graph
-void generateGraphData(GraphEquation& graph) {
+void generateGraphData(GraphEquation& graph, std::vector<float, ArenaAllocator<float>>& vertexData) {
 	if (graph.func == nullptr) {
 		return;
 	}
-	std::vector<float, ArenaAllocator<float>> vertexData;
+	vertexData.clear();
+	// for small scale(zoom out) this needs more precision
+	// but just doing / scale gives 10000 vertexes, so no
+	int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale));
 
-	int numPoints = std::max(initialNumPoints, initialNumPoints / scale);
 	float step = 2.0f / numPoints; // Step through X space from -1 to 1
 	for (int j = 0; j <= numPoints; ++j) {
 		float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
@@ -259,8 +261,8 @@ bool setGraph(GraphEquation& graph, int index) {
 	}
 
 	graph.color = generateColor(index);
-
-	generateGraphData(graph);	
+	std::vector<float, ArenaAllocator<float>> vertexData;
+	generateGraphData(graph, vertexData);	
 	
 	return true;
 }
@@ -285,7 +287,8 @@ bool gameInit() {
 	graphEquations[0].input = "x * x";
 	graphEquations[0].func = [](double x) { return x * x; };
 	graphEquations[0].color = generateColor(0);
-	generateGraphData(graphEquations[0]);
+	std::vector<float, ArenaAllocator<float>> vertexData;
+	generateGraphData(graphEquations[0], vertexData);
 	generateAxisData();
 	return true;
 }
@@ -361,10 +364,15 @@ bool gameLogic(float deltaTime, int w, int h) {
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -5.0f, 5.0f);
 	ImGui::End();
 #pragma endregion
+	// reset early 
 	if (shouldRecalculateEverything) {
 		generateAxisData();
-		for (GraphEquation& graph : graphEquations)
-			generateGraphData(graph);
+		arena_reset(&global_arena); // early reset cause this requires alot of vertexes
+		std::vector<float, ArenaAllocator<float>> vertexData;
+		vertexData.reserve(initialNumPoints / std::sqrt(scale));
+		for (GraphEquation& graph : graphEquations) {
+			generateGraphData(graph, vertexData);
+		}
 	}
     #pragma region fullscreen
 	if (platform::isButtonPressedOn(platform::Button::F11)) {
