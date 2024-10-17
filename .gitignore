@@ -2,3 +2,12 @@
 out/
 build/
 old/
+*.exe
+*.obj
+*.lib
+*.o
+*.dll
+*.so
+*.a
+*.ttf
+*.otf
