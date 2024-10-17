@@ -17,17 +17,17 @@
 #include "windowIcon.h"
 
 #if PLATFORM_WIN
-#include <dwmapi.h>
-#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
-#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
-#endif
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
 #define WIN32_LEAN_AN_MEAN
 #define NOMINMAX
 #include <Windows.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+using DwmSetWindowAttributeType = HRESULT(__stdcall*)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute,
+													  DWORD cbAttribute);
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
-#include <cstdio>
+#endif
 static GLFWwindow* wind = nullptr;
 static bool currentFullScreen = 0;
 static bool fullScreen = 0;
@@ -270,7 +270,7 @@ int guiLoop() {
 	std::cout.sync_with_stdio();
 #endif
 #endif
-	#pragma endregion
+#pragma endregion
 	int result = EXIT_SUCCESS;
 #pragma region glfw and glad init
 	if (!glfwInit()) {
@@ -285,12 +285,19 @@ int guiLoop() {
 		return EXIT_FAILURE;
 	}
 	glfwSetWindowAspectRatio(wind, 1, 1);
-	#if PLATFORM_WIN
+#if PLATFORM_WIN
 	// set window decoration to black
-	HWND hwnd = glfwGetWin32Window(wind);
-	BOOL value = TRUE;
-	DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
-	#endif
+	HINSTANCE dwamapidll = LoadLibraryW(L"Dwmapi.dll");
+	if (dwamapidll) {
+		DwmSetWindowAttributeType fnDwmSetWindowAttribute =
+			(DwmSetWindowAttributeType)GetProcAddress(dwamapidll, "DwmSetWindowAttribute");
+		if (fnDwmSetWindowAttribute) {
+			HWND hwnd = glfwGetWin32Window(wind);
+			BOOL value = TRUE;
+			fnDwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
+		}
+	}
+#endif
 	glfwMakeContextCurrent(wind);	
 	glfwSwapInterval(1);
 
