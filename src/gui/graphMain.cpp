@@ -14,6 +14,7 @@
 #include <array>
 #include "arenaAllocator.hpp"
 
+#pragma region defines
 using calcFunc = std::function<double(double)>;
 
 static constexpr float mouseSensitivity = 60;
@@ -25,14 +26,14 @@ struct VertexBufferObject {
 	GLuint vbo = 0;
 	size_t dataSize = 0;
 };
-
 struct GraphEquation {
 	std::string input = "";
 	calcFunc func = nullptr;
 	VertexBufferObject vboObj;
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
-
+#pragma endregion
+#pragma region globals
 static std::array<VertexBufferObject,2> grids;
 #define gridThin grids[0]
 #define gridThick grids[1]
@@ -42,7 +43,8 @@ static std::vector<GraphEquation> graphEquations;
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
 
-
+#pragma endregion
+#pragma region generate VBOS
 void generateAxisData() {
 	constexpr auto roundToNearestPowerOf2 = [](float value) { return std::pow(2, std::round(std::log2(value))); };
 
@@ -163,7 +165,8 @@ void generateGraphData(const calcFunc& func, VertexBufferObject& vboObject,
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 	
 }
-
+#pragma endregion
+#pragma region color gen
 float getDoubleRand() {
 	std::mt19937_64 rng;
 	// initialize the random number generator with time-dependent seed
@@ -173,7 +176,6 @@ float getDoubleRand() {
 	std::uniform_real_distribution<double> unif(0, 1);
 	return unif(rng);
 }
-
 // TODO: reconsider the entire method of this function
 glm::vec3 generateColor(int index) {
 	static float rndStart = getDoubleRand();
@@ -236,7 +238,8 @@ glm::vec3 generateColor(int index) {
 	// Return the RGB color generated from the HSV values
 	return hsvToRgb(hue, saturation, value);
 }
-
+#pragma endregion
+#pragma region set function and color
 bool setGraph(GraphEquation& graph, int index) {
 	{
 		// the tokens have a string_view to a member string of the lexer
@@ -268,7 +271,8 @@ bool setGraph(GraphEquation& graph, int index) {
 	
 	return true;
 }
-
+#pragma endregion
+#pragma region imGui callbacks
 // Custom callback function to call setGraph when input changes
 int inputTextCallback(ImGuiInputTextCallbackData* data) {
 	size_t index = reinterpret_cast<size_t>(data->UserData) - 1;
@@ -278,22 +282,8 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 	}
 	return 0;
 }
-
-bool gameInit() {
-	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
-
-	for (auto& grid : grids) {
-		glGenBuffers(1, &grid.vbo);
-	}
-	graphEquations.resize(1);
-	graphEquations[0].input = "x * x";
-	graphEquations[0].func = [](double x) { return x * x; };
-	graphEquations[0].color = generateColor(0);
-	std::vector<float, ArenaAllocator<float>> vertexData;
-	generateGraphData(graphEquations[0].func, graphEquations[0].vboObj, vertexData);
-	generateAxisData();
-	return true;
-}
+#pragma endregion
+#pragma region mainSuff
 
 bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
@@ -399,6 +389,22 @@ bool gameLogic(float deltaTime, int w, int h) {
 	return true;
 }
 
+bool gameInit() {
+	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
+
+	for (auto& grid : grids) {
+		glGenBuffers(1, &grid.vbo);
+	}
+	graphEquations.resize(1);
+	graphEquations[0].input = "x * x";
+	graphEquations[0].func = [](double x) { return x * x; };
+	graphEquations[0].color = generateColor(0);
+	std::vector<float, ArenaAllocator<float>> vertexData;
+	generateGraphData(graphEquations[0].func, graphEquations[0].vboObj, vertexData);
+	generateAxisData();
+	return true;
+}
+
 void gameEnd() {
 	for (const auto& graph : graphEquations) {
 		if (graph.vboObj.vbo != 0) {
@@ -406,3 +412,4 @@ void gameEnd() {
 		}
 	}
 }
+#pragma endregion
