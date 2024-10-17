@@ -1,18 +1,18 @@
+#include "arenaAllocator.hpp"
 #include "graphMain.hpp"
-#include "platformInput.h"
+#include "JITcompiler.hpp"
 #include "mainGui.hpp"
 #include "parser.hpp"
-#include "JITcompiler.hpp"
-#include <iostream>
-#include <glad/glad.h>
-#include <vector>
-#include <imgui.h>
-#include <imgui_stdlib.h>
-#include <random>
+#include "platformInput.h"
+#include <array>
 #include <chrono>
 #include <cmath> // Include for std::log10 and std::floor
-#include <array>
-#include "arenaAllocator.hpp"
+#include <glad/glad.h>
+#include <imgui.h>
+#include <imgui_stdlib.h>
+#include <iostream>
+#include <random>
+#include <vector>
 
 #pragma region defines
 using calcFunc = std::function<double(double)>;
@@ -38,13 +38,13 @@ const char* const shaderSource =
 	"#version 330 core\n"
 	"\n"
 	"layout(location = 0) in vec2 position;   // Line vertex position (NDC space)\n"
-	"layout(location = 1) in float lineType;  // Line type: 0 for thin, 1 for thick, 2 for very thick\n"
+	"layout(location = 1) in float lineThickness;\n"
 	"\n"
-	"out float fragLineType; // Pass lineType to geometry shader\n"
+	"out float fragLineThickness;\n"
 	"\n"
 	"void main() {\n"
 	"    gl_Position = vec4(position, 0.0, 1.0);\n"
-	"    fragLineType = lineType; // Pass lineType to the next stage\n"
+	"    fragLineThickness  = lineThickness;\n"
 	"}\n";
 
 const char* const geometryShaderSource =
@@ -56,8 +56,8 @@ const char* const geometryShaderSource =
 	"// Uniform for viewport size\n"
 	"uniform vec2 viewportSize;\n"
 	"\n"
-	"in float fragLineType[]; // Line type input from the vertex shader\n"
-	"out float gLineType; // Output line type for the fragment shader\n"
+	"in float fragLineThickness[]; // Line type input from the vertex shader\n"
+	"out float gLineThickness; // Output line type for the fragment shader\n"
 	"\n"
 	"void main() {\n"
 	"    // Get the positions of the input line vertices\n"
@@ -68,13 +68,7 @@ const char* const geometryShaderSource =
 	"    vec2 lineDir = normalize(p1 - p0);\n"
 	"    vec2 lineNormal = vec2(-lineDir.y, lineDir.x); // Perpendicular vector\n"
 	"\n"
-	"    // Set thickness based on lineType and viewport size\n"
-	"    float thickness = 0.0025; // Default thin thickness relative to viewport\n"
-	"    if (fragLineType[0] == 1.0) {\n"
-	"        thickness = 0.0055; // Thick lines\n"
-	"    } else if (fragLineType[0] == 2.0) {\n"
-	"        thickness = 0.008; // Very thick lines\n"
-	"    }\n"
+	"    float thickness = fragLineThickness[0];\n"
 	"\n"
 	"    // Offset positions to create the quad\n"
 	"    vec2 offset = lineNormal * thickness * 0.5;\n"
@@ -82,19 +76,19 @@ const char* const geometryShaderSource =
 	"    // offset = offset / viewportSize;\n"
 	"    // Emit vertices for the quad\n"
 	"    gl_Position = vec4(p0 - offset, 0.0, 1.0); // Bottom-left\n"
-	"    gLineType = fragLineType[0];\n"
+	"    gLineThickness = fragLineThickness[0];\n"
 	"    EmitVertex();\n"
 	"\n"
 	"    gl_Position = vec4(p0 + offset, 0.0, 1.0); // Top-left\n"
-	"    gLineType = fragLineType[0];\n"
+	"    gLineThickness = fragLineThickness[0];\n"
 	"    EmitVertex();\n"
 	"\n"
 	"    gl_Position = vec4(p1 - offset, 0.0, 1.0); // Bottom-right\n"
-	"    gLineType = fragLineType[0];\n"
+	"    gLineThickness = fragLineThickness[0];\n"
 	"    EmitVertex();\n"
 	"\n"
 	"    gl_Position = vec4(p1 + offset, 0.0, 1.0); // Top-right\n"
-	"    gLineType = fragLineType[0];\n"
+	"    gLineThickness = fragLineThickness[0];\n"
 	"    EmitVertex();\n"
 	"\n"
 	"    EndPrimitive();\n"
@@ -132,6 +126,10 @@ void generateAxisData() {
 	constexpr float screenMinY = -1.0f;
 	constexpr float screenMaxY = 1.0f;
 
+	constexpr float thinThick = 0.003f;
+	constexpr float mediumThick = 0.00575f;
+	constexpr float veryThick = 0.00825f;
+
 	// Convert NDC to function space, factoring in origin and scale
 	const float worldMinX = origin.x + screenMinX / scale;
 	const float worldMaxX = origin.x + screenMaxX / scale;
@@ -163,43 +161,43 @@ void generateAxisData() {
 	for (float x = xStart; x <= worldMaxX; x += worldSpacing) {
 		float ndcX = (x - origin.x) * scale;
 
-		float lineType;
+		float lineThickness;
 		if (x == 0) {
-			lineType = 2.0f; // Middle (origin) line is thickest
+			lineThickness = veryThick; // Middle (origin) line is thickest
 		} else if (fmod(x / worldSpacing, 5) == 0) {
-			lineType = 1.0f; // Every fifth line is thicker
+			lineThickness = mediumThick; // Every fifth line is thicker
 		} else {
-			lineType = 0.0f; // All other lines are thin
+			lineThickness = thinThick; // All other lines are thin
 		}
 
 		// Push both vertex positions and line type
 		vertices.push_back(ndcX);		// x1
 		vertices.push_back(screenMinY); // y1
-		vertices.push_back(lineType);	// line type
+		vertices.push_back(lineThickness);	// line type
 		vertices.push_back(ndcX);		// x2
 		vertices.push_back(screenMaxY); // y2
-		vertices.push_back(lineType);	// line type
+		vertices.push_back(lineThickness);	// line type
 	}
 
 	// Generate horizontal lines in world space
 	for (float y = yStart; y <= worldMaxY; y += worldSpacing) {
 		float ndcY = (-y + origin.y) * scale;
 
-		float lineType;
+		float lineThickness;
 		if (y == 0) {
-			lineType = 2.0f; // Middle (origin) line is thickest
+			lineThickness = veryThick; // Middle (origin) line is thickest
 		} else if (fmod(y / worldSpacing, 5) == 0) {
-			lineType = 1.0f; // Every fifth line is thicker
+			lineThickness = mediumThick; // Every fifth line is thicker
 		} else {
-			lineType = 0.0f; // All other lines are thin
+			lineThickness = thinThick; // All other lines are thin
 		}
 
 		vertices.push_back(screenMinX); // x1
 		vertices.push_back(ndcY);		// y1
-		vertices.push_back(lineType);	// line type
+		vertices.push_back(lineThickness);	// line type
 		vertices.push_back(screenMaxX); // x2
 		vertices.push_back(ndcY);		// y2
-		vertices.push_back(lineType);	// line type
+		vertices.push_back(lineThickness);	// line type
 	}
 
 	grid.dataSize = vertices.size();
@@ -373,7 +371,6 @@ bool gameLogic(float deltaTime, int w, int h) {
 	bool shouldRecalculateEverything = false;
 
 	#pragma region draw grid using shader
-	glColor3f(0.01f, 0.01f, 0.01f);
 	glUseProgram(shaderProgram);
 	glUniform2f(viewportSizeLocation, w, h);
 	glBindBuffer(GL_ARRAY_BUFFER, grid.vbo);
