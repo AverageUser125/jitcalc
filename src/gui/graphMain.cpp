@@ -34,9 +34,10 @@ struct GraphEquation {
 };
 #pragma endregion
 #pragma region globals
-static std::array<VertexBufferObject,2> grids;
+static std::array<VertexBufferObject,3> grids;
 #define gridThin grids[0]
 #define gridThick grids[1]
+#define gridMiddle grids[2]
 static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
@@ -82,7 +83,7 @@ void generateAxisData() {
 	ArenaAllocator<float> tempAllocator;
 	std::vector<float, ArenaAllocator<float>> verticesThick(tempAllocator);
 	std::vector<float, ArenaAllocator<float>> verticesThin(tempAllocator);
-	
+	std::array<float, 8> verticesMiddle{};
 	verticesThick.reserve(desiredLines * 0.2);
 	verticesThin.reserve(desiredLines * 0.8);
 
@@ -92,7 +93,13 @@ void generateAxisData() {
 		// Convert from function space to NDC
 		float ndcX = (x - origin.x) * scale;
 
-		if (fmod(x / worldSpacing, 5) != 0) {
+		if (x == 0) {
+			verticesMiddle[0] = ndcX;
+			verticesMiddle[1] = screenMinY;
+			verticesMiddle[2] = ndcX;
+			verticesMiddle[3] = screenMaxY;
+		}
+		else if (fmod(x / worldSpacing, 5) != 0) {
 			verticesThin.push_back(ndcX);		// x1
 			verticesThin.push_back(screenMinY); // y1
 			verticesThin.push_back(ndcX);		// x2
@@ -110,7 +117,13 @@ void generateAxisData() {
 		// Correctly calculate ndcY using the origin and scale
 		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
 		
-		if (fmod(y / worldSpacing, 5) != 0) {
+		if (y == 0) {
+			verticesMiddle[4] = screenMinX;
+			verticesMiddle[5] = ndcY;
+			verticesMiddle[6] = screenMaxX;
+			verticesMiddle[7] = ndcY;
+		}
+		else if (fmod(y / worldSpacing, 5) != 0) {
 			verticesThin.push_back(screenMinX); // x1
 			verticesThin.push_back(ndcY);		// y1
 			verticesThin.push_back(screenMaxX); // x2
@@ -124,12 +137,15 @@ void generateAxisData() {
 	}
 	gridThin.dataSize = verticesThin.size();
 	gridThick.dataSize = verticesThick.size();
-	
+	gridMiddle.dataSize = verticesMiddle.size();
+
 	// Transfer data to GPU
 	glBindBuffer(GL_ARRAY_BUFFER, gridThin.vbo);
 	glBufferData(GL_ARRAY_BUFFER, gridThin.dataSize * sizeof(float), verticesThin.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, gridThick.vbo);
 	glBufferData(GL_ARRAY_BUFFER, gridThick.dataSize * sizeof(float), verticesThick.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, gridMiddle.vbo);
+	glBufferData(GL_ARRAY_BUFFER, gridMiddle.dataSize * sizeof(float), verticesMiddle.data(), GL_STATIC_DRAW);
 }
 
 // Function to generate vertex data for the graph
