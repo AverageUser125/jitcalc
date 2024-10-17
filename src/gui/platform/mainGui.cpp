@@ -124,6 +124,9 @@ void windowFocusCallback(GLFWwindow* window, int focused) {
 
 void windowSizeCallback(GLFWwindow* window, int x, int y) {
 	platform::internal::resetInputsToZero();
+	if (glfwGetWindowAttrib(window, GLFW_MAXIMIZED)) {
+		glfwRestoreWindow(window);
+	}
 }
 
 static int mouseMovedFlag = 0;
@@ -414,7 +417,6 @@ int guiLoop() {
 		}
 
 #pragma endregion
-
 #pragma region reset flags
 		scrollSize = 0;
 		mouseMovedFlag = 0;
