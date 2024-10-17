@@ -287,7 +287,7 @@ int guiLoop() {
 	glfwSetWindowAspectRatio(wind, 1, 1);
 #if PLATFORM_WIN
 	// set window decoration to black
-	HINSTANCE dwamapidll = LoadLibraryW(L"Dwmapi.dll");
+	HMODULE dwamapidll = LoadLibraryW(L"Dwmapi.dll");
 	if (dwamapidll) {
 		DwmSetWindowAttributeType fnDwmSetWindowAttribute =
 			(DwmSetWindowAttributeType)GetProcAddress(dwamapidll, "DwmSetWindowAttribute");
@@ -296,6 +296,7 @@ int guiLoop() {
 			BOOL value = TRUE;
 			fnDwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
 		}
+		FreeLibrary(dwamapidll);
 	}
 #endif
 	glfwMakeContextCurrent(wind);	
