@@ -152,7 +152,7 @@ void generateAxisData() {
 void generateGraphData(const calcFunc& func, VertexBufferObject& vboObject, 
 	std::vector<float, ArenaAllocator<float>>& vertexData,
 	int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
-
+	vertexData.reserve(numPoints);
 	if (func == nullptr) {
 		return;
 	}
@@ -377,10 +377,8 @@ bool gameLogic(float deltaTime, int w, int h) {
 		generateAxisData();
 		arena_reset(&global_arena); // early reset cause this requires alot of vertexes
 		std::vector<float, ArenaAllocator<float>> vertexData;
-		int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale));
-		vertexData.reserve(numPoints);
 		for (GraphEquation& graph : graphEquations) {
-			generateGraphData(graph.func, graph.vboObj, vertexData, numPoints);
+			generateGraphData(graph.func, graph.vboObj, vertexData);
 		}
 	}
     #pragma region fullscreen
