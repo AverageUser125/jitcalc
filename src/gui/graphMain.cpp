@@ -29,8 +29,7 @@ struct VertexBufferObject {
 struct GraphEquation {
 	std::string input = "";
 	calcFunc func = nullptr;
-	GLuint vbo = 0;
-	size_t dataSize = 0;
+	VertexBufferObject vboObj;
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 
@@ -131,14 +130,16 @@ void generateAxisData() {
 }
 
 // Function to generate vertex data for the graph
-void generateGraphData(GraphEquation& graph, std::vector<float, ArenaAllocator<float>>& vertexData) {
-	if (graph.func == nullptr) {
+void generateGraphData(const calcFunc& func, VertexBufferObject& vboObject, 
+	std::vector<float, ArenaAllocator<float>>& vertexData,
+	int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
+
+	if (func == nullptr) {
 		return;
 	}
 	vertexData.clear();
 	// for small scale(zoom out) this needs more precision
 	// but just doing / scale gives 10000 vertexes, so no
-	int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale));
 
 	float step = 2.0f / numPoints; // Step through X space from -1 to 1
 	for (int j = 0; j <= numPoints; ++j) {
@@ -146,18 +147,18 @@ void generateGraphData(GraphEquation& graph, std::vector<float, ArenaAllocator<f
 		float x = (normalizedX / scale) + origin.x; // Apply scaling (zoom) to X
 
 		// Evaluate the function at the scaled X value
-		float y = graph.func(x); // Evaluate the function
+		float y = func(x); // Evaluate the function
 
 		float scaledY = (y + origin.y) * scale; // Apply scaling (zoom) to the Y value
 		vertexData.push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
 		vertexData.push_back(scaledY);	  // Scaled Y
 	}
 
-	if (graph.vbo == 0) {
-		glGenBuffers(1, &graph.vbo); // Generate the VBO only if it doesn't exist
+	if (vboObject.vbo == 0) {
+		glGenBuffers(1, &vboObject.vbo); // Generate the VBO only if it doesn't exist
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
-	graph.dataSize = vertexData.size();
+	glBindBuffer(GL_ARRAY_BUFFER, vboObject.vbo);
+	vboObject.dataSize = vertexData.size();
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 	
 }
@@ -262,7 +263,7 @@ bool setGraph(GraphEquation& graph, int index) {
 
 	graph.color = generateColor(index);
 	std::vector<float, ArenaAllocator<float>> vertexData;
-	generateGraphData(graph, vertexData);	
+	generateGraphData(graph.func, graph.vboObj, vertexData);	
 	
 	return true;
 }
@@ -288,7 +289,7 @@ bool gameInit() {
 	graphEquations[0].func = [](double x) { return x * x; };
 	graphEquations[0].color = generateColor(0);
 	std::vector<float, ArenaAllocator<float>> vertexData;
-	generateGraphData(graphEquations[0], vertexData);
+	generateGraphData(graphEquations[0].func, graphEquations[0].vboObj, vertexData);
 	generateAxisData();
 	return true;
 }
@@ -312,13 +313,13 @@ bool gameLogic(float deltaTime, int w, int h) {
 	glLineWidth(4.0f);
 	for (const auto& graph : graphEquations) {
 
-		glBindBuffer(GL_ARRAY_BUFFER, graph.vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.vbo);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
 		// Set the color for the line
 		glm::vec3 color = graph.color;
 		glColor3f(color.x, color.y, color.z); // Set different color for each function
-		glDrawArrays(GL_LINE_STRIP, 0, graph.dataSize / 2); // Draw the line strip
+		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.dataSize / 2); // Draw the line strip
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 	#pragma endregion
@@ -369,9 +370,10 @@ bool gameLogic(float deltaTime, int w, int h) {
 		generateAxisData();
 		arena_reset(&global_arena); // early reset cause this requires alot of vertexes
 		std::vector<float, ArenaAllocator<float>> vertexData;
-		vertexData.reserve(initialNumPoints / std::sqrt(scale));
+		int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale));
+		vertexData.reserve(numPoints);
 		for (GraphEquation& graph : graphEquations) {
-			generateGraphData(graph, vertexData);
+			generateGraphData(graph.func, graph.vboObj, vertexData, numPoints);
 		}
 	}
     #pragma region fullscreen
@@ -398,8 +400,8 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 void gameEnd() {
 	for (const auto& graph : graphEquations) {
-		if (graph.vbo != 0) {
-			glDeleteBuffers(1, &graph.vbo);
+		if (graph.vboObj.vbo != 0) {
+			glDeleteBuffers(1, &graph.vboObj.vbo);
 		}
 	}
 }
