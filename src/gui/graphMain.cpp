@@ -330,32 +330,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 	#pragma endregion
-	#pragma region move with cursor
-	// Move with cursor
-	static glm::ivec2 originMousePos = {0, 0};
-	static glm::vec2 originOrigin = {0, 0};
-
-	if (platform::isRMousePressed()) {
-		originOrigin = origin;
-		// originMousePos = static_cast<glm::vec2>(platform::getRelMousePosition()) / glm::vec2({w, h});
-		originMousePos = platform::getRelMousePosition();
-	}
-	if (platform::isRMouseHeld()) {
-		glm::ivec2 currentMousePos = platform::getRelMousePosition();
-		glm::vec2 delta = 2.0f * static_cast<glm::vec2>(originMousePos - currentMousePos); // Delta in pixels
-		origin = originOrigin + (delta / scale) / glm::vec2({w, h});				// Scale and update the origin
-
-		shouldRecalculateEverything = true;
-	}
-
-	double scrollSize = platform::getScrollSize();
-	if (scrollSize != 0) {
-		scale *= exp(scrollSize / scrollSensitivity);
-		scale = std::clamp(scale, 0.001f, 1000.0f);
-		shouldRecalculateEverything = true;
-	}
-#pragma endregion
-    #pragma region display equations
+    #pragma region display equations widget
 	ImGui::Begin("Equations", nullptr,
 				 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
 	for (size_t i = 0; i < graphEquations.size(); i++) {
@@ -371,6 +346,33 @@ bool gameLogic(float deltaTime, int w, int h) {
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
 	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -5.0f, 5.0f);
 	ImGui::End();
+#pragma endregion
+
+#pragma region move with cursor
+	// Move with cursor
+	static glm::ivec2 originMousePos = {0, 0};
+	static glm::vec2 originOrigin = {0, 0};
+
+	if (platform::isRMousePressed()) {
+		originOrigin = origin;
+		// originMousePos = static_cast<glm::vec2>(platform::getRelMousePosition()) / glm::vec2({w, h});
+		originMousePos = platform::getRelMousePosition();
+	}
+	if (platform::isRMouseHeld()) {
+		glm::ivec2 currentMousePos = platform::getRelMousePosition();
+		glm::vec2 delta = 2.0f * static_cast<glm::vec2>(originMousePos - currentMousePos); // Delta in pixels
+		origin = originOrigin + (delta / scale) / glm::vec2({w, h}); // Scale and update the origin
+
+		shouldRecalculateEverything = true;
+	}
+
+	double scrollSize = platform::getScrollSize();
+	if (scrollSize != 0) {
+		scale *= exp(scrollSize / scrollSensitivity);
+		scale = std::clamp(scale, 0.001f, 1000.0f);
+		shouldRecalculateEverything = true;
+	}
+
 #pragma endregion
 	// reset early 
 	if (shouldRecalculateEverything) {
