@@ -24,7 +24,7 @@ static constexpr float initialNumPoints = 100;
 
 struct VertexBufferObject {
 	GLuint vbo = 0;
-	size_t dataSize = 0;
+	size_t amount = 0;
 };
 struct GraphEquation {
 	std::string input = "";
@@ -190,11 +190,11 @@ void generateAxisData() {
 		vertices.push_back(lineThickness);	// line type
 	}
 
-	grid.dataSize = vertices.size();
+	grid.amount = vertices.size() / 3;
 
 	// Transfer data to GPU (one VBO for all data)
 	glBindBuffer(GL_ARRAY_BUFFER, grid.vbo);
-	glBufferData(GL_ARRAY_BUFFER, grid.dataSize * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
 	// Setup vertex attributes for position and line type
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Position (x, y)
@@ -232,7 +232,7 @@ void generateGraphData(const calcFunc& func, VertexBufferObject& vboObject,
 		glGenBuffers(1, &vboObject.vbo); // Generate the VBO only if it doesn't exist
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, vboObject.vbo);
-	vboObject.dataSize = vertexData.size();
+	vboObject.amount = vertexData.size() / 2;
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 	
 }
@@ -369,7 +369,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	glEnableVertexAttribArray(0); // Enable the position attribute
 	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(2 * sizeof(float)));
 	glEnableVertexAttribArray(1); // Enable the lineType attribute
-	glDrawArrays(GL_LINES, 0, grid.dataSize / 3);
+	glDrawArrays(GL_LINES, 0, grid.amount);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -386,7 +386,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 		// Set the color for the line
 		glm::vec3 color = graph.color;
 		glColor3f(color.x, color.y, color.z); // Set different color for each function
-		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.dataSize / 2); // Draw the line strip
+		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.amount); // Draw the line strip
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 	#pragma endregion
