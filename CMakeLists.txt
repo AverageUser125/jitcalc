@@ -2,6 +2,8 @@
 # delete .out/CmakeFiles folder to make this work
 option(PRODUCTION_BUILD "Make this a production build" OFF)
 
+option(ANALYZE "Enable compiler analyzation" OFF)
+
 # FIXME: just using MSVC macro doesn't work for me
 set(USING_MSVC WIN32)
 
@@ -16,6 +18,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -50,7 +54,7 @@ endif()
 
 if(${USING_MSVC})
     add_compile_options(/W3)
-    add_compile_options(/arch:AVX2 /GA)
+    add_compile_options(/arch:AVX2 /GA /Gy)
     add_compile_options(/wd4624  # Disable the warning for deleted destructors
                         /wd4533  # allow goto to skip variable decleration
                         /wd4244  # implicit conversion from return
@@ -105,21 +109,25 @@ else()
     target_compile_definitions(${PROJECT_NAME} PUBLIC PRODUCTION_BUILD=0) 
 endif()
 
-if(${USING_MSVC})
-    target_compile_options(${PROJECT_NAME} PRIVATE "/analyze")
-	target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC _CRT_SECURE_NO_WARNINGS)
-	set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
-else()
-    target_compile_options(${PROJECT_NAME} PRIVATE 
-    "-fanalyzer" 
-    "-Wno-analyzer-use-of-uninitialized-value" # platform::getTypedInput() raises the unintalized every time
-    )
+if(WIN32)
+    set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
+endif()
+
+if(${ANALYZE})
+    if(${USING_MSVC})
+        # target_compile_options(${PROJECT_NAME} PRIVATE "/analyze")
+	    target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC _CRT_SECURE_NO_WARNINGS)
+    else()
+        target_compile_options(${PROJECT_NAME} PRIVATE 
+        "-fanalyzer" 
+        "-Wno-analyzer-use-of-uninitialized-value" # platform::getTypedInput() raises the unintalized every time
+        )
+    endif()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC GLFW_INCLUDE_NONE) 
 # add .h and .hpp files
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
-
 
 target_link_libraries(${PROJECT_NAME}
     ${LLVM_LIBS}
