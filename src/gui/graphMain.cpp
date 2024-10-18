@@ -93,21 +93,11 @@ static const char* const geometryShaderSource =
 	"\n"
 	"    EndPrimitive();\n"
 	"}\n";
-
-static const char* const fragmentShaderSource = "#version 330 core\n"
-										 "out vec4 outColor;\n"
-										 "void main() {\n"
-										 "	outColor = vec4(0.01f, 0.01f, 0.01f, 1.0f);\n"
-										 "}\n";
-
 #pragma endregion
 #pragma region globals
 static GLint viewportSizeLocation;
 static GLuint shaderProgram;
 static VertexBufferObject grid;
-#define gridThin grids[0]
-#define gridThick grids[1]
-#define gridMiddle grids[2]
 static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
@@ -371,6 +361,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	bool shouldRecalculateEverything = false;
 
 	#pragma region draw grid using shader
+	glColor4f(0.01f, 0.01f, 0.01f, 1.0f);
 	glUseProgram(shaderProgram);
 	glUniform2f(viewportSizeLocation, w, h);
 	glBindBuffer(GL_ARRAY_BUFFER, grid.vbo);
@@ -487,17 +478,12 @@ bool gameInit() {
 	glShaderSource(vertexShader, 1, &shaderSource, nullptr);
 	glCompileShader(vertexShader);
 
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-	glCompileShader(fragmentShader);
-
 	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
 	glShaderSource(geometryShader, 1, &geometryShaderSource, nullptr);
 	glCompileShader(geometryShader);
 
 	shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
 	glAttachShader(shaderProgram, geometryShader);
 	glLinkProgram(shaderProgram);
 	viewportSizeLocation = glGetUniformLocation(shaderProgram, "viewportSize");

@@ -165,7 +165,7 @@ void clearTerminal() {
 							   screen.dwSize.X * screen.dwSize.Y, topLeft, &written);
 	SetConsoleCursorPosition(console, topLeft);
 }
-#elif PLATFORM_LINUX == 1
+#elif PLATFORM_LINUX || PLATFORM_MAC
 void clearTerminal() {
 	std::cout << "\x1B[2J\x1B[H";
 }
@@ -281,7 +281,7 @@ int guiLoop() {
 		return EXIT_FAILURE;
 	}
 	glfwWindowHint(GLFW_SAMPLES, 4);
-#ifdef __APPLE__ 
+#if PLATFORM_MAC 
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
