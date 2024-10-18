@@ -34,7 +34,7 @@ struct GraphEquation {
 };
 #pragma endregion
 #pragma region shaders sources
-static const char* const shaderSource =
+static const char* const fragmentShaderSource =
 	"#version 330 core\n"
 	"\n"
 	"layout(location = 0) in vec2 position;   // Line vertex position (NDC space)\n"
@@ -216,6 +216,7 @@ void generateGraphData(const calcFunc& func, VertexBufferObject& vboObject,
 	// but just doing / scale gives 10000 vertexes, so no
 
 	float step = 2.0f / numPoints; // Step through X space from -1 to 1
+
 	for (int j = 0; j <= numPoints; ++j) {
 		float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
 		float x = (normalizedX / scale) + origin.x; // Apply scaling (zoom) to X
@@ -475,7 +476,7 @@ bool gameInit() {
 	#pragma region shader creation
 	// Not checking for errors here, since they are managed globally already
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &shaderSource, nullptr);
+	glShaderSource(vertexShader, 1, &fragmentShaderSource, nullptr);
 	glCompileShader(vertexShader);
 
 	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
