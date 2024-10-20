@@ -197,23 +197,3 @@ void arena_free(Arena* a) {
 	a->begin = NULL;
 	a->end = NULL;
 }
-
-ArenaSnapshot arena_snapshot(Arena* a) {
-	ArenaSnapshot snapshot{};
-	snapshot.end = a->end;
-	snapshot.count = a->end->count;
-	return snapshot;
-}
-
-void arena_rewind(Arena* a, ArenaSnapshot snapshot) {
-	// Restore the end pointer and count
-	a->end = snapshot.end;
-	a->end->count = snapshot.count;
-
-	// Set the count of all regions after the restored `end` to zero
-	Region* current = a->end->next;
-	while (current != nullptr) {
-		current->count = 0;
-		current = current->next;
-	}
-}

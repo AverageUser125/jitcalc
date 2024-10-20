@@ -41,16 +41,4 @@ template <typename T> class ArenaAllocator {
 	bool operator!=(const ArenaAllocator& other) const noexcept {
 		return !(*this == other);
 	}
-
-	static ArenaSnapshot getSnapshot() {
-		return arena_snapshot(&global_arena);
-	}
-
-	static void restoreSnapshot(const ArenaSnapshot snap) {
-		arena_rewind(&global_arena, snap);
-	}
-
-	static void reset() {
-		arena_reset(&global_arena);
-	}
 };

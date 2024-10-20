@@ -66,6 +66,8 @@ if(${USING_MSVC})
                         /wd28125 # try-excpet for windows functions?
                         /wd6393  # array with 365 is not enough for leap years
                         /wd6326  # comparison of constants
+                        /wd4100  # a function parameter without usage, mostly for callbacks
+                        /wd4245  # narrow and signess casting, common for LLVM
     )
     add_compile_options(/permissive-)
     # Disable CRT secure warnings

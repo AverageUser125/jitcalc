@@ -65,9 +65,6 @@ namespace imguiThemes
     //https://github.com/ocornut/imgui/issues/707
     inline void red()
     {
-
-        auto& io = ImGui::GetIO();
-
         auto& style = ImGui::GetStyle();
         style.FrameRounding = 4.0f;
         style.WindowBorderSize = 0.0f;
