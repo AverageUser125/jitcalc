@@ -52,8 +52,9 @@ else()
 endif()
 
 if(${USING_MSVC})
+    add_compile_options(/arch:AVX2 /GA /Gy /Gw /GF /GS- /GR-) # optimzations
+
     add_compile_options(/W3)
-    add_compile_options(/arch:AVX2 /GA /Gy)
     add_compile_options(/wd4624  # Disable the warning for deleted destructors
                         /wd4533  # allow goto to skip variable decleration
                         /wd4244  # implicit conversion from return
@@ -70,11 +71,11 @@ if(${USING_MSVC})
                         /wd4245  # narrow and signess casting, common for LLVM
     )
     add_compile_options(/permissive-)
-    # Disable CRT secure warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
-    # Show all warnings, just nice to have
-    add_compile_options(-Wall -Wextra)
+    add_compile_options("-mavx2" "-march=native" "-ffunction-sections" "-fdata-sections" "-Wl,--gc-sections")
+
+    add_compile_options(-Wall -Wextra -Wunreachable-code)
     add_compile_options("-Wno-unused-parameter" "-Wno-unused-variable" "-Wno-missing-field-initializers" "-Wno-sign-compare")
 endif()
 
