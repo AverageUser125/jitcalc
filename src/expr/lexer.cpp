@@ -38,8 +38,6 @@ std::optional<std::vector<Token, ArenaAllocator<Token>>> Lexer::lexerLexAllToken
 	if (parenthesesBalance != 0) {
 		return std::nullopt;
 	}
-	tokenArray.push_back({TokenType::tkEOF, ""});
-	tokenArray.push_back({TokenType::tkEOF, ""});
 
 	return tokenArray;
 }
