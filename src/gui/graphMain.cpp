@@ -195,10 +195,6 @@ void generateAxisData() {
 	std::vector<float> allVertices;
 	allVertices.reserve(verticesThin.size() + verticesMedium.size() + verticesThick.size());
 
-	size_t thinOffset = 0;
-	size_t mediumOffset = verticesThin.size();
-	size_t thickOffset = mediumOffset + verticesMedium.size();
-
 	allVertices.insert(allVertices.end(), verticesThin.begin(), verticesThin.end());
 	allVertices.insert(allVertices.end(), verticesMedium.begin(), verticesMedium.end());
 	allVertices.insert(allVertices.end(), verticesThick.begin(), verticesThick.end());

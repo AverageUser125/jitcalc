@@ -54,29 +54,10 @@ endif()
 if(${USING_MSVC})
     add_compile_options(/arch:AVX2 /GA /Gy /Gw /GF /GS- /GR-) # optimzations
 
-    add_compile_options(/W3)
-    add_compile_options(/wd4624  # Disable the warning for deleted destructors
-                        /wd4533  # allow goto to skip variable decleration
-                        /wd4244  # implicit conversion from return
-                        /wd4267  # implicit conversion
-                        /wd4273  # multiple definitions with different dllimport
-                        /wd4146  # unary stuff
-                        /wd4200  # arena.h use non-static size memberm which is a C and not CXX feature
-                        /wd6323  # Use of arithmatic with boolean
-                        /wd6031  # ignoring return values
-                        /wd28125 # try-excpet for windows functions?
-                        /wd6393  # array with 365 is not enough for leap years
-                        /wd6326  # comparison of constants
-                        /wd4100  # a function parameter without usage, mostly for callbacks
-                        /wd4245  # narrow and signess casting, common for LLVM
-    )
     add_compile_options(/permissive-)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
-    add_compile_options("-mavx2" "-march=native" "-ffunction-sections" "-fdata-sections" "-Wl,--gc-sections")
-
-    add_compile_options(-Wall -Wextra -Wunreachable-code)
-    add_compile_options("-Wno-unused-parameter" "-Wno-unused-variable" "-Wno-missing-field-initializers" "-Wno-sign-compare")
+    add_compile_options("-mavx2" "-march=native" "-ffunction-sections" "-fdata-sections" "-Wl,--gc-sections" "-fuse-linker-plugin")
 endif()
 
 project("${PROJECT_NAME}")
@@ -115,11 +96,38 @@ if(WIN32)
     set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
 endif()
 
-if(${ANALYZE})
-    if(${USING_MSVC})
-        # target_compile_options(${PROJECT_NAME} PRIVATE "/analyze")
+
+if(${USING_MSVC})
+    target_compile_options(${PROJECT_NAME} PRIVATE /W4)
+    target_compile_options(${PROJECT_NAME} PRIVATE 
+                        /wd4624  # Disable the warning for deleted destructors
+                        /wd4533  # allow goto to skip variable decleration
+                        /wd4244  # implicit conversion from return
+                        /wd4267  # implicit conversion
+                        /wd4273  # multiple definitions with different dllimport
+                        /wd4146  # unary stuff
+                        /wd6323  # Use of arithmatic with boolean
+                        /wd6031  # ignoring return values
+                        /wd28125 # try-excpet for windows functions?
+                        /wd6393  # array with 365 is not enough for leap years
+                        /wd6326  # comparison of constants
+                        /wd4100  # a function parameter without usage, mostly for callbacks
+                        /wd4245  # narrow and signess casting, common for LLVM
+                        /wd4324  # structure padding is okay
+                        /wd4458  # hiding class members is okay
+    )
+
+    if(${ANALYZE})
+        target_compile_options(${PROJECT_NAME} PRIVATE "/analyze")
 	    target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC _CRT_SECURE_NO_WARNINGS)
-    else()
+    endif()
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE 
+        "-pedantic"
+        "-Wall" "-Wextra" "-Wunreachable-code" 
+        "-Wno-unused-parameter" "-Wno-unused-variable" "-Wno-missing-field-initializers" "-Wno-sign-compare")
+    
+    if(${ANALYZE})
         target_compile_options(${PROJECT_NAME} PRIVATE 
         "-fanalyzer" 
         "-Wno-analyzer-use-of-uninitialized-value" # platform::getTypedInput() raises the unintalized every time
