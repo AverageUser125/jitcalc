@@ -124,10 +124,11 @@ void generateAxisData() {
 	const float size = 2 / scale;
 	// Calculate world spacing based on the number of lines
 	const float worldSpacing = roundToNearestPowerOf2(size / desiredLines);
+	const float invWorldSpacing = 1.0f / worldSpacing;
 
 	// Ensure grid aligns with the real origin (0, 0)
-	float xStart = std::floor(worldMinX / worldSpacing) * worldSpacing;
-	float yStart = std::floor(worldMinY / worldSpacing) * worldSpacing;
+	float xStart = std::floor(worldMinX * invWorldSpacing) * worldSpacing;
+	float yStart = std::floor(worldMinY * invWorldSpacing) * worldSpacing;
 
 	// ensure in NDC range of [-1, 1]
 	if (xStart < -1.0f) {
@@ -155,7 +156,7 @@ void generateAxisData() {
 			verticesThick[1] = screenMinY;
 			verticesThick[2] = ndcX;
 			verticesThick[3] = screenMaxY;
-		} else if (static_cast<int>(x / worldSpacing) % 5 != 0) {
+		} else if (static_cast<int>(x * invWorldSpacing) % 5 != 0) {
 			verticesThin.push_back(ndcX);		// x1
 			verticesThin.push_back(screenMinY); // y1
 			verticesThin.push_back(ndcX);		// x2
@@ -178,7 +179,7 @@ void generateAxisData() {
 			verticesThick[5] = ndcY;
 			verticesThick[6] = screenMaxX;
 			verticesThick[7] = ndcY;
-		} else if (static_cast<int>(y / worldSpacing) % 5 != 0) {
+		} else if (static_cast<int>(y * invWorldSpacing) % 5 != 0) {
 			verticesThin.push_back(screenMinX); // x1
 			verticesThin.push_back(ndcY);		// y1
 			verticesThin.push_back(screenMaxX); // x2
