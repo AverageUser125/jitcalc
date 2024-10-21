@@ -33,71 +33,12 @@ struct GraphEquation {
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 #pragma endregion
-#pragma region shaders sources
-static const char* const fragmentShaderSource =
-	"#version 330 core\n"
-	"\n"
-	"layout(location = 0) in vec2 position;   // Line vertex position (NDC space)\n"
-	"layout(location = 1) in float lineThickness;\n"
-	"\n"
-	"out float fragLineThickness;\n"
-	"\n"
-	"void main() {\n"
-	"    gl_Position = vec4(position, 0.0, 1.0);\n"
-	"    fragLineThickness  = lineThickness;\n"
-	"}\n";
-
-static const char* const geometryShaderSource =
-	"#version 330 core\n"
-	"\n"
-	"layout(lines) in; // Input: lines\n"
-	"layout(triangle_strip, max_vertices = 4) out; // Output: quad vertices\n"
-	"\n"
-	"// Uniform for viewport size\n"
-	"uniform vec2 viewportSize;\n"
-	"\n"
-	"in float fragLineThickness[]; // Line type input from the vertex shader\n"
-	"out float gLineThickness; // Output line type for the fragment shader\n"
-	"\n"
-	"void main() {\n"
-	"    // Get the positions of the input line vertices\n"
-	"    vec2 p0 = gl_in[0].gl_Position.xy; // First vertex position\n"
-	"    vec2 p1 = gl_in[1].gl_Position.xy; // Second vertex position\n"
-	"\n"
-	"    // Calculate the line direction and normal\n"
-	"    vec2 lineDir = normalize(p1 - p0);\n"
-	"    vec2 lineNormal = vec2(-lineDir.y, lineDir.x); // Perpendicular vector\n"
-	"\n"
-	"    float thickness = fragLineThickness[0];\n"
-	"\n"
-	"    // Offset positions to create the quad\n"
-	"    vec2 offset = lineNormal * thickness * 0.5;\n"
-	"\n"
-	"    // offset = offset / viewportSize;\n"
-	"    // Emit vertices for the quad\n"
-	"    gl_Position = vec4(p0 - offset, 0.0, 1.0); // Bottom-left\n"
-	"    gLineThickness = fragLineThickness[0];\n"
-	"    EmitVertex();\n"
-	"\n"
-	"    gl_Position = vec4(p0 + offset, 0.0, 1.0); // Top-left\n"
-	"    gLineThickness = fragLineThickness[0];\n"
-	"    EmitVertex();\n"
-	"\n"
-	"    gl_Position = vec4(p1 - offset, 0.0, 1.0); // Bottom-right\n"
-	"    gLineThickness = fragLineThickness[0];\n"
-	"    EmitVertex();\n"
-	"\n"
-	"    gl_Position = vec4(p1 + offset, 0.0, 1.0); // Top-right\n"
-	"    gLineThickness = fragLineThickness[0];\n"
-	"    EmitVertex();\n"
-	"\n"
-	"    EndPrimitive();\n"
-	"}\n";
-#pragma endregion
 #pragma region globals
 static GLint viewportSizeLocation;
 static GLuint shaderProgram;
 static GLBufferInfo grid;
+static std::array<GLBufferInfo,3> gridVaos;
+static GLuint gridVbo;
 static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
@@ -106,19 +47,16 @@ static float scale = 1;
 
 #pragma endregion
 #pragma region generate VBOS
+
 void generateAxisData() {
 	constexpr auto roundToNearestPowerOf2 = [](float value) { return std::pow(2, std::round(std::log2(value))); };
-	constexpr size_t desiredLines = 65;
+	constexpr int desiredLines = 65;
 
 	// Set screen-space boundaries in NDC (-1 to 1)
 	constexpr float screenMinX = -1.0f;
 	constexpr float screenMaxX = 1.0f;
 	constexpr float screenMinY = -1.0f;
 	constexpr float screenMaxY = 1.0f;
-
-	constexpr float thinThick = 0.003f;
-	constexpr float mediumThick = 0.00575f;
-	constexpr float veryThick = 0.00825f;
 
 	// Convert NDC to function space, factoring in origin and scale
 	const float worldMinX = origin.x + screenMinX / scale;
@@ -143,64 +81,91 @@ void generateAxisData() {
 		yStart += worldSpacing;
 	}
 
-	ArenaAllocator<float> tempAllocator;
-	std::vector<float, ArenaAllocator<float>> vertices(tempAllocator); // Combine all into one VAO
-	vertices.reserve(desiredLines * 4);
+	std::vector<float, ArenaAllocator<float>> verticesThin;
+	std::vector<float, ArenaAllocator<float>> verticesMedium;
+	std::array<float, 8> verticesThick{};
+
+	verticesMedium.reserve(desiredLines * 0.2);
+	verticesThin.reserve(desiredLines * 0.8);
 
 	// Generate vertical lines in world space
+
 	for (float x = xStart; x <= worldMaxX; x += worldSpacing) {
+		// Convert from function space to NDC
 		float ndcX = (x - origin.x) * scale;
 
-		float lineThickness;
 		if (x == 0) {
-			lineThickness = veryThick; // Middle (origin) line is thickest
-		} else if (fmod(x / worldSpacing, 5) == 0) {
-			lineThickness = mediumThick; // Every fifth line is thicker
+			verticesThick[0] = ndcX;
+			verticesThick[1] = screenMinY;
+			verticesThick[2] = ndcX;
+			verticesThick[3] = screenMaxY;
+		} else if (fmod(x / worldSpacing, 5) != 0) {
+			verticesThin.push_back(ndcX);		// x1
+			verticesThin.push_back(screenMinY); // y1
+			verticesThin.push_back(ndcX);		// x2
+			verticesThin.push_back(screenMaxY); // y2
 		} else {
-			lineThickness = thinThick; // All other lines are thin
+			verticesMedium.push_back(ndcX);		 // x1
+			verticesMedium.push_back(screenMinY); // y1
+			verticesMedium.push_back(ndcX);		 // x2
+			verticesMedium.push_back(screenMaxY); // y2
 		}
-
-		// Push both vertex positions and line type
-		vertices.push_back(ndcX);		// x1
-		vertices.push_back(screenMinY); // y1
-		vertices.push_back(lineThickness);	// line type
-		vertices.push_back(ndcX);		// x2
-		vertices.push_back(screenMaxY); // y2
-		vertices.push_back(lineThickness);	// line type
+		
 	}
 
 	// Generate horizontal lines in world space
 	for (float y = yStart; y <= worldMaxY; y += worldSpacing) {
-		float ndcY = (-y + origin.y) * scale;
+		// Correctly calculate ndcY using the origin and scale
+		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
 
-		float lineThickness;
 		if (y == 0) {
-			lineThickness = veryThick; // Middle (origin) line is thickest
-		} else if (fmod(y / worldSpacing, 5) == 0) {
-			lineThickness = mediumThick; // Every fifth line is thicker
+			verticesThick[4] = screenMinX;
+			verticesThick[5] = ndcY;
+			verticesThick[6] = screenMaxX;
+			verticesThick[7] = ndcY;
+		} else if (fmod(y / worldSpacing, 5) != 0) {
+			verticesThin.push_back(screenMinX); // x1
+			verticesThin.push_back(ndcY);		// y1
+			verticesThin.push_back(screenMaxX); // x2
+			verticesThin.push_back(ndcY);		// y2
 		} else {
-			lineThickness = thinThick; // All other lines are thin
+			verticesMedium.push_back(screenMinX); // x1
+			verticesMedium.push_back(ndcY);		 // y1
+			verticesMedium.push_back(screenMaxX); // x2
+			verticesMedium.push_back(ndcY);		 // y2
 		}
-
-		vertices.push_back(screenMinX); // x1
-		vertices.push_back(ndcY);		// y1
-		vertices.push_back(lineThickness);	// line type
-		vertices.push_back(screenMaxX); // x2
-		vertices.push_back(ndcY);		// y2
-		vertices.push_back(lineThickness);	// line type
+		
 	}
+	std::vector<float> allVertices;
+	allVertices.reserve(verticesThin.size() + verticesMedium.size() + verticesThick.size());
 
-	grid.amount = vertices.size() / 3;
+	size_t thinOffset = 0;
+	size_t mediumOffset = verticesThin.size();
+	size_t thickOffset = mediumOffset + verticesMedium.size();
 
-	// Transfer data to GPU (one VBO for all data)
-	glBindBuffer(GL_ARRAY_BUFFER, grid.id);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+	allVertices.insert(allVertices.end(), verticesThin.begin(), verticesThin.end());
+	allVertices.insert(allVertices.end(), verticesMedium.begin(), verticesMedium.end());
+	allVertices.insert(allVertices.end(), verticesThick.begin(), verticesThick.end());
 
-	// Setup vertex attributes for position and line type
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Position (x, y)
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(2 * sizeof(float))); // Line type (thickness)
-	glEnableVertexAttribArray(1);
+	// Store the vertex data and bind VAOs in a loop
+	glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
+	glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float), allVertices.data(), GL_STATIC_DRAW);
+
+	// Data for VAOs (amount of lines and offset in floats)
+	const std::array<std::pair<size_t, size_t>, 3> vaoData = {
+		{{verticesThin.size() / 2, 0},
+		 {verticesMedium.size() / 2, verticesThin.size()},
+		 {verticesThick.size() / 2, verticesThin.size() + verticesMedium.size()}}};
+
+	// Iterate over VAOs and set them up
+	for (int i = 0; i < 3; ++i) {
+		glBindVertexArray(gridVaos[i].id);
+		glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
+		gridVaos[i].amount = vaoData[i].first; // Set the amount
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(vaoData[i].second * sizeof(float)));
+		glEnableVertexAttribArray(0);
+	}
+	glBindVertexArray(0);
 }
 
 // Function to generate vertex data for the graph
@@ -363,18 +328,14 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 	#pragma region draw grid using shader
 	glColor4f(0.01f, 0.01f, 0.01f, 1.0f);
-	glUseProgram(shaderProgram);
-	glUniform2f(viewportSizeLocation, w, h);
-	glBindBuffer(GL_ARRAY_BUFFER, grid.id);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0); // Enable the position attribute
-	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(2 * sizeof(float)));
-	glEnableVertexAttribArray(1); // Enable the lineType attribute
-	glDrawArrays(GL_LINES, 0, grid.amount);
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glUseProgram(0);
+	for (int i = 0; i < 3; i++) {
+		glLineWidth(1.5 * i + 1);
+		glColor3f(0.01f, 0.01f, 0.01f);
+		glEnableVertexAttribArray(0);
+		glBindVertexArray(gridVaos[i].id);
+		glDrawArrays(GL_LINES, 0, gridVaos[i].amount);
+		glDisableVertexAttribArray(0);
+	}
 	#pragma endregion
     #pragma region draw graphs
 	// Draw graph for each function
@@ -471,25 +432,12 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
+	
+	glGenBuffers(1, &gridVbo);
+	for (auto& gridVao : gridVaos) {
+		glGenVertexArrays(1, &gridVao.id);		
+	}
 
-	glGenBuffers(1, &grid.id);
-	#pragma region shader creation
-	// Not checking for errors here, since they are managed globally already
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &fragmentShaderSource, nullptr);
-	glCompileShader(vertexShader);
-
-	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
-	glShaderSource(geometryShader, 1, &geometryShaderSource, nullptr);
-	glCompileShader(geometryShader);
-
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, geometryShader);
-	glLinkProgram(shaderProgram);
-	viewportSizeLocation = glGetUniformLocation(shaderProgram, "viewportSize");
-
-#pragma endregion
 	graphEquations.resize(1);
 	graphEquations[0].input = "x * x";
 	graphEquations[0].func = [](double x) { return x * x; };
