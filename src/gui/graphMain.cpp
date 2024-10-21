@@ -141,8 +141,8 @@ void generateAxisData() {
 	std::vector<float, ArenaAllocator<float>> verticesMedium;
 	std::array<float, 8> verticesThick{};
 
-	verticesMedium.reserve(desiredLines * 0.2);
-	verticesThin.reserve(desiredLines * 0.8);
+	verticesMedium.reserve(desiredLines * 0.2 * 2);
+	verticesThin.reserve(desiredLines * 0.8 * 2);
 
 	// Generate vertical lines in world space
 
@@ -200,7 +200,6 @@ void generateAxisData() {
 	glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
 	glBufferData(GL_ARRAY_BUFFER, totalSize, nullptr, GL_STATIC_DRAW);
 
-	// Upload each part directly into the buffer
 	size_t offset = 0;
 	
 	assert(!verticesThin.empty());
@@ -221,7 +220,6 @@ void generateAxisData() {
 		 {verticesThick.size() / 2, verticesThin.size() + verticesMedium.size()}}};
 	static_assert(gridVaos.size() == vaoData.size());
 
-	// Iterate over VAOs and set them up
 	for (int i = 0; i < gridVaos.size(); ++i) {
 		glBindVertexArray(gridVaos[i].id);
 		glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
