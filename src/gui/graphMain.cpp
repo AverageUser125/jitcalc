@@ -532,8 +532,8 @@ void gameEnd() {
 	// It is just here just incase
 	return;
 
+	/*
 	glUseProgram(0);
-
 	for (const auto& graph : graphEquations) {
 		if (graph.vboObj.id != 0) {
 			glDeleteBuffers(1, &graph.vboObj.id);
@@ -547,6 +547,7 @@ void gameEnd() {
 	glDeleteBuffers(1, &gridVbo);
 
 	glDeleteProgram(shaderProgram);
+	*/
 }
 
 #pragma endregion
