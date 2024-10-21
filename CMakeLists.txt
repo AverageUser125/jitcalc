@@ -115,6 +115,8 @@ if(${USING_MSVC})
                         /wd4245  # narrow and signess casting, common for LLVM
                         /wd4324  # structure padding is okay
                         /wd4458  # hiding class members is okay
+                        # TODO: consider fixing this
+                        /wd4200  # flexiable array members in C++, arena.h 
     )
 
     if(${ANALYZE})
