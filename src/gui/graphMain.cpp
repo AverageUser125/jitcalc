@@ -397,7 +397,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 #pragma endregion
 #pragma region draw graphs
 	// Draw graph for each function
-	glUniform1f(lineThicknessUniform, 10 / 1000.0f);
+	glUniform1f(lineThicknessUniform, 8.0f / 1000.0f);
 	for (const auto& graph : graphEquations) {
 
 		glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.id);
