@@ -21,7 +21,7 @@ JITCompiler::JITCompiler() {
 	powFunction = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "pow", module.get());
 }
 
-double (*JITCompiler::compile(ExpressionNode* expr))(double) {
+calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	assert(module != nullptr);
 
 	// Create a function with a double parameter for the variable

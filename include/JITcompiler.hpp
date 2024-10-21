@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+using calcFunction = double (*)(double);
 
 // Forward declarations of LLVM types
 /*

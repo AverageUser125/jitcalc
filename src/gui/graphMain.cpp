@@ -15,7 +15,6 @@
 #include <vector>
 
 #pragma region defines
-using calcFunc = std::function<double(double)>;
 
 static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
@@ -29,7 +28,7 @@ struct GLBufferInfo {
 
 struct GraphEquation {
 	std::string input = "";
-	calcFunc func = nullptr;
+	calcFunction func = nullptr;
 	GLBufferInfo vboObj;
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
@@ -220,7 +219,7 @@ void generateAxisData() {
 }
 
 // Function to generate vertex data for the graph
-void generateGraphData(const calcFunc& func, GLBufferInfo& vboObject,
+void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 					   std::vector<float, ArenaAllocator<float>>& vertexData,
 					   int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
 	vertexData.reserve(numPoints);
