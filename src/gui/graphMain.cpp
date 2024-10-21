@@ -26,12 +26,14 @@ struct GLBufferInfo {
 	GLuint id = 0;
 	size_t amount = 0;
 };
+
 struct GraphEquation {
 	std::string input = "";
 	calcFunc func = nullptr;
 	GLBufferInfo vboObj;
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
+
 #pragma endregion
 #pragma region shader source
 static const char* const vertexShaderSource =
@@ -78,22 +80,21 @@ static const char* const geometryShaderSource =
 	"\n"
 	"    EndPrimitive();\n"
 	"}\n";
-static const char* const fragmentShaderSource = 
-	"#version 330 core\n"
-	"\n"
-	"uniform vec4 lineColor; // Color uniform\n"
-	"out vec4 fragColor;     // Output color\n"
-	"\n"
-	"void main() {\n"
-	"    fragColor = lineColor; // Set the fragment color\n"
-	"}\n";
+static const char* const fragmentShaderSource = "#version 330 core\n"
+												"\n"
+												"uniform vec4 lineColor; // Color uniform\n"
+												"out vec4 fragColor;     // Output color\n"
+												"\n"
+												"void main() {\n"
+												"    fragColor = lineColor; // Set the fragment color\n"
+												"}\n";
 
 #pragma endregion
 #pragma region globals
 static GLint lineThicknessUniform;
 static GLint lineColorUniform;
 static GLuint shaderProgram;
-static std::array<GLBufferInfo,3> gridVaos;
+static std::array<GLBufferInfo, 3> gridVaos;
 static GLuint gridVbo;
 static std::vector<GraphEquation> graphEquations;
 
@@ -161,12 +162,11 @@ void generateAxisData() {
 			verticesThin.push_back(ndcX);		// x2
 			verticesThin.push_back(screenMaxY); // y2
 		} else {
-			verticesMedium.push_back(ndcX);		 // x1
+			verticesMedium.push_back(ndcX);		  // x1
 			verticesMedium.push_back(screenMinY); // y1
-			verticesMedium.push_back(ndcX);		 // x2
+			verticesMedium.push_back(ndcX);		  // x2
 			verticesMedium.push_back(screenMaxY); // y2
 		}
-		
 	}
 
 	// Generate horizontal lines in world space
@@ -186,11 +186,10 @@ void generateAxisData() {
 			verticesThin.push_back(ndcY);		// y2
 		} else {
 			verticesMedium.push_back(screenMinX); // x1
-			verticesMedium.push_back(ndcY);		 // y1
+			verticesMedium.push_back(ndcY);		  // y1
 			verticesMedium.push_back(screenMaxX); // x2
-			verticesMedium.push_back(ndcY);		 // y2
+			verticesMedium.push_back(ndcY);		  // y2
 		}
-		
 	}
 	std::vector<float> allVertices;
 	allVertices.reserve(verticesThin.size() + verticesMedium.size() + verticesThick.size());
@@ -221,9 +220,9 @@ void generateAxisData() {
 }
 
 // Function to generate vertex data for the graph
-void generateGraphData(const calcFunc& func, GLBufferInfo& vboObject, 
-	std::vector<float, ArenaAllocator<float>>& vertexData,
-	int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
+void generateGraphData(const calcFunc& func, GLBufferInfo& vboObject,
+					   std::vector<float, ArenaAllocator<float>>& vertexData,
+					   int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
 	vertexData.reserve(numPoints);
 	if (func == nullptr) {
 		return;
@@ -242,8 +241,8 @@ void generateGraphData(const calcFunc& func, GLBufferInfo& vboObject,
 		float y = func(x); // Evaluate the function
 
 		float scaledY = (y + origin.y) * scale; // Apply scaling (zoom) to the Y value
-		vertexData.push_back(normalizedX);	// Keep normalized X for OpenGL [-1, 1] range
-		vertexData.push_back(scaledY);	  // Scaled Y
+		vertexData.push_back(normalizedX);		// Keep normalized X for OpenGL [-1, 1] range
+		vertexData.push_back(scaledY);			// Scaled Y
 	}
 
 	if (vboObject.id == 0) {
@@ -252,10 +251,11 @@ void generateGraphData(const calcFunc& func, GLBufferInfo& vboObject,
 	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
 	vboObject.amount = vertexData.size() / 2;
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
-	
 }
+
 #pragma endregion
 #pragma region color gen
+
 float getDoubleRand() {
 	std::mt19937_64 rng;
 	// initialize the random number generator with time-dependent seed
@@ -265,6 +265,7 @@ float getDoubleRand() {
 	std::uniform_real_distribution<double> unif(0, 1);
 	return unif(rng);
 }
+
 // TODO: reconsider the entire method of this function
 glm::vec3 generateColor(int index) {
 	static float rndStart = getDoubleRand();
@@ -307,7 +308,7 @@ glm::vec3 generateColor(int index) {
 
 	// Simple hash function to generate consistent pseudo-random values based on the index
 	static const auto hash = [](int idx) -> float {
-		const int prime = 31;							   // A small prime number
+		const int prime = 31;						 // A small prime number
 		return fmod((idx * prime * rndStart), 1.0f); // Modulo 1 to get a float between 0 and 1
 	};
 
@@ -327,16 +328,18 @@ glm::vec3 generateColor(int index) {
 	// Return the RGB color generated from the HSV values
 	return hsvToRgb(hue, saturation, value);
 }
+
 #pragma endregion
 #pragma region set function and color
+
 bool setGraph(GraphEquation& graph, int index) {
 	{
 		// the tokens have a string_view to a member string of the lexer
 		// therfore you cannot call the destructor on the lexer before the parser has finished
 		Lexer lexer(graph.input);
 		std::optional<std::vector<Token, ArenaAllocator<Token>>> tokenArrayOpt = lexer.lexerLexAllTokens();
-			// lexer.lexerDebugPrintArray(*tokenArrayOpt);
-	
+		// lexer.lexerDebugPrintArray(*tokenArrayOpt);
+
 
 		if (!tokenArrayOpt.has_value()) {
 			return false;
@@ -356,12 +359,14 @@ bool setGraph(GraphEquation& graph, int index) {
 
 	graph.color = generateColor(index);
 	std::vector<float, ArenaAllocator<float>> vertexData;
-	generateGraphData(graph.func, graph.vboObj, vertexData);	
-	
+	generateGraphData(graph.func, graph.vboObj, vertexData);
+
 	return true;
 }
+
 #pragma endregion
 #pragma region imGui callbacks
+
 // Custom callback function to call setGraph when input changes
 int inputTextCallback(ImGuiInputTextCallbackData* data) {
 	size_t index = reinterpret_cast<size_t>(data->UserData) - 1;
@@ -371,14 +376,16 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 	}
 	return 0;
 }
+
 #pragma endregion
 #pragma region mainSuff
+
 bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
 
 	bool shouldRecalculateEverything = false;
 
-	#pragma region draw grid using shader
+#pragma region draw grid using shader
 	glUniform4f(lineColorUniform, 0.1f, 0.1f, 0.1f, 1.0f);
 	for (int i = 0; i < 3; i++) {
 		glUniform1f(lineThicknessUniform, (2 * i + 1) / 1000.0f);
@@ -387,8 +394,8 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glDrawArrays(GL_LINES, 0, gridVaos[i].amount);
 		glDisableVertexAttribArray(0);
 	}
-	#pragma endregion
-    #pragma region draw graphs
+#pragma endregion
+#pragma region draw graphs
 	// Draw graph for each function
 	glUniform1f(lineThicknessUniform, 10 / 1000.0f);
 	for (const auto& graph : graphEquations) {
@@ -396,20 +403,19 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.id);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
-		glUniform4f(lineColorUniform, graph.color.x, graph.color.y, graph.color.z, 1.0f); // Set different color for each function
+		glUniform4f(lineColorUniform, graph.color.x, graph.color.y, graph.color.z,
+					1.0f);									 // Set different color for each function
 		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.amount); // Draw the line strip
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
-	// glUseProgram(0);
-	#pragma endregion
-    #pragma region display equations widget
+// glUseProgram(0);
+#pragma endregion
+#pragma region display equations widget
 	ImGui::Begin("Equations", nullptr,
 				 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
 	for (size_t i = 0; i < graphEquations.size(); i++) {
-		ImGui::InputText(("##" + std::to_string(i)).c_str(), 
-			&graphEquations[i].input, 
-			ImGuiInputTextFlags_CallbackEdit, inputTextCallback,
-			(void*)(i + 1));
+		ImGui::InputText(("##" + std::to_string(i)).c_str(), &graphEquations[i].input, ImGuiInputTextFlags_CallbackEdit,
+						 inputTextCallback, (void*)(i + 1));
 	}
 	if (ImGui::Button("add equation", {100.0f, 25.0f})) {
 		graphEquations.resize(graphEquations.size() + 1);
@@ -420,7 +426,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	ImGui::End();
 #pragma endregion
 
-    #pragma region move with cursor
+#pragma region move with cursor
 	// Move with cursor
 	static glm::ivec2 originMousePos = {0, 0};
 	static glm::vec2 originOrigin = {0, 0};
@@ -446,7 +452,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	}
 
 #pragma endregion
-	// reset early 
+	// reset early
 	if (shouldRecalculateEverything) {
 		generateAxisData();
 		arena_reset(&global_arena); // early reset cause this requires alot of vertexes
@@ -455,9 +461,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 			generateGraphData(graph.func, graph.vboObj, vertexData);
 		}
 	}
-    
-    #pragma region fullscreen
-	/*
+
+#pragma region fullscreen
+/*
 	if (platform::isButtonPressedOn(platform::Button::F11)) {
 		if (platform::isFullScreen()) {
 			platform::setFullScreen(false);
@@ -466,14 +472,14 @@ bool gameLogic(float deltaTime, int w, int h) {
 		}
 	}
 	*/
-    #pragma endregion
+#pragma endregion
 
-	#pragma region clearTerminal
+#pragma region clearTerminal
 	if (platform::isButtonPressedOn(platform::Button::D)) {
 		platform::clearTerminal();
 	}
 
-	#pragma endregion
+#pragma endregion
 
 
 	arena_reset(&global_arena);
@@ -482,16 +488,16 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
-	
+
 	glGenBuffers(1, &gridVbo);
 	for (auto& gridVao : gridVaos) {
-		glGenVertexArrays(1, &gridVao.id);		
+		glGenVertexArrays(1, &gridVao.id);
 	}
-	#pragma region shader init
+#pragma region shader init
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
 	glCompileShader(vertexShader);
-	
+
 	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
 	glShaderSource(geometryShader, 1, &geometryShaderSource, nullptr);
 	glCompileShader(geometryShader);
@@ -499,7 +505,7 @@ bool gameInit() {
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
 	glCompileShader(fragmentShader);
-	
+
 	shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, geometryShader);
 	glAttachShader(shaderProgram, vertexShader);
@@ -512,7 +518,7 @@ bool gameInit() {
 
 	lineThicknessUniform = glGetUniformLocation(shaderProgram, "lineThickness");
 	lineColorUniform = glGetUniformLocation(shaderProgram, "lineColor");
-	#pragma endregion
+#pragma endregion
 
 	graphEquations.resize(1);
 	graphEquations[0].input = "x * x";

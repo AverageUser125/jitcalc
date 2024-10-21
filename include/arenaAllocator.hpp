@@ -9,13 +9,13 @@ template <typename T> class ArenaAllocator {
 	using value_type = T;
 	using size_type = std::size_t;
 	using difference_type = std::ptrdiff_t;
-	
+
 	// Default constructor using the global static Arena
-	ArenaAllocator() noexcept {
-	};
+	ArenaAllocator() noexcept {};
 
 	~ArenaAllocator() noexcept {
 	}
+
 	// Rebind allocator to another type
 	template <typename U> struct rebind {
 		using other = ArenaAllocator<U>;

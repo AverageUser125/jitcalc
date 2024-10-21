@@ -16,11 +16,12 @@ enum class TokenType {
 	Star,
 	Slash,
 	Caret,
-	OpenParenthesis ,
+	OpenParenthesis,
 	CloseParenthesis,
 	Comma,
 	MAX
 };
+
 struct Token {
 	TokenType type{};
 	std::string_view lexme;
@@ -36,8 +37,8 @@ struct Lexer {
 
 	std::optional<std::vector<Token, ArenaAllocator<Token>>> lexerLexAllTokens();
 
-	inline Token lexerMakeToken(TokenType type);	
-	
+	inline Token lexerMakeToken(TokenType type);
+
 	// Template function that accepts multiple conditions and checks them in the loop
 	template <typename... Conditions> inline void lexerAdvanceTillConditionFail(Conditions... conditions) {
 		// Lambda to check all conditions
@@ -57,4 +58,3 @@ struct Lexer {
 	static void lexerDebugPrintArray(const std::vector<Token>& tokenArray);
 	static void lexerDebugPrintToken(Token token);
 };
-

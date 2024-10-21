@@ -59,11 +59,11 @@ void free_region(Region* r) {
 
 Region* new_region(size_t capacity) {
 	SIZE_T size_bytes = sizeof(Region) + sizeof(uintptr_t) * capacity;
-	Region* r = (Region*)VirtualAllocEx(GetCurrentProcess(),		 /* Allocate in current process address space */
-							   NULL,					 /* Unknown position */
-							   size_bytes,				 /* Bytes to allocate */
-							   MEM_COMMIT | MEM_RESERVE, /* Reserve and commit allocated page */
-							   PAGE_READWRITE			 /* Permissions ( Read/Write )*/
+	Region* r = (Region*)VirtualAllocEx(GetCurrentProcess(),	  /* Allocate in current process address space */
+										NULL,					  /* Unknown position */
+										size_bytes,				  /* Bytes to allocate */
+										MEM_COMMIT | MEM_RESERVE, /* Reserve and commit allocated page */
+										PAGE_READWRITE			  /* Permissions ( Read/Write )*/
 	);
 	if (INV_HANDLE(r)) {
 		ARENA_ASSERT(0 && "VirtualAllocEx() failed.");

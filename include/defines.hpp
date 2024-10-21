@@ -53,7 +53,7 @@
 #endif
 }
 
-#if defined(__cplusplus)					// Check if compiling in C++
+#if defined(__cplusplus)		   // Check if compiling in C++
 #if COMPILER_GCC || COMPILER_CLANG // For GCC/Clang
 #define RESTRICT __restrict__
 #elif COMPILER_MSVC // For MSVC

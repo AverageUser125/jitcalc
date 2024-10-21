@@ -66,7 +66,7 @@ struct Region {
 
 struct Arena {
 	Region* begin = nullptr;
-	Region *end = nullptr;
+	Region* end = nullptr;
 };
 
 struct ArenaSnapshot {

@@ -21,7 +21,6 @@ JITCompiler::JITCompiler() {
 	powFunction = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "pow", module.get());
 }
 
-
 double (*JITCompiler::compile(ExpressionNode* expr))(double) {
 	assert(module != nullptr);
 
@@ -110,8 +109,7 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 	case NodeType::Variable: {
 		return variable; // Return the variable (the function's argument)
 	}
-	case NodeType::Error:
-	{
+	case NodeType::Error: {
 		assert(0 && "ERROR WAS FOUND!, YOU PROBABLY FORGOT TO CHECK FOR IT");
 		break;
 	}

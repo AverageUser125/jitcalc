@@ -14,6 +14,6 @@ int main() {
 
 	// The OS frees the memory when the program ends already
 	// arena_free(&global_arena);
-	
+
 	return returnCode;
 }

@@ -42,8 +42,8 @@ ExpressionNode* Parser::parseIdent() {
 	} else if (curr.lexme == "pi") {
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Number;
-		ret->number = pi;	
-	} else if (curr.lexme == "x"){
+		ret->number = pi;
+	} else if (curr.lexme == "x") {
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Variable;
 	} else {
@@ -58,50 +58,49 @@ ExpressionNode* Parser::parseIdent() {
 ExpressionNode* Parser::parserParsePrefixExpr() {
 	ExpressionNode* ret = nullptr;
 
- 	switch (curr.type) {
-		case TokenType::Number: {
-			ret = parserParseNumber();
-			break;
-		}
-		case TokenType::Ident: {
-			ret = parseIdent();
-			break;
-		}
-		case TokenType::OpenParenthesis: {
+	switch (curr.type) {
+	case TokenType::Number: {
+		ret = parserParseNumber();
+		break;
+	}
+	case TokenType::Ident: {
+		ret = parseIdent();
+		break;
+	}
+	case TokenType::OpenParenthesis: {
+		parserAdvance();
+		ret = parserParseExpression(Precedence::MIN);
+		if (curr.type == TokenType::CloseParenthesis) {
 			parserAdvance();
-			ret = parserParseExpression(Precedence::MIN);
-			if (curr.type == TokenType::CloseParenthesis) {
-				parserAdvance();
-			}
-			break;
 		}
-		case TokenType::Plus: {
-			parserAdvance();
-			ret = nodePool.allocate(1);
-			ret->type = NodeType::Positive;
-			ret->unary.operand = parserParsePrefixExpr();
-			break;
-		}
-		case TokenType::Minus: {
-			parserAdvance();
-			ret = nodePool.allocate(1);
-			ret->type = NodeType::Negative;
-			ret->unary.operand = parserParsePrefixExpr();
-			break;
-		}
-		default: {
+		break;
+	}
+	case TokenType::Plus: {
+		parserAdvance();
+		ret = nodePool.allocate(1);
+		ret->type = NodeType::Positive;
+		ret->unary.operand = parserParsePrefixExpr();
+		break;
+	}
+	case TokenType::Minus: {
+		parserAdvance();
+		ret = nodePool.allocate(1);
+		ret->type = NodeType::Negative;
+		ret->unary.operand = parserParsePrefixExpr();
+		break;
+	}
+	default: {
 
- 			ret = nodePool.allocate(1);
-			ret->type = NodeType::Error;
-			hasError = true;
-			return ret;
-		}
+		ret = nodePool.allocate(1);
+		ret->type = NodeType::Error;
+		hasError = true;
+		return ret;
+	}
 	}
 	// support implicit multiplication such as:
 	// 5(1 + 5), which means 5*(1+5)
 	// 5pi, which means 5*pi
-	if (curr.type == TokenType::Number || curr.type == TokenType::Ident ||
-		curr.type == TokenType::OpenParenthesis) {
+	if (curr.type == TokenType::Number || curr.type == TokenType::Ident || curr.type == TokenType::OpenParenthesis) {
 		ExpressionNode* new_ret = nodePool.allocate(1);
 		new_ret->type = NodeType::Mul;
 		new_ret->binary.left = ret;
@@ -111,7 +110,7 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 	return ret;
 }
 
-ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode *left) {
+ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode* left) {
 	ExpressionNode* ret = nodePool.allocate(1);
 
 	switch (tk.type) {
@@ -182,11 +181,11 @@ void Parser::parserDebugDumpTree(ExpressionNode* node, size_t indent) {
 	case NodeType::Error:
 		printf("Error\n");
 		break;
-	
+
 	case NodeType::Variable: {
 		printf("X\n");
 	} break;
-	
+
 	case NodeType::Number: {
 		printf("%f\n", node->number);
 	} break;
