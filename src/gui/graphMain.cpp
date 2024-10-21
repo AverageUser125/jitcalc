@@ -189,7 +189,8 @@ void generateAxisData() {
 			verticesMedium.push_back(screenMaxX); // x2
 			verticesMedium.push_back(ndcY);		  // y2
 		}
-	} // Calculate total size of the buffer
+	} 
+	
 	const size_t thinSize = verticesThin.size() * sizeof(float);
 	const size_t mediumSize = verticesMedium.size() * sizeof(float);
 	const size_t thickSize = verticesThick.size() * sizeof(float);
@@ -201,14 +202,16 @@ void generateAxisData() {
 
 	// Upload each part directly into the buffer
 	size_t offset = 0;
-	if (!verticesThin.empty()) {
-		glBufferSubData(GL_ARRAY_BUFFER, offset, thinSize, verticesThin.data());
-		offset += thinSize;
-	}
-	if (!verticesMedium.empty()) {
-		glBufferSubData(GL_ARRAY_BUFFER, offset, mediumSize, verticesMedium.data());
-		offset += mediumSize;
-	}
+	
+	assert(!verticesThin.empty());
+	glBufferSubData(GL_ARRAY_BUFFER, offset, thinSize, verticesThin.data());
+	offset += thinSize;
+
+	assert(!verticesMedium.empty());
+	glBufferSubData(GL_ARRAY_BUFFER, offset, mediumSize, verticesMedium.data());
+	offset += mediumSize;
+	
+	assert(!verticesThick.empty());
 	glBufferSubData(GL_ARRAY_BUFFER, offset, thickSize, verticesThick.data());
 
 	// Data for VAOs (amount of lines and offset in floats)
@@ -216,9 +219,10 @@ void generateAxisData() {
 		{{verticesThin.size() / 2, 0},
 		 {verticesMedium.size() / 2, verticesThin.size()},
 		 {verticesThick.size() / 2, verticesThin.size() + verticesMedium.size()}}};
+	static_assert(gridVaos.size() == vaoData.size());
 
 	// Iterate over VAOs and set them up
-	for (int i = 0; i < 3; ++i) {
+	for (int i = 0; i < gridVaos.size(); ++i) {
 		glBindVertexArray(gridVaos[i].id);
 		glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
 		gridVaos[i].amount = vaoData[i].first; // Set the amount
