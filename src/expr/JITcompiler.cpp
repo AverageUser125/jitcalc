@@ -38,10 +38,13 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	// Create an optimizer pass manager
 	llvm::legacy::FunctionPassManager fpm(module.get());
 
-	// The only optimization that does something, I just don't know what exactly
+	// TODO: Add the following passes
+	// GlobalOptPass [module] (local_unamed_addr)
+	// InstCombinePass [func] ( 1 + x - 0.5 converts to x - 0.5)
 	fpm.add((llvm::Pass*)llvm::createTailCallEliminationPass());
 	fpm.add((llvm::Pass*)llvm::createEarlyCSEPass());
-
+	fpm.add((llvm::Pass*)llvm::createInstSimplifyLegacyPass());
+	
 	// Run the optimizer on the function
 	fpm.doInitialization();
 	fpm.run(*func);
