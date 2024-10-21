@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 using calcFunction = double (*)(double);
 
 // Forward declarations of LLVM types
@@ -27,9 +28,10 @@ class JITCompiler {
 
   private:
 	llvm::Value* generateCode(ExpressionNode* expr, llvm::Value* variable);
-	llvm::Function* powFunction;
+	void createExternalFunction(const std::string_view name);
 
 	std::unique_ptr<llvm::LLVMContext> context;
 	std::unique_ptr<llvm::IRBuilder<>> builder;
 	std::unique_ptr<llvm::Module> module;
+	std::unordered_map<std::string_view, llvm::Function*> createdFunctions;
 };

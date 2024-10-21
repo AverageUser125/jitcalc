@@ -1,7 +1,13 @@
 #include "parser.hpp"
+#include <iostream>
 
 constexpr double pi = 3.14159265358979323846;
 constexpr double E = 2.718281828459045235360;
+
+// all functions from math.h
+const std::unordered_set<std::string_view> Parser::functionSet = {
+	"sin",	 "cos",	  "tan", "pow",	  "acos", "asin", "atan", "atan2", "cosh",	"sinh", "tanh", "exp",
+	"frexp", "ldexp", "log", "log10", "modf", "sqrt", "ceil", "fabs",  "floor", "fmod", "round"};
 
 Parser::Parser(const std::vector<Token, ArenaAllocator<Token>>& arr) : tokenArray(arr), tokenIndex(0) {
 	if (!tokenArray.empty()) {
@@ -32,10 +38,43 @@ ExpressionNode* Parser::parserParseNumber() {
 	return ret;
 }
 
+ExpressionNode* Parser::parseFunctionCall() {
+	ExpressionNode* ret = nodePool.allocate(1);
+	ret->type = NodeType::Function;
+	ret->function.name = curr.lexme; // Store the function name
+
+	parserAdvance(); // Advance past the function name
+
+	if (curr.type == TokenType::OpenParenthesis) {
+		parserAdvance(); // Advance past the '('
+		// Parse the argument (if any) within the parentheses
+		ret->function.argument = parserParseExpression(Precedence::MIN);
+
+		if (curr.type == TokenType::CloseParenthesis) {
+			// the parseIdent already does this
+			// parserAdvance(); // Advance past the ')'
+		} else {
+			// Handle error: mismatched parentheses
+			ret->type = NodeType::Error;
+			hasError = true;
+		}
+	} else {
+		// Handle error: expected '(' after function name
+		ret->type = NodeType::Error;
+		hasError = true;
+	}
+
+	return ret;
+}
+
 ExpressionNode* Parser::parseIdent() {
 	ExpressionNode* ret = nullptr;
-
-	if (curr.lexme == "e") {
+	
+	if (functionSet.find(curr.lexme) != functionSet.end()) {
+		ret = parseFunctionCall(); // Parse as function call
+	}
+	#pragma region constants
+	else if (curr.lexme == "e") {
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Number;
 		ret->number = E;
@@ -43,6 +82,7 @@ ExpressionNode* Parser::parseIdent() {
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Number;
 		ret->number = pi;
+	#pragma endregion
 	} else if (curr.lexme == "x") {
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Variable;
@@ -59,12 +99,12 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 	ExpressionNode* ret = nullptr;
 
 	switch (curr.type) {
-	case TokenType::Number: {
-		ret = parserParseNumber();
-		break;
-	}
 	case TokenType::Ident: {
 		ret = parseIdent();
+		break;
+	}
+	case TokenType::Number: {
+		ret = parserParseNumber();
 		break;
 	}
 	case TokenType::OpenParenthesis: {
@@ -90,7 +130,6 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 		break;
 	}
 	default: {
-
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Error;
 		hasError = true;
@@ -229,5 +268,9 @@ void Parser::parserDebugDumpTree(ExpressionNode* node, size_t indent) {
 		parserDebugDumpTree(node->binary.left, indent + 1);
 		parserDebugDumpTree(node->binary.right, indent + 1);
 	} break;
+	case NodeType::Function: {
+		printf("%.*s:\n", static_cast<int>(node->function.name.size()), node->function.name.data());
+		parserDebugDumpTree(node->function.argument, indent + 1);
+	}
 	}
 }

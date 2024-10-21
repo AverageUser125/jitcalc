@@ -1,7 +1,11 @@
 #pragma once
-#include "lexer.hpp"
-#include <vector>
 #include "arenaAllocator.hpp"
+#include "lexer.hpp"
+#include <string>
+#include <utility>
+#include <vector>
+#include <unordered_set>
+#include <string_view>
 
 enum class Precedence {
 	MIN,
@@ -41,7 +45,13 @@ enum class NodeType {
 	Sub,
 	Mul,
 	Div,
-	Pow
+	Pow,
+	Function
+};
+
+struct FunctionInfo {
+	std::string name;
+	;
 };
 
 struct ExpressionNode {
@@ -58,6 +68,11 @@ struct ExpressionNode {
 			ExpressionNode* left;
 			ExpressionNode* right;
 		} binary;
+
+		struct {
+			std::string_view name;
+			ExpressionNode* argument;
+		} function;
 	};
 };
 
@@ -80,6 +95,10 @@ typedef struct Parser {
 	ExpressionNode* parserParsePrefixExpr();
 	ExpressionNode* parserParseExpression(Precedence curr_operator_prec = Precedence::MIN);
 	ExpressionNode* parserParseInfixExpr(Token tk, ExpressionNode* left);
+	ExpressionNode* parseFunctionCall();
 
 	static void parserDebugDumpTree(ExpressionNode* node, size_t indent = 0);
+
+	const static std::unordered_set<std::string_view> functionSet;
+
 } Parser;

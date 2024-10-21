@@ -17,13 +17,6 @@ JITCompiler::JITCompiler() {
 	context = std::make_unique<llvm::LLVMContext>();
 	module = std::make_unique<llvm::Module>("calculator_module", *context);
 	builder = std::make_unique<llvm::IRBuilder<>>(*context);
-	auto funcType =
-		llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy(), builder->getDoubleTy()}, false);
-	powFunction = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "pow", module.get());
-	powFunction->addFnAttr(llvm::Attribute::ReadNone); // or Attribute::ReadOnly if it only reads
-	powFunction->addFnAttr(llvm::Attribute::NoUnwind); // Indicate it does not throw exceptions
-	powFunction->addFnAttr(
-		llvm::Attribute::AlwaysInline); // Suggest the optimizer to inline this function, if beneficial
 }
 
 calcFunction JITCompiler::compile(ExpressionNode* expr) {
@@ -99,6 +92,7 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 		return builder->CreateFDiv(left, right, "divtmp");
 	}
 	case NodeType::Pow: {
+		createExternalFunction("pow");
 		llvm::Value* left = generateCode(expr->binary.left, variable);
 		llvm::Value* right = generateCode(expr->binary.right, variable);
 
@@ -123,12 +117,17 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 			llvm::Value* outerExponent = right; // Use the exponent from the current Pow
 			llvm::Value* newExponent = builder->CreateFMul(innerExponent, outerExponent, "exponentProduct");
 
-			return builder->CreateCall(powFunction, {innerBase, newExponent}, "powtmp");
+			return builder->CreateCall(createdFunctions.at("pow"), {innerBase, newExponent}, "powtmp");
 		}
-		return builder->CreateCall(powFunction, {left, right}, "powtmp");
+		return builder->CreateCall(createdFunctions.at("pow"), {left, right}, "powtmp");
 	}
 	case NodeType::Variable: {
 		return variable; // Return the variable (the function's argument)
+	}
+	case NodeType::Function: {
+		createExternalFunction(expr->function.name);
+		llvm::Value* argValue = generateCode(expr->function.argument, variable);
+		return builder->CreateCall(createdFunctions.at(expr->function.name), {argValue}, "funccalltmp");
 	}
 	case NodeType::Error: {
 		assert(0 && "ERROR WAS FOUND!, YOU PROBABLY FORGOT TO CHECK FOR IT");
@@ -140,4 +139,14 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 	}
 	// llvm_unreachable();
 	unreachable();
+}
+
+
+void JITCompiler::createExternalFunction(const std::string_view name) {
+	// Check if the function has already been created
+	if (createdFunctions.find(name) == createdFunctions.end()) {
+		auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy()}, false);
+		llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, name, module.get());
+		createdFunctions[name] = func; // Mark this function as created
+	}
 }
