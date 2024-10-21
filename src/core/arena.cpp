@@ -42,6 +42,7 @@ Region* new_region(size_t capacity) {
 void free_region(Region* r) {
 	size_t size_bytes = sizeof(Region) + sizeof(uintptr_t) * r->capacity;
 	int ret = munmap(r, size_bytes);
+	(void)ret;
 	ARENA_ASSERT(ret == 0);
 }
 
