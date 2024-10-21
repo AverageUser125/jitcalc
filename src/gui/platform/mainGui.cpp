@@ -287,6 +287,9 @@ int guiLoop() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #endif
+#if PRODUCTION_BUILD == 0
+	glfwWindowHint(GLFW_CONTEXT_DEBUG, GLFW_TRUE);
+#endif
 	wind = glfwCreateWindow(WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT, "Graph calculator", nullptr, nullptr);
 	if (!wind) {
 		std::cerr << "Failed to create GLFW window" << std::endl;
@@ -326,8 +329,10 @@ int guiLoop() {
 		std::cerr << "Failed to initialize GLAD" << std::endl;
 		return EXIT_FAILURE;
 	}
+#if PRODUCTION_BUILD == 0
 	// enable error reporting
 	enableReportGlErrors();
+#endif
 	#pragma endregion
 
 #pragma region imgui init
