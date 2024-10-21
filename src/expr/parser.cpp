@@ -72,9 +72,7 @@ ExpressionNode* Parser::parseIdent() {
 	
 	if (functionSet.find(curr.lexme) != functionSet.end()) {
 		ret = parseFunctionCall(); // Parse as function call
-	}
-	#pragma region constants
-	else if (curr.lexme == "e") {
+	} else if (curr.lexme == "e") {
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Number;
 		ret->number = E;
@@ -82,7 +80,6 @@ ExpressionNode* Parser::parseIdent() {
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Number;
 		ret->number = pi;
-	#pragma endregion
 	} else if (curr.lexme == "x") {
 		ret = nodePool.allocate(1);
 		ret->type = NodeType::Variable;

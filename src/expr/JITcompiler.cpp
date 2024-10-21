@@ -47,12 +47,6 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	fpm.run(*func);
 	fpm.doFinalization();
 
-	{ 
-		std::string llvmIR;
-		llvm::raw_string_ostream ros(llvmIR);
-		module->print(ros, nullptr, false, true);
-		std::cout << llvmIR << '\n';
-	}
 	// Create the JIT execution engine
 	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
 	if (!engine) {
@@ -154,6 +148,9 @@ void JITCompiler::createExternalFunction(const std::string_view name) {
 	if (createdFunctions.find(name) == createdFunctions.end()) {
 		auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy()}, false);
 		llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, name, module.get());
+		func->addFnAttr(llvm::Attribute::ReadNone);
+		func->addFnAttr(llvm::Attribute::NoUnwind);
+		func->addFnAttr(llvm::Attribute::AlwaysInline);
 		createdFunctions[name] = func; // Mark this function as created
 	}
 }

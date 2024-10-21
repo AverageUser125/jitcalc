@@ -49,11 +49,6 @@ enum class NodeType {
 	Function
 };
 
-struct FunctionInfo {
-	std::string name;
-	;
-};
-
 struct ExpressionNode {
 	NodeType type;
 
