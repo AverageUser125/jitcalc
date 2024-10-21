@@ -42,17 +42,10 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	llvm::Value* result = generateCode(expr, variable);
 	builder->CreateRet(result);
 
-	{
-		std::string llvmIR;
-		llvm::raw_string_ostream rso(llvmIR);
-		module->print(rso, nullptr);
-		std::cout << "Generated LLVM IR:\n" << llvmIR << std::endl;
-	}
-
 	// Create an optimizer pass manager
 	llvm::legacy::FunctionPassManager fpm(module.get());
 
-	// Add the remove unused variables pass (dead code elimination)
+	// The only optimization that does something, I just don't know what exactly
 	fpm.add((llvm::Pass*)llvm::createTailCallEliminationPass());
 
 	// Run the optimizer on the function
@@ -60,12 +53,6 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	fpm.run(*func);
 	fpm.doFinalization();
 
-	{
-		std::string llvmIR;
-		llvm::raw_string_ostream rso(llvmIR);
-		module->print(rso, nullptr);
-		std::cout << "Generated LLVM IR:\n" << llvmIR << std::endl;
-	}
 	// Create the JIT execution engine
 	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
 	if (!engine) {
