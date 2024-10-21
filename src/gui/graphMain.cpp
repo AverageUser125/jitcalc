@@ -527,6 +527,11 @@ bool gameInit() {
 }
 
 void gameEnd() {
+
+	// there is no reasone to free all of these since the OS does this for us
+	// It is just here just incase
+	return;
+
 	glUseProgram(0);
 
 	for (const auto& graph : graphEquations) {

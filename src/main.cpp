@@ -11,7 +11,9 @@ int main() {
 
 	arena_init(&global_arena);
 	int returnCode = guiLoop();
-	arena_free(&global_arena);
+
+	// The OS frees the memory when the program ends already
+	// arena_free(&global_arena);
 	
 	return returnCode;
 }
