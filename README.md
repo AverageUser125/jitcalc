@@ -16,8 +16,8 @@ Additionally will graph the equation you put in and will let you zoom out and mo
 - ImGUI is used to display the equation widget
 
 # Disclamer
-This may, or will, absolutely fail horribly and there us zero
-guarante it will even compile nor run.
+This may, or will, absolutely fail horribly and there is zero
+guarantee it will compile nor run.
 
 # Credits
 - https://github.com/PixelRifts/math-expr-evaluator
