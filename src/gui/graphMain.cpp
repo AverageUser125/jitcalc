@@ -33,10 +33,66 @@ struct GraphEquation {
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 #pragma endregion
+#pragma region shader source
+static const char* const vertexShaderSource =
+	"#version 330 core\n"
+	"\n"
+	"layout(location = 0) in vec2 position; // Vertex position\n"
+	"\n"
+	"void main() {\n"
+	"    gl_Position = vec4(position, 0.0, 1.0); // Pass through to clip space\n"
+	"}\n";
+
+static const char* const geometryShaderSource =
+	"#version 330 core\n"
+	"\n"
+	"layout(lines) in; // Input: lines\n"
+	"layout(triangle_strip, max_vertices = 4) out; // Output: quad vertices\n"
+	"\n"
+	"uniform float lineThickness; // Uniform line thickness\n"
+	"\n"
+	"void main() {\n"
+	"    // Get the positions of the input line vertices\n"
+	"    vec2 p0 = gl_in[0].gl_Position.xy; // First vertex position\n"
+	"    vec2 p1 = gl_in[1].gl_Position.xy; // Second vertex position\n"
+	"\n"
+	"    // Calculate the line direction and normal\n"
+	"    vec2 lineDir = normalize(p1 - p0);\n"
+	"    vec2 lineNormal = vec2(-lineDir.y, lineDir.x); // Perpendicular vector\n"
+	"\n"
+	"    // Offset positions to create the quad\n"
+	"    vec2 offset = lineNormal * lineThickness * 0.5;\n"
+	"\n"
+	"    // Emit vertices for the quad\n"
+	"    gl_Position = vec4(p0 - offset, 0.0, 1.0); // Bottom-left\n"
+	"    EmitVertex();\n"
+	"\n"
+	"    gl_Position = vec4(p0 + offset, 0.0, 1.0); // Top-left\n"
+	"    EmitVertex();\n"
+	"\n"
+	"    gl_Position = vec4(p1 - offset, 0.0, 1.0); // Bottom-right\n"
+	"    EmitVertex();\n"
+	"\n"
+	"    gl_Position = vec4(p1 + offset, 0.0, 1.0); // Top-right\n"
+	"    EmitVertex();\n"
+	"\n"
+	"    EndPrimitive();\n"
+	"}\n";
+static const char* const fragmentShaderSource = 
+	"#version 330 core\n"
+	"\n"
+	"uniform vec4 lineColor; // Color uniform\n"
+	"out vec4 fragColor;     // Output color\n"
+	"\n"
+	"void main() {\n"
+	"    fragColor = lineColor; // Set the fragment color\n"
+	"}\n";
+
+#pragma endregion
 #pragma region globals
-static GLint viewportSizeLocation;
+static GLint lineThicknessUniform;
+static GLint lineColorUniform;
 static GLuint shaderProgram;
-static GLBufferInfo grid;
 static std::array<GLBufferInfo,3> gridVaos;
 static GLuint gridVbo;
 static std::vector<GraphEquation> graphEquations;
@@ -327,10 +383,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 	bool shouldRecalculateEverything = false;
 
 	#pragma region draw grid using shader
-	glColor4f(0.01f, 0.01f, 0.01f, 1.0f);
+	glUniform4f(lineColorUniform, 0.1f, 0.1f, 0.1f, 1.0f);
 	for (int i = 0; i < 3; i++) {
-		glLineWidth(1.5 * i + 1);
-		glColor3f(0.01f, 0.01f, 0.01f);
+		glUniform1f(lineThicknessUniform, (2 * i + 1) / 1000.0f);
 		glEnableVertexAttribArray(0);
 		glBindVertexArray(gridVaos[i].id);
 		glDrawArrays(GL_LINES, 0, gridVaos[i].amount);
@@ -339,18 +394,17 @@ bool gameLogic(float deltaTime, int w, int h) {
 	#pragma endregion
     #pragma region draw graphs
 	// Draw graph for each function
-	glLineWidth(4.0f);
+	glUniform1f(lineThicknessUniform, 10 / 1000.0f);
 	for (const auto& graph : graphEquations) {
 
 		glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.id);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
-		// Set the color for the line
-		glm::vec3 color = graph.color;
-		glColor3f(color.x, color.y, color.z); // Set different color for each function
+		glUniform4f(lineColorUniform, graph.color.x, graph.color.y, graph.color.z, 1.0f); // Set different color for each function
 		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.amount); // Draw the line strip
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
+	// glUseProgram(0);
 	#pragma endregion
     #pragma region display equations widget
 	ImGui::Begin("Equations", nullptr,
@@ -437,6 +491,32 @@ bool gameInit() {
 	for (auto& gridVao : gridVaos) {
 		glGenVertexArrays(1, &gridVao.id);		
 	}
+	#pragma region shader init
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+	glCompileShader(vertexShader);
+	
+	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+	glShaderSource(geometryShader, 1, &geometryShaderSource, nullptr);
+	glCompileShader(geometryShader);
+
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+	glCompileShader(fragmentShader);
+	
+	shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, geometryShader);
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(geometryShader);
+	glDeleteShader(fragmentShader);
+
+	lineThicknessUniform = glGetUniformLocation(shaderProgram, "lineThickness");
+	lineColorUniform = glGetUniformLocation(shaderProgram, "lineColor");
+	#pragma endregion
 
 	graphEquations.resize(1);
 	graphEquations[0].input = "x * x";
@@ -445,14 +525,27 @@ bool gameInit() {
 	std::vector<float, ArenaAllocator<float>> vertexData;
 	generateGraphData(graphEquations[0].func, graphEquations[0].vboObj, vertexData);
 	generateAxisData();
+
+	glUseProgram(shaderProgram);
 	return true;
 }
 
 void gameEnd() {
+	glUseProgram(0);
+
 	for (const auto& graph : graphEquations) {
 		if (graph.vboObj.id != 0) {
 			glDeleteBuffers(1, &graph.vboObj.id);
 		}
 	}
+	for (const auto& gridVao : gridVaos) {
+		if (gridVao.id != 0) {
+			glDeleteVertexArrays(1, &gridVao.id);
+		}
+	}
+	glDeleteBuffers(1, &gridVbo);
+
+	glDeleteProgram(shaderProgram);
 }
+
 #pragma endregion
