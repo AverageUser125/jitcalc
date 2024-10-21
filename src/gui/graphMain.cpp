@@ -22,14 +22,14 @@ static constexpr float scrollSensitivity = 30;
 
 static constexpr float initialNumPoints = 100;
 
-struct VertexBufferObject {
-	GLuint vbo = 0;
+struct GLBufferInfo {
+	GLuint id = 0;
 	size_t amount = 0;
 };
 struct GraphEquation {
 	std::string input = "";
 	calcFunc func = nullptr;
-	VertexBufferObject vboObj;
+	GLBufferInfo vboObj;
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 #pragma endregion
@@ -97,7 +97,7 @@ static const char* const geometryShaderSource =
 #pragma region globals
 static GLint viewportSizeLocation;
 static GLuint shaderProgram;
-static VertexBufferObject grid;
+static GLBufferInfo grid;
 static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
@@ -193,7 +193,7 @@ void generateAxisData() {
 	grid.amount = vertices.size() / 3;
 
 	// Transfer data to GPU (one VBO for all data)
-	glBindBuffer(GL_ARRAY_BUFFER, grid.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, grid.id);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
 	// Setup vertex attributes for position and line type
@@ -204,7 +204,7 @@ void generateAxisData() {
 }
 
 // Function to generate vertex data for the graph
-void generateGraphData(const calcFunc& func, VertexBufferObject& vboObject, 
+void generateGraphData(const calcFunc& func, GLBufferInfo& vboObject, 
 	std::vector<float, ArenaAllocator<float>>& vertexData,
 	int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
 	vertexData.reserve(numPoints);
@@ -229,10 +229,10 @@ void generateGraphData(const calcFunc& func, VertexBufferObject& vboObject,
 		vertexData.push_back(scaledY);	  // Scaled Y
 	}
 
-	if (vboObject.vbo == 0) {
-		glGenBuffers(1, &vboObject.vbo); // Generate the VBO only if it doesn't exist
+	if (vboObject.id == 0) {
+		glGenBuffers(1, &vboObject.id); // Generate the VBO only if it doesn't exist
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, vboObject.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
 	vboObject.amount = vertexData.size() / 2;
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 	
@@ -365,7 +365,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	glColor4f(0.01f, 0.01f, 0.01f, 1.0f);
 	glUseProgram(shaderProgram);
 	glUniform2f(viewportSizeLocation, w, h);
-	glBindBuffer(GL_ARRAY_BUFFER, grid.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, grid.id);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0); // Enable the position attribute
 	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(2 * sizeof(float)));
@@ -381,7 +381,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	glLineWidth(4.0f);
 	for (const auto& graph : graphEquations) {
 
-		glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.id);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
 		// Set the color for the line
@@ -472,7 +472,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
 
-	glGenBuffers(1, &grid.vbo);
+	glGenBuffers(1, &grid.id);
 	#pragma region shader creation
 	// Not checking for errors here, since they are managed globally already
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -502,8 +502,8 @@ bool gameInit() {
 
 void gameEnd() {
 	for (const auto& graph : graphEquations) {
-		if (graph.vboObj.vbo != 0) {
-			glDeleteBuffers(1, &graph.vboObj.vbo);
+		if (graph.vboObj.id != 0) {
+			glDeleteBuffers(1, &graph.vboObj.id);
 		}
 	}
 }
