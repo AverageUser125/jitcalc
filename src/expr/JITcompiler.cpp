@@ -8,8 +8,9 @@
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/IR/LegacyPassManager.h> // Include for PassManager
 #include <llvm/Support/FileSystem.h>   // For file writing support
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/IR/LegacyPassManager.h> // For legacy pass manager
 
 JITCompiler::JITCompiler() {
 	// Initialize the LLVM context, module, and builder
@@ -19,6 +20,10 @@ JITCompiler::JITCompiler() {
 	auto funcType =
 		llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy(), builder->getDoubleTy()}, false);
 	powFunction = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "pow", module.get());
+	powFunction->addFnAttr(llvm::Attribute::ReadNone); // or Attribute::ReadOnly if it only reads
+	powFunction->addFnAttr(llvm::Attribute::NoUnwind); // Indicate it does not throw exceptions
+	powFunction->addFnAttr(
+		llvm::Attribute::AlwaysInline); // Suggest the optimizer to inline this function, if beneficial
 }
 
 calcFunction JITCompiler::compile(ExpressionNode* expr) {
@@ -39,12 +44,29 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 
 	{
 		std::string llvmIR;
-		llvm::raw_string_ostream rso(llvmIR);						// Create an instance of raw_string_ostream
-		module->print(rso, nullptr);								// Print to standard output
-		std::cout << "Generated LLVM IR:\n" << llvmIR << std::endl; // Print it to std::cout
+		llvm::raw_string_ostream rso(llvmIR);
+		module->print(rso, nullptr);
+		std::cout << "Generated LLVM IR:\n" << llvmIR << std::endl;
 	}
 
-	// Now that the module is fully constructed, create the JIT execution engine
+	// Create an optimizer pass manager
+	llvm::legacy::FunctionPassManager fpm(module.get());
+
+	// Add the remove unused variables pass (dead code elimination)
+	fpm.add((llvm::Pass*)llvm::createTailCallEliminationPass());
+
+	// Run the optimizer on the function
+	fpm.doInitialization();
+	fpm.run(*func);
+	fpm.doFinalization();
+
+	{
+		std::string llvmIR;
+		llvm::raw_string_ostream rso(llvmIR);
+		module->print(rso, nullptr);
+		std::cout << "Generated LLVM IR:\n" << llvmIR << std::endl;
+	}
+	// Create the JIT execution engine
 	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
 	if (!engine) {
 		std::cerr << "Failed to create execution engine." << std::endl;
@@ -57,6 +79,7 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	// Return the pointer to the compiled function
 	return (double (*)(double))engine->getPointerToFunction(func);
 }
+
 
 llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variable) {
 	switch (expr->type) {
@@ -91,6 +114,17 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 	case NodeType::Pow: {
 		llvm::Value* left = generateCode(expr->binary.left, variable);
 		llvm::Value* right = generateCode(expr->binary.right, variable);
+
+		// Check if both left and right are constants
+		if (llvm::ConstantFP* leftConst = llvm::dyn_cast<llvm::ConstantFP>(left)) {
+			if (llvm::ConstantFP* rightConst = llvm::dyn_cast<llvm::ConstantFP>(right)) {
+				// If both are constants, calculate the result and return it as a constant
+				double result =
+					std::pow(leftConst->getValueAPF().convertToDouble(), rightConst->getValueAPF().convertToDouble());
+				return llvm::ConstantFP::get(*context, llvm::APFloat(result));
+			}
+		}
+
 		// Check if the right operand is another power expression
 		if (expr->binary.left->type == NodeType::Pow) {
 			// Get the base and inner exponent from the left power expression
