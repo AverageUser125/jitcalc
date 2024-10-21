@@ -40,12 +40,19 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 
 	// The only optimization that does something, I just don't know what exactly
 	fpm.add((llvm::Pass*)llvm::createTailCallEliminationPass());
+	fpm.add((llvm::Pass*)llvm::createEarlyCSEPass());
 
 	// Run the optimizer on the function
 	fpm.doInitialization();
 	fpm.run(*func);
 	fpm.doFinalization();
 
+	{ 
+		std::string llvmIR;
+		llvm::raw_string_ostream ros(llvmIR);
+		module->print(ros, nullptr, false, true);
+		std::cout << llvmIR << '\n';
+	}
 	// Create the JIT execution engine
 	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
 	if (!engine) {
