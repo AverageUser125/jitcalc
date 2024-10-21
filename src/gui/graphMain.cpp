@@ -155,7 +155,7 @@ void generateAxisData() {
 			verticesThick[1] = screenMinY;
 			verticesThick[2] = ndcX;
 			verticesThick[3] = screenMaxY;
-		} else if (fmod(x / worldSpacing, 5) != 0) {
+		} else if (static_cast<int>(x / worldSpacing) % 5 != 0) {
 			verticesThin.push_back(ndcX);		// x1
 			verticesThin.push_back(screenMinY); // y1
 			verticesThin.push_back(ndcX);		// x2
@@ -178,7 +178,7 @@ void generateAxisData() {
 			verticesThick[5] = ndcY;
 			verticesThick[6] = screenMaxX;
 			verticesThick[7] = ndcY;
-		} else if (fmod(y / worldSpacing, 5) != 0) {
+		} else if (static_cast<int>(y / worldSpacing) % 5 != 0) {
 			verticesThin.push_back(screenMinX); // x1
 			verticesThin.push_back(ndcY);		// y1
 			verticesThin.push_back(screenMaxX); // x2
