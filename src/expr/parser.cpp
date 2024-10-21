@@ -4,10 +4,10 @@
 constexpr double pi = 3.14159265358979323846;
 constexpr double E = 2.718281828459045235360;
 
-// all functions from math.h
-const std::unordered_set<std::string_view> Parser::functionSet = {
-	"sin",	 "cos",	  "tan", "pow",	  "acos", "asin", "atan", "atan2", "cosh",	"sinh", "tanh", "exp",
-	"frexp", "ldexp", "log", "log10", "modf", "sqrt", "ceil", "fabs",  "floor", "fmod", "round"};
+// all functions from math.h that take 1 parameter
+const std::unordered_set<std::string_view> Parser::functionSet = {"sin",  "cos",  "tan",   "acos", "asin",	"atan",
+																  "cosh", "sinh", "tanh",  "log",  "log10", "sqrt",
+																  "ceil", "fabs", "floor", "round"};
 
 Parser::Parser(const std::vector<Token, ArenaAllocator<Token>>& arr) : tokenArray(arr), tokenIndex(0) {
 	if (!tokenArray.empty()) {
