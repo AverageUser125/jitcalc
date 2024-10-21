@@ -189,17 +189,27 @@ void generateAxisData() {
 			verticesMedium.push_back(screenMaxX); // x2
 			verticesMedium.push_back(ndcY);		  // y2
 		}
-	}
-	std::vector<float> allVertices;
-	allVertices.reserve(verticesThin.size() + verticesMedium.size() + verticesThick.size());
+	} // Calculate total size of the buffer
+	const size_t thinSize = verticesThin.size() * sizeof(float);
+	const size_t mediumSize = verticesMedium.size() * sizeof(float);
+	const size_t thickSize = verticesThick.size() * sizeof(float);
+	const size_t totalSize = thinSize + mediumSize + thickSize;
 
-	allVertices.insert(allVertices.end(), verticesThin.begin(), verticesThin.end());
-	allVertices.insert(allVertices.end(), verticesMedium.begin(), verticesMedium.end());
-	allVertices.insert(allVertices.end(), verticesThick.begin(), verticesThick.end());
-
-	// Store the vertex data and bind VAOs in a loop
+	// Create buffer and allocate space for all vertices
 	glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
-	glBufferData(GL_ARRAY_BUFFER, allVertices.size() * sizeof(float), allVertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, totalSize, nullptr, GL_STATIC_DRAW);
+
+	// Upload each part directly into the buffer
+	size_t offset = 0;
+	if (!verticesThin.empty()) {
+		glBufferSubData(GL_ARRAY_BUFFER, offset, thinSize, verticesThin.data());
+		offset += thinSize;
+	}
+	if (!verticesMedium.empty()) {
+		glBufferSubData(GL_ARRAY_BUFFER, offset, mediumSize, verticesMedium.data());
+		offset += mediumSize;
+	}
+	glBufferSubData(GL_ARRAY_BUFFER, offset, thickSize, verticesThick.data());
 
 	// Data for VAOs (amount of lines and offset in floats)
 	const std::array<std::pair<size_t, size_t>, 3> vaoData = {
