@@ -24,7 +24,7 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 
 	// Create a function with a double parameter for the variable
 	auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy()}, false);
-	auto func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "evaluate", module.get());
+	auto func = llvm::Function::Create(funcType, llvm::Function::InternalLinkage, "evaluate", module.get());
 	llvm::BasicBlock* block = llvm::BasicBlock::Create(*context, "entry", func);
 	builder->SetInsertPoint(block);
 

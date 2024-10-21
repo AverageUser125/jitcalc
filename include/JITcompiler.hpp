@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <string_view>
 using calcFunction = double (*)(double);
 
 // Forward declarations of LLVM types
