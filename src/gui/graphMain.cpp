@@ -235,10 +235,15 @@ void generateAxisData() {
 void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 					   std::vector<float, ArenaAllocator<float>>& vertexData,
 					   int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
-	vertexData.reserve(numPoints);
 	if (func == nullptr) {
+		if (vboObject.id != 0) {
+			glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
+			glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+			vboObject.amount = 0;
+		}
 		return;
 	}
+	vertexData.reserve(numPoints);
 	vertexData.clear();
 	// for small scale(zoom out) this needs more precision
 	// but just doing / scale gives 10000 vertexes, so no
@@ -345,13 +350,18 @@ glm::vec3 generateColor(int index) {
 #pragma region set function and color
 
 bool setGraph(GraphEquation& graph, int index) {
+
+	if (graph.input.empty()) {
+		graph.func = nullptr;
+		goto generateGraphGoto;
+	}
+
 	{
 		// the tokens have a string_view to a member string of the lexer
 		// therfore you cannot call the destructor on the lexer before the parser has finished
 		Lexer lexer(graph.input);
 		std::optional<std::vector<Token, ArenaAllocator<Token>>> tokenArrayOpt = lexer.lexerLexAllTokens();
 		// lexer.lexerDebugPrintArray(*tokenArrayOpt);
-
 
 		if (!tokenArrayOpt.has_value()) {
 			return false;
@@ -370,6 +380,7 @@ bool setGraph(GraphEquation& graph, int index) {
 	}
 
 	graph.color = generateColor(index);
+	generateGraphGoto:
 	std::vector<float, ArenaAllocator<float>> vertexData;
 	generateGraphData(graph.func, graph.vboObj, vertexData);
 
