@@ -61,7 +61,7 @@ struct Region {
 	Region* next;
 	size_t count;
 	size_t capacity;
-	uintptr_t* data;
+	uintptr_t data[];
 };
 
 struct Arena {
@@ -88,9 +88,6 @@ Region* new_region(size_t capacity);
 void arena_free(Arena* a);
 void arena_reset(Arena* a);
 void free_region(Region* r);
-
-ArenaSnapshot arena_snapshot(Arena* a);
-void arena_rewind(Arena* a, ArenaSnapshot snapshot);
 
 #define ARENA_DA_INIT_CAP 256
 
