@@ -14,6 +14,7 @@
 #include <random>
 #include <vector>
 
+static constexpr float goldenAngle = 137.50776;
 #pragma region shader source
 static const char* const vertexShaderSource =
 	"#version 330 core\n"
@@ -70,7 +71,6 @@ static const char* const fragmentShaderSource = "#version 330 core\n"
 
 #pragma endregion
 #pragma region defines
-
 static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
 
@@ -246,6 +246,9 @@ void clearGraphData(GLBufferInfo& vboObject) {
 void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 					   std::vector<float, ArenaAllocator<float>>& vertexData,
 					   int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
+	if (func == nullptr) {
+		return;
+	}
 	vertexData.reserve(numPoints);
 	vertexData.clear();
 	// for small scale(zoom out) this needs more precision
@@ -276,21 +279,22 @@ void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 #pragma endregion
 #pragma region color gen
 
-float getDoubleRand() {
+float getFloatRand() {
 	std::mt19937_64 rng;
 	// initialize the random number generator with time-dependent seed
 	uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
 	rng.seed(ss);
-	std::uniform_real_distribution<double> unif(0, 1);
+	std::uniform_real_distribution<float> unif(0, 1);
 	return unif(rng);
 }
 
 // TODO: reconsider the entire method of this function
-glm::vec3 generateColor(int index) {
-	static float rndStart = getDoubleRand();
+glm::vec3 generateColor() {
+	static int index = 0;
+	static float rndStart = fmod(getFloatRand(), 360.0f);
 	// Helper lambda to convert HSV to RGB
-	static const auto hsvToRgb = [](float h, float s, float v) -> glm::vec3 {
+	static constexpr auto hsvToRgb = [](const float h, const float s, const float v) -> glm::vec3 {
 		float c = v * s;
 		float x = c * (1 - std::fabs(fmod(h / 60.0f, 2) - 1));
 		float m = v - c;
@@ -326,27 +330,12 @@ glm::vec3 generateColor(int index) {
 		return glm::vec3(r + m, g + m, b + m);
 	};
 
-	// Simple hash function to generate consistent pseudo-random values based on the index
-	static const auto hash = [](int idx) -> float {
-		const int prime = 31;						 // A small prime number
-		return fmod((idx * prime * rndStart), 1.0f); // Modulo 1 to get a float between 0 and 1
-	};
+	float hue = rndStart;
+	hue += index * goldenAngle;
+	hue = fmod(hue, 360.0f);
 
-	// Generate hue using hash based on the index
-	float hue = 360.0f * hash(index);
-
-	// For even indexes, generate a hue opposite to the previous index
-	if (index > 0 && index % 2 == 0) {
-		float previousHue = 360.0f * hash(index - 1); // Get the hue for the previous index
-		hue = fmod(previousHue + 180.0f, 360.0f);	  // Opposite hue
-	}
-
-	// Full saturation and value for fully saturated colors
-	float saturation = 1.0f;
-	float value = 1.0f;
-
-	// Return the RGB color generated from the HSV values
-	return hsvToRgb(hue, saturation, value);
+	index++;
+	return hsvToRgb(hue, 0.5f,0.95f);
 }
 
 #pragma endregion
@@ -382,8 +371,9 @@ bool setGraph(GraphEquation& graph, int index) {
 		JITCompiler jit;
 		graph.func = jit.compile(tree); // Compile the function
 	}
-
-	graph.color = generateColor(index);
+	if (graph.color.x == 0.0f && graph.color.y == 0.0f && graph.color.z == 0.0f) {
+		graph.color = generateColor();
+	}
 	std::vector<float, ArenaAllocator<float>> vertexData;
 	generateGraphData(graph.func, graph.vboObj, vertexData);
 
@@ -568,7 +558,7 @@ bool gameInit() {
 	graphEquations.resize(1);
 	graphEquations[0].input = "x * x";
 	graphEquations[0].func = [](double x) { return x * x; };
-	graphEquations[0].color = generateColor(0);
+	graphEquations[0].color = generateColor();
 	std::vector<float, ArenaAllocator<float>> vertexData;
 	generateGraphData(graphEquations[0].func, graphEquations[0].vboObj, vertexData);
 	generateAxisData();
