@@ -14,6 +14,8 @@
 #include <random>
 #include <vector>
 
+// https://en.wikipedia.org/wiki/Golden_angle
+// https://stackoverflow.com/questions/43044/algorithm-to-randomly-generate-an-aesthetically-pleasing-color-palette
 static constexpr float goldenAngle = 137.50776405;
 #pragma region shader source
 static const char* const vertexShaderSource =
