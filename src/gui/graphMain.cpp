@@ -231,18 +231,17 @@ void generateAxisData() {
 	glBindVertexArray(0);
 }
 
+void clearGraphData(GLBufferInfo& vboObject) {
+	assert(vboObject.id != 0);
+	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
+	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+	vboObject.amount = 0;
+}
+
 // Function to generate vertex data for the graph
 void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 					   std::vector<float, ArenaAllocator<float>>& vertexData,
 					   int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
-	if (func == nullptr) {
-		if (vboObject.id != 0) {
-			glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
-			glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
-			vboObject.amount = 0;
-		}
-		return;
-	}
 	vertexData.reserve(numPoints);
 	vertexData.clear();
 	// for small scale(zoom out) this needs more precision
@@ -353,7 +352,8 @@ bool setGraph(GraphEquation& graph, int index) {
 
 	if (graph.input.empty()) {
 		graph.func = nullptr;
-		goto generateGraphGoto;
+		clearGraphData(graph.vboObj);
+		return true;
 	}
 
 	{
@@ -380,11 +380,21 @@ bool setGraph(GraphEquation& graph, int index) {
 	}
 
 	graph.color = generateColor(index);
-	generateGraphGoto:
 	std::vector<float, ArenaAllocator<float>> vertexData;
 	generateGraphData(graph.func, graph.vboObj, vertexData);
 
 	return true;
+}
+
+void removeGraph(int index) {
+	assert(!graphEquations.empty());
+	assert(0 <= index && index < graphEquations.size());
+	
+	GraphEquation& graph = graphEquations[index];
+
+	// graph.func = nullptr
+	clearGraphData(graph.vboObj);
+	graphEquations.erase(graphEquations.begin() + index);
 }
 
 #pragma endregion
@@ -439,6 +449,14 @@ bool gameLogic(float deltaTime, int w, int h) {
 	for (size_t i = 0; i < graphEquations.size(); i++) {
 		ImGui::InputText(("##" + std::to_string(i)).c_str(), &graphEquations[i].input, ImGuiInputTextFlags_CallbackEdit,
 						 inputTextCallback, (void*)(i + 1));
+		ImGui::SameLine();
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));		   // Red button color
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.8f, 0.0f, 0.0f, 1.0f)); // Darker red when hovered
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.0f, 0.0f, 1.0f));  // Even darker red when pressed
+		if (ImGui::Button(("X##" + std::to_string(i)).c_str())) {
+			removeGraph(i);
+		}
+		ImGui::PopStyleColor(3);
 	}
 	if (ImGui::Button("add equation", {100.0f, 25.0f})) {
 		graphEquations.resize(graphEquations.size() + 1);
