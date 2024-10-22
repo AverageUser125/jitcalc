@@ -14,26 +14,6 @@
 #include <random>
 #include <vector>
 
-#pragma region defines
-
-static constexpr float mouseSensitivity = 60;
-static constexpr float scrollSensitivity = 30;
-
-static constexpr float initialNumPoints = 100;
-
-struct GLBufferInfo {
-	GLuint id = 0;
-	size_t amount = 0;
-};
-
-struct GraphEquation {
-	std::string input = "";
-	calcFunction func = nullptr;
-	GLBufferInfo vboObj;
-	glm::vec3 color = {0.0f, 0.0f, 0.0f};
-};
-
-#pragma endregion
 #pragma region shader source
 static const char* const vertexShaderSource =
 	"#version 330 core\n"
@@ -89,12 +69,36 @@ static const char* const fragmentShaderSource = "#version 330 core\n"
 												"}\n";
 
 #pragma endregion
+#pragma region defines
+
+static constexpr float mouseSensitivity = 60;
+static constexpr float scrollSensitivity = 30;
+
+static constexpr float initialNumPoints = 100;
+
+struct GLBufferInfo {
+	GLuint id = 0;
+	size_t amount = 0;
+};
+
+struct GraphEquation {
+	std::string input = "";
+	calcFunction func = nullptr;
+	GLBufferInfo vboObj;
+	glm::vec3 color = {0.0f, 0.0f, 0.0f};
+};
+
+#pragma endregion
 #pragma region globals
 static GLint lineThicknessUniform;
 static GLint lineColorUniform;
 static GLuint shaderProgram;
+
 static std::array<GLBufferInfo, 3> gridVaos;
 static GLuint gridVbo;
+
+static GLuint grahpVBO;
+static size_t totalGraphVertices = 0;
 static std::vector<GraphEquation> graphEquations;
 
 // use std::vector to allow dynamic amount of equations
