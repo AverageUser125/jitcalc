@@ -14,7 +14,7 @@
 #include <random>
 #include <vector>
 
-static constexpr float goldenAngle = 137.50776;
+static constexpr float goldenAngle = 137.50776405;
 #pragma region shader source
 static const char* const vertexShaderSource =
 	"#version 330 core\n"
