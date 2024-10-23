@@ -6,7 +6,9 @@ VBOAllocator::VBOAllocator() {
 }
 
 VBOAllocator::~VBOAllocator() {
-	cleanup();
+	// DO NOT CALL cleanup() here!
+	// it will cause a segfault since opengl is no longer
+	// working at the after math of the window
 }
 
 void VBOAllocator::reserve(size_t amount) {
