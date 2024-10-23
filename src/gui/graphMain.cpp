@@ -31,7 +31,7 @@ struct GraphEquation {
 #pragma region constants
 // https://en.wikipedia.org/wiki/Golden_angle
 // https://stackoverflow.com/questions/43044/algorithm-to-randomly-generate-an-aesthetically-pleasing-color-palette
-static constexpr float goldenAngle = 137.50776405;
+static constexpr float goldenAngle = 137.50776405f;
 
 static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
@@ -271,9 +271,6 @@ void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 		vertexData.push_back(scaledY);			// Scaled Y
 	}
 
-	if (vboObject.id == 0) {
-		glGenBuffers(1, &vboObject.id); // Generate the VBO only if it doesn't exist
-	}
 	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
 	vboObject.amount = vertexData.size() / 2;
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
@@ -344,7 +341,11 @@ glm::vec3 generateColor() {
 #pragma endregion
 #pragma region set function and color
 
-bool setGraph(GraphEquation& graph, int index) {
+bool setGraph(GraphEquation& graph) {
+	
+	if (graph.vboObj.id == 0) {
+		glGenBuffers(1, &graph.vboObj.id);
+	}
 
 	if (graph.input.empty()) {
 		graph.func = nullptr;
@@ -372,8 +373,9 @@ bool setGraph(GraphEquation& graph, int index) {
 		}
 
 		JITCompiler jit;
-		graph.func = jit.compile(tree); // Compile the function
+		graph.func = jit.compile(tree);
 	}
+
 	if (graph.color.x == 0.0f && graph.color.y == 0.0f && graph.color.z == 0.0f) {
 		graph.color = generateColor();
 	}
@@ -391,6 +393,7 @@ void removeGraph(int index) {
 
 	// graph.func = nullptr
 	clearGraphData(graph.vboObj);
+	glDeleteBuffers(1, &graph.vboObj.id);
 	graphEquations.erase(graphEquations.begin() + index);
 }
 
@@ -402,7 +405,7 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 	size_t index = reinterpret_cast<size_t>(data->UserData) - 1;
 	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
 		graphEquations[index].input = data->Buf;
-		setGraph(graphEquations[index], index); // Update the graph with both inputs
+		setGraph(graphEquations[index]); // Update the graph with both inputs
 	}
 	return 0;
 }
@@ -559,11 +562,7 @@ bool gameInit() {
 #pragma endregion
 
 	graphEquations.resize(1);
-	graphEquations[0].input = "x * x";
-	graphEquations[0].func = [](double x) { return x * x; };
-	graphEquations[0].color = generateColor();
-	std::vector<float, ArenaAllocator<float>> vertexData;
-	generateGraphData(graphEquations[0].func, graphEquations[0].vboObj, vertexData);
+	setGraph(graphEquations[0]);
 	generateAxisData();
 
 	glUseProgram(shaderProgram);
