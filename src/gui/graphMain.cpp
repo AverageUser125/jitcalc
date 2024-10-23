@@ -259,7 +259,7 @@ void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 
 	float step = 2.0f / numPoints; // Step through X space from -1 to 1
 
-	for (int j = 0; j < numPoints; ++j) {
+	for (int j = 0; j <= numPoints; ++j) {
 		float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
 		float x = (normalizedX / scale) + origin.x; // Apply scaling (zoom) to X
 
