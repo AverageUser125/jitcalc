@@ -13,6 +13,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <glm/gtc/type_ptr.hpp>
 
 #pragma region defines
 struct GLBufferInfo {
@@ -54,7 +55,6 @@ static const char* const geometryShaderSource =
 	"void main() {\n"
 	"    vec2 p0 = gl_in[0].gl_Position.xy;\n"
 	"    vec2 p1 = gl_in[1].gl_Position.xy;\n"
-	"    // Calculate the line direction and normal\n"
 	"    vec2 lineDir = normalize(p1 - p0);\n"
 	"    vec2 lineNormal = vec2(-lineDir.y, lineDir.x);\n"
 	"    vec2 offset = lineNormal * lineThickness * 0.5;\n"
@@ -72,7 +72,6 @@ static const char* const fragmentShaderSource =
 	"#version 330 core\n"
 	"uniform vec4 lineColor; \n"
 	"out vec4 fragColor;\n"
-	"\n"
 	"void main() {\n"
 	"    fragColor = lineColor;\n"
 	"}\n";
