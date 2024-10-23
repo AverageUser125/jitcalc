@@ -21,7 +21,7 @@
       "displayName": "Linux Release",
       "inherits": "linux-debug",
       "description": "Target the Windows Subsystem for Linux (WSL) or a remote Linux system.",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
     },
     {
       "name": "windows-base",
