@@ -281,7 +281,7 @@ int guiLoop() {
 		return EXIT_FAILURE;
 	}
 	glfwWindowHint(GLFW_SAMPLES, 4);
-#if PLATFORM_MAC 
+#if PLATFORM_MAC
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -311,7 +311,7 @@ int guiLoop() {
 		FreeLibrary(dwamapidll);
 	}
 #endif
-	glfwMakeContextCurrent(wind);	
+	glfwMakeContextCurrent(wind);
 	glfwSwapInterval(1);
 
 	glfwSetKeyCallback(wind, keyCallback);
@@ -333,7 +333,7 @@ int guiLoop() {
 	// enable error reporting
 	enableReportGlErrors();
 #endif
-	#pragma endregion
+#pragma endregion
 
 #pragma region imgui init
 	ImGui::CreateContext();
@@ -443,7 +443,7 @@ int guiLoop() {
 
 	gameEnd();
 
-	defer:
+defer:
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
@@ -451,6 +451,6 @@ int guiLoop() {
 		glfwDestroyWindow(wind);
 		glfwTerminate();
 	}
-	#pragma endregion
+#pragma endregion
 	return result;
 }

@@ -8,7 +8,7 @@
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/FileSystem.h>   // For file writing support
+#include <llvm/Support/FileSystem.h> // For file writing support
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/IR/LegacyPassManager.h> // For legacy pass manager
 
@@ -44,7 +44,7 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	fpm.add((llvm::Pass*)llvm::createTailCallEliminationPass());
 	fpm.add((llvm::Pass*)llvm::createEarlyCSEPass());
 	fpm.add((llvm::Pass*)llvm::createInstSimplifyLegacyPass());
-	
+
 	// Run the optimizer on the function
 	fpm.doInitialization();
 	fpm.run(*func);
@@ -63,7 +63,6 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	// Return the pointer to the compiled function
 	return (double (*)(double))engine->getPointerToFunction(func);
 }
-
 
 llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variable) {
 	switch (expr->type) {
@@ -144,7 +143,6 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 	// llvm_unreachable();
 	unreachable();
 }
-
 
 void JITCompiler::createExternalFunction(const std::string_view name) {
 	// Check if the function has already been created

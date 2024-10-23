@@ -17,6 +17,7 @@
 #include "vboAllocator.hpp"
 
 #pragma region defines
+
 struct GLBufferInfo {
 	GLuint id = 0;
 	size_t amount = 0;
@@ -76,7 +77,6 @@ static const char* const fragmentShaderSource =
 	"void main() {\n"
 	"    fragColor = lineColor;\n"
 	"}\n";
-
 #pragma endregion
 #pragma region globals
 static GLint lineThicknessUniform;
@@ -183,8 +183,8 @@ void generateAxisData() {
 			verticesMedium.push_back(screenMaxX); // x2
 			verticesMedium.push_back(ndcY);		  // y2
 		}
-	} 
-	
+	}
+
 	const size_t thinSize = verticesThin.size() * sizeof(float);
 	const size_t mediumSize = verticesMedium.size() * sizeof(float);
 	const size_t thickSize = verticesThick.size() * sizeof(float);
@@ -195,7 +195,7 @@ void generateAxisData() {
 	glBufferData(GL_ARRAY_BUFFER, totalSize, nullptr, GL_STATIC_DRAW);
 
 	size_t offset = 0;
-	
+
 	assert(!verticesThin.empty());
 	glBufferSubData(GL_ARRAY_BUFFER, offset, thinSize, verticesThin.data());
 	offset += thinSize;
@@ -203,7 +203,7 @@ void generateAxisData() {
 	assert(!verticesMedium.empty());
 	glBufferSubData(GL_ARRAY_BUFFER, offset, mediumSize, verticesMedium.data());
 	offset += mediumSize;
-	
+
 	assert(!verticesThick.empty());
 	glBufferSubData(GL_ARRAY_BUFFER, offset, thickSize, verticesThick.data());
 
@@ -230,7 +230,6 @@ void clearGraphData(GLBufferInfo& vboObject) {
 	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
 	vboObject.amount = 0;
 }
-
 
 void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 					   std::vector<glm::vec2, ArenaAllocator<glm::vec2>>& vertexData) {
@@ -325,14 +324,14 @@ glm::vec3 generateColor() {
 	hue = fmod(hue, 360.0f);
 
 	index++;
-	return hsvToRgb(hue, 0.5f,0.95f);
+	return hsvToRgb(hue, 0.5f, 0.95f);
 }
 
 #pragma endregion
 #pragma region set function and color
 
 bool setGraph(GraphEquation& graph) {
-	
+
 	if (graph.vboObj.id == 0) {
 		graph.vboObj.id = vboAllocator.allocateVBO();
 	}
@@ -377,7 +376,7 @@ bool setGraph(GraphEquation& graph) {
 void removeGraph(int index) {
 	assert(!graphEquations.empty());
 	assert(0 <= index && index < graphEquations.size());
-	
+
 	GraphEquation& graph = graphEquations[index];
 
 	// graph.func = nullptr

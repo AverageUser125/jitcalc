@@ -15,6 +15,7 @@ class VBOAllocator {
 	void cleanup();
 
 	static constexpr size_t DEFAULT_VBO_RESERVE_AMOUNT = 10;
+
   private:
 	std::vector<GLuint> freeList;	   // Holds freed VBOs
 	std::vector<GLuint> allocatedVBOs; // Holds all allocated VBOs

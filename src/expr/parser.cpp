@@ -69,7 +69,7 @@ ExpressionNode* Parser::parseFunctionCall() {
 
 ExpressionNode* Parser::parseIdent() {
 	ExpressionNode* ret = nullptr;
-	
+
 	if (functionSet.find(curr.lexme) != functionSet.end()) {
 		ret = parseFunctionCall(); // Parse as function call
 	} else if (curr.lexme == "e") {

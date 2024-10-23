@@ -11,7 +11,7 @@ VBOAllocator::~VBOAllocator() {
 void VBOAllocator::reserve(size_t amount) {
 	assert(freeList.empty());
 	freeList.resize(amount);
-	glGenBuffers(amount, freeList.data() );
+	glGenBuffers(amount, freeList.data());
 }
 
 GLuint VBOAllocator::allocateVBO() {
