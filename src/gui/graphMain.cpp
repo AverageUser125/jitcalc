@@ -245,19 +245,19 @@ void clearGraphData(GLBufferInfo& vboObject) {
 	vboObject.amount = 0;
 }
 
-// Function to generate vertex data for the graph
+
 void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
-					   std::vector<float, ArenaAllocator<float>>& vertexData,
-					   int numPoints = static_cast<int>(initialNumPoints / std::sqrt(scale))) {
+					   std::vector<glm::vec2, ArenaAllocator<glm::vec2>>& vertexData) {
 	if (func == nullptr) {
 		return;
 	}
+	size_t numPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
 	vertexData.reserve(numPoints);
 	vertexData.clear();
 	// for small scale(zoom out) this needs more precision
 	// but just doing / scale gives 10000 vertexes, so no
 
-	float step = 2.0f / numPoints; // Step through X space from -1 to 1
+	float step = 2.0f / numPoints;
 
 	for (int j = 0; j <= numPoints; ++j) {
 		float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
@@ -267,13 +267,17 @@ void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 		float y = func(x); // Evaluate the function
 
 		float scaledY = (y + origin.y) * scale; // Apply scaling (zoom) to the Y value
-		vertexData.push_back(normalizedX);		// Keep normalized X for OpenGL [-1, 1] range
-		vertexData.push_back(scaledY);			// Scaled Y
+		vertexData.push_back({normalizedX, scaledY});
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
-	vboObject.amount = vertexData.size() / 2;
-	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
+	vboObject.amount = vertexData.size();
+	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec2), vertexData.data(), GL_STATIC_DRAW);
+}
+
+void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject) {
+	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
+	generateGraphData(func, vboObject, vertexData);
 }
 
 #pragma endregion
@@ -379,8 +383,7 @@ bool setGraph(GraphEquation& graph) {
 	if (graph.color.x == 0.0f && graph.color.y == 0.0f && graph.color.z == 0.0f) {
 		graph.color = generateColor();
 	}
-	std::vector<float, ArenaAllocator<float>> vertexData;
-	generateGraphData(graph.func, graph.vboObj, vertexData);
+	generateGraphData(graph.func, graph.vboObj);
 
 	return true;
 }
@@ -497,7 +500,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	if (shouldRecalculateEverything) {
 		generateAxisData();
 		arena_reset(&global_arena); // early reset cause this requires alot of vertexes
-		std::vector<float, ArenaAllocator<float>> vertexData;
+		std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
 		for (GraphEquation& graph : graphEquations) {
 			generateGraphData(graph.func, graph.vboObj, vertexData);
 		}
@@ -566,9 +569,8 @@ bool gameInit() {
 	firstGraph.input = "x*x";
 	firstGraph.color = generateColor();
 	firstGraph.func = [](double x) { return x * x; };
-	std::vector<float, ArenaAllocator<float>> vertices;
 	glGenBuffers(1, &firstGraph.vboObj.id);
-	generateGraphData(firstGraph.func, firstGraph.vboObj, vertices);
+	generateGraphData(firstGraph.func, firstGraph.vboObj);
 	generateAxisData();
 
 	glUseProgram(shaderProgram);
