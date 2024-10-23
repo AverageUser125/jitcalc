@@ -562,7 +562,13 @@ bool gameInit() {
 #pragma endregion
 
 	graphEquations.resize(1);
-	setGraph(graphEquations[0]);
+	GraphEquation& firstGraph = graphEquations[0];
+	firstGraph.input = "x*x";
+	firstGraph.color = generateColor();
+	firstGraph.func = [](double x) { return x * x; };
+	std::vector<float, ArenaAllocator<float>> vertices;
+	glGenBuffers(1, &firstGraph.vboObj.id);
+	generateGraphData(firstGraph.func, firstGraph.vboObj, vertices);
 	generateAxisData();
 
 	glUseProgram(shaderProgram);
