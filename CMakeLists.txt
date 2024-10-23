@@ -96,6 +96,9 @@ if(WIN32)
     set_target_properties("${CMAKE_PROJECT_NAME}" PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup") #no console
 endif()
 
+# allows to show relative path in permaAssert
+string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
+add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
 
 if(${USING_MSVC})
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)

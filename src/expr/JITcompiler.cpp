@@ -2,6 +2,7 @@
 #include "parser.hpp"
 #include <cmath>
 #include <iostream>
+#include <tools.hpp>
 
 #undef NDEBUG
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
@@ -50,6 +51,14 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 	fpm.run(*func);
 	fpm.doFinalization();
 
+	#if PRODUCTION_BUILD == 0
+	{ 
+		std::string llvmIR;
+		llvm::raw_string_ostream rso(llvmIR);
+		module->print(rso, nullptr, false, !PRODUCTION_BUILD);
+		llog(llvmIR);
+	}
+	#endif
 	// Create the JIT execution engine
 	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
 	if (!engine) {

@@ -15,6 +15,7 @@
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
 #include "vboAllocator.hpp"
+#include "tools.hpp"
 
 #pragma region defines
 
@@ -225,7 +226,8 @@ void generateAxisData() {
 }
 
 void clearGraphData(GLBufferInfo& vboObject) {
-	assert(vboObject.id != 0);
+	permaAssert(vboObject.id != 0);
+	
 	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
 	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
 	vboObject.amount = 0;

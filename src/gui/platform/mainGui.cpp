@@ -15,6 +15,7 @@
 #include <backends/imgui_impl_opengl3.h>
 #include <imguiThemes.h>
 #include "windowIcon.h"
+#include "tools.hpp"
 
 #if PLATFORM_WIN
 #define WIN32_LEAN_AN_MEAN
@@ -276,10 +277,8 @@ int guiLoop() {
 #pragma endregion
 	int result = EXIT_SUCCESS;
 #pragma region glfw and glad init
-	if (!glfwInit()) {
-		std::cerr << "Failed to initialize GLFW" << std::endl;
-		return EXIT_FAILURE;
-	}
+	permaAssertComment(glfwInit(), "GLFW has failed to initialize");
+
 	glfwWindowHint(GLFW_SAMPLES, 4);
 #if PLATFORM_MAC
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
@@ -292,7 +291,7 @@ int guiLoop() {
 #endif
 	wind = glfwCreateWindow(WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT, "Graph calculator", nullptr, nullptr);
 	if (!wind) {
-		std::cerr << "Failed to create GLFW window" << std::endl;
+		elog("Failed to create GLFW window");
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
@@ -305,10 +304,15 @@ int guiLoop() {
 			(DwmSetWindowAttributeType)GetProcAddress(dwamapidll, "DwmSetWindowAttribute");
 		if (fnDwmSetWindowAttribute) {
 			HWND hwnd = glfwGetWin32Window(wind);
+			assert(hwnd != nullptr);
 			BOOL value = TRUE;
 			fnDwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
+		} else {
+			wlog("failed to get DwmSetWindowAttribute from Dwmapi.dll");
 		}
 		FreeLibrary(dwamapidll);
+	} else {
+		wlog("failed to lode Dwampi.dll");
 	}
 #endif
 	glfwMakeContextCurrent(wind);
@@ -325,10 +329,8 @@ int guiLoop() {
 	const GLFWimage windownIconImage{windowIconHeight, windowIconWidth, const_cast<unsigned char*>(windowIcon)};
 	glfwSetWindowIcon(wind, 1, &windownIconImage);
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cerr << "Failed to initialize GLAD" << std::endl;
-		return EXIT_FAILURE;
-	}
+	permaAssertComment(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress), "Failed to initialize GLAD");
+
 #if PRODUCTION_BUILD == 0
 	// enable error reporting
 	enableReportGlErrors();
@@ -351,6 +353,7 @@ int guiLoop() {
 	auto stop = std::chrono::high_resolution_clock::now();
 
 	if (!gameInit()) {
+		wlog("gameInit has failed, exiting");
 		result = EXIT_FAILURE;
 		goto defer;
 	}
@@ -383,7 +386,7 @@ int guiLoop() {
 		glfwGetFramebufferSize(wind, &display_w, &display_h);
 
 		if (!gameLogic(augmentedDeltaTime, display_w, display_h)) {
-			return EXIT_FAILURE;
+			return EXIT_SUCCESS;
 		}
 
 #pragma region fullscreen
