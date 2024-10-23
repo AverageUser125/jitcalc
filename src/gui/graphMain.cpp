@@ -14,6 +14,7 @@
 #include <random>
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
+#include "vboAllocator.hpp"
 
 #pragma region defines
 struct GLBufferInfo {
@@ -86,6 +87,8 @@ static std::array<GLBufferInfo, 3> gridVaos;
 static GLuint gridVbo;
 
 static std::vector<GraphEquation> graphEquations;
+
+static VBOAllocator vboAllocator;
 
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
@@ -331,7 +334,7 @@ glm::vec3 generateColor() {
 bool setGraph(GraphEquation& graph) {
 	
 	if (graph.vboObj.id == 0) {
-		glGenBuffers(1, &graph.vboObj.id);
+		graph.vboObj.id = vboAllocator.allocateVBO();
 	}
 
 	if (graph.input.empty()) {
@@ -379,7 +382,7 @@ void removeGraph(int index) {
 
 	// graph.func = nullptr
 	clearGraphData(graph.vboObj);
-	glDeleteBuffers(1, &graph.vboObj.id);
+	vboAllocator.freeVBO(graph.vboObj.id);
 	graphEquations.erase(graphEquations.begin() + index);
 }
 
@@ -546,13 +549,14 @@ bool gameInit() {
 	lineThicknessUniform = glGetUniformLocation(shaderProgram, "lineThickness");
 	lineColorUniform = glGetUniformLocation(shaderProgram, "lineColor");
 #pragma endregion
+	vboAllocator.reserve(VBOAllocator::DEFAULT_VBO_RESERVE_AMOUNT);
 
 	graphEquations.resize(1);
 	GraphEquation& firstGraph = graphEquations[0];
 	firstGraph.input = "x*x";
 	firstGraph.color = generateColor();
 	firstGraph.func = [](double x) { return x * x; };
-	glGenBuffers(1, &firstGraph.vboObj.id);
+	firstGraph.vboObj.id = vboAllocator.allocateVBO();
 	generateGraphData(firstGraph.func, firstGraph.vboObj);
 	generateAxisData();
 
@@ -565,14 +569,10 @@ void gameEnd() {
 	// there is no reasone to free all of these since the OS does this for us
 	// It is just here just incase
 	return;
-
 	/*
 	glUseProgram(0);
-	for (const auto& graph : graphEquations) {
-		if (graph.vboObj.id != 0) {
-			glDeleteBuffers(1, &graph.vboObj.id);
-		}
-	}
+	
+	vboAllocator.cleanup();
 	for (const auto& gridVao : gridVaos) {
 		if (gridVao.id != 0) {
 			glDeleteVertexArrays(1, &gridVao.id);
