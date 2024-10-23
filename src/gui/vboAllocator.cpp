@@ -1,5 +1,6 @@
 #include "vboAllocator.hpp"
 #include "arenaAllocator.hpp"
+#include <algorithm>
 
 VBOAllocator::VBOAllocator() {
 }
