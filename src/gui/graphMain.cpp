@@ -520,10 +520,6 @@ bool gameLogic(float deltaTime, int w, int h) {
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
 
-	glGenBuffers(1, &gridVbo);
-	for (auto& gridVao : gridVaos) {
-		glGenVertexArrays(1, &gridVao.id);
-	}
 #pragma region shader init
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
@@ -550,7 +546,13 @@ bool gameInit() {
 	lineThicknessUniform = glGetUniformLocation(shaderProgram, "lineThickness");
 	lineColorUniform = glGetUniformLocation(shaderProgram, "lineColor");
 #pragma endregion
+	
 	vboAllocator.reserve(VBOAllocator::DEFAULT_VBO_RESERVE_AMOUNT);
+	gridVbo = vboAllocator.allocateVBO();
+
+	for (auto& gridVao : gridVaos) {
+		glGenVertexArrays(1, &gridVao.id);
+	}
 
 	graphEquations.resize(1);
 	GraphEquation& firstGraph = graphEquations[0];
@@ -579,7 +581,6 @@ void gameEnd() {
 			glDeleteVertexArrays(1, &gridVao.id);
 		}
 	}
-	glDeleteBuffers(1, &gridVbo);
 
 	glDeleteProgram(shaderProgram);
 	*/
