@@ -18,7 +18,7 @@ void VBOAllocator::reserve(size_t amount) {
 }
 
 GLuint VBOAllocator::allocateVBO() {
-	GLuint vbo;
+	GLuint vbo = 0;
 
 	if (!freeList.empty()) {
 		vbo = freeList.back();

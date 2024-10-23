@@ -80,16 +80,16 @@ static const char* const fragmentShaderSource =
 	"}\n";
 #pragma endregion
 #pragma region globals
-static GLint lineThicknessUniform;
-static GLint lineColorUniform;
-static GLuint shaderProgram;
+static GLint lineThicknessUniform = 0;
+static GLint lineColorUniform = 0;
+static GLuint shaderProgram = 0;
 
-static std::array<GLBufferInfo, 3> gridVaos;
-static GLuint gridVbo;
+static std::array<GLBufferInfo, 3> gridVaos{};
+static GLuint gridVbo = 0;
 
-static std::vector<GraphEquation> graphEquations;
+static std::vector<GraphEquation> graphEquations{};
 
-static VBOAllocator vboAllocator;
+static VBOAllocator vboAllocator{};
 
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
