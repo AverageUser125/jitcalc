@@ -128,7 +128,7 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE 
         "-pedantic"
         "-Wall" "-Wextra" "-Wunreachable-code" 
-        "-Wno-unused-parameter" "-Wno-missing-field-initializers" "-Wno-sign-compare -Wno-redundant-move")
+        "-Wno-unused-parameter" "-Wno-missing-field-initializers" "-Wno-sign-compare")
     
     if(${ANALYZE})
         target_compile_options(${PROJECT_NAME} PRIVATE 
