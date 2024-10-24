@@ -76,7 +76,10 @@ class CompiledFunction {
 
 	// Manual destructor for resource cleanup
 	void manualDestructor() {
-		lljit.release();
+		if (lljit.get() != nullptr) {
+			lljit.get()->~LLJIT();
+			lljit.release();
+		}
 		function = nullptr;
 	}
 
