@@ -226,10 +226,11 @@ void generateAxisData() {
 }
 
 void clearGraphData(GLBufferInfo& vboObject) {
-	permaAssert(vboObject.id != 0);
-	
-	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
-	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+	// for the case where you created an empty graph and immediatly removed it
+	if (vboObject.id != 0) {
+		glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
+		glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+	}
 	vboObject.amount = 0;
 }
 
