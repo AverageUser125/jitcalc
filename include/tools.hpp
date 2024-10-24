@@ -1,13 +1,13 @@
 #ifndef TOOLS_H_INCLUDE
 #define TOOLS_H_INCLUDE
-#include "defines.hpp"
+
 
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
-#include <stdint.h>
+#include "defines.hpp"
 
 #define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
 
@@ -103,25 +103,6 @@ inline void assertFuncInternal(const char* expression, const char* file_name, un
 	}
 }
 
-#if PRODUCTION_BUILD == 0
-
-#define permaAssert(expression)                                                                                        \
-	(void)((!!(expression)) || (assertFuncInternal(#expression, __FILENAME__, (unsigned)(__LINE__)), 0))
-
-#define permaAssertComment(expression, comment)                                                                        \
-	(void)((!!(expression)) || (assertFuncInternal(#expression, __FILENAME__, (unsigned)(__LINE__), comment), 1))
-
-#else
-
-#define permaAssert(expression)                                                                                        \
-	(void)((!!(expression)) || (assertFuncProduction(#expression, __FILENAME__, (unsigned)(__LINE__)), 0))
-
-#define permaAssertComment(expression, comment)                                                                        \
-	(void)((!!(expression)) || (assertFuncProduction(#expression, __FILENAME__, (unsigned)(__LINE__), comment), 1))
-
-#endif
-
-
 #else //linux or others
 
 inline void assertFuncProduction(const char* expression, const char* file_name, unsigned const line_number,
@@ -136,6 +117,7 @@ inline void assertFuncInternal(const char* expression, const char* file_name, un
 	raise(SIGABRT);
 }
 
+#endif
 
 #if PRODUCTION_BUILD == 0
 
@@ -154,8 +136,6 @@ inline void assertFuncInternal(const char* expression, const char* file_name, un
 	(void)((!!(expression)) || (assertFuncProduction(#expression, __FILENAME__, (unsigned)(__LINE__), comment), 1))
 #endif
 
-
-#endif
 
 #if PRODUCTION_BUILD == 0
 #define FORCE_LOG
@@ -311,8 +291,9 @@ inline void elog(std::stringstream&& stream) {
 	f.close();
 }
 
-
 #endif
 
 #endif
+
+
 #endif
