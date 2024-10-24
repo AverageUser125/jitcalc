@@ -16,6 +16,12 @@
 #include <llvm/TargetParser/Host.h>
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Transforms/Utils/BuildLibCalls.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/Transforms/IPO.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
+#include <llvm/Transforms/InstCombine/InstCombiner.h>
+
 using namespace llvm;
 using namespace llvm::orc;
 
@@ -37,6 +43,10 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 		auto& DL = J.get()->getDataLayout();
 		JD.addGenerator(cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix())));
 	}
+
+	// InstCombinePass [func] ( 1 + x - 0.5 converts to x - 0.5)
+    llvm::legacy::PassManager passManager;
+	passManager.add(llvm::createInstructionCombiningPass());
 
 	if (J.get()->addIRModule(std::move(M))) {
 		elog("failed to link module to LLJIT");
