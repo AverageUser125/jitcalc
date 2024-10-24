@@ -11,104 +11,91 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h> // For file writing support
 #include <llvm/Transforms/Scalar.h>
-#include <llvm/IR/LegacyPassManager.h> // For legacy pass manager
+#include "llvm/IR/BasicBlock.h"
+ 
+using namespace llvm;
+using namespace llvm::orc;
 
 JITCompiler::JITCompiler() {
-	// Initialize the LLVM context, module, and builder
-	context = std::make_unique<llvm::LLVMContext>();
-	module = std::make_unique<llvm::Module>("calculator_module", *context);
-	builder = std::make_unique<llvm::IRBuilder<>>(*context);
 }
 
 CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
-	assert(module != nullptr);
-
-	// Create a function with a double parameter for the variable
-	auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy()}, false);
-	auto func = llvm::Function::Create(funcType, llvm::Function::InternalLinkage, "evaluate", module.get());
-	llvm::BasicBlock* block = llvm::BasicBlock::Create(*context, "entry", func);
-	builder->SetInsertPoint(block);
-
-	// Set the function's argument as the variable
-	llvm::Value* variable = func->getArg(0);
-
-	// Generate code for the expression and return the result
-	llvm::Value* result = generateCode(expr, variable);
-	builder->CreateRet(result);
-
-	// Create an optimizer pass manager
-	llvm::legacy::FunctionPassManager fpm(module.get());
-
-	// TODO: Add the following passes
-	// GlobalOptPass [module] (local_unamed_addr)
-	// InstCombinePass [func] ( 1 + x - 0.5 converts to x - 0.5)
-	fpm.add((llvm::Pass*)llvm::createTailCallEliminationPass());
-	fpm.add((llvm::Pass*)llvm::createEarlyCSEPass());
-	fpm.add((llvm::Pass*)llvm::createInstSimplifyLegacyPass());
-
-	// Run the optimizer on the function
-	fpm.doInitialization();
-	fpm.run(*func);
-	fpm.doFinalization();
-
-	#if PRODUCTION_BUILD == 0
-	{ 
-		std::string llvmIR;
-		llvm::raw_string_ostream rso(llvmIR);
-		module->print(rso, nullptr, false, !PRODUCTION_BUILD);
-		llog(llvmIR);
-	}
-	#endif
-	llvm::Module* rawModule = module.get();
-	// Create the JIT execution engine
-	llvm::ExecutionEngine* engine =
-		(llvm::ExecutionEngine*)(llvm::EngineBuilder(std::move(module)).create());
-
-	if (!engine) {
-		std::cerr << "Failed to create execution engine." << std::endl;
-		return {nullptr, nullptr, nullptr};
-	}
-	// return {nullptr, [](double x) { return x; }};
-	// Finalize the JIT object
-	engine->finalizeObject();
-	CompiledFunction compiledFunction(engine, rawModule, (calcFunction) engine->getPointerToFunction(func));
-	return compiledFunction;
+	auto J = LLJITBuilder().create();
+	auto M = createModule(expr);
+	J.get()->addIRModule(std::move(M));
+	auto evalFunc = J.get()->lookup("eval");
+	calcFunction func = evalFunc.get().toPtr<calcFunction>();
+	wlog(func(1), " ", func(2));
+	CompiledFunction compFunc(func, std::move(J.get()));
+	return compFunc;
 }
 
-llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variable) {
+ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
+	auto context = std::make_unique<llvm::LLVMContext>();
+	auto module = std::make_unique<llvm::Module>("test", *context);
+
+	Module* M = module.get();
+	Function* func =
+		Function::Create(FunctionType::get(Type::getDoubleTy(*context), {Type::getDoubleTy(*context)}, false),
+						 Function::ExternalLinkage, "eval", M);
+
+	llvm::BasicBlock* BB = llvm::BasicBlock::Create(*context, "EntryBlock", func);
+	llvm::IRBuilder<> builder(BB);
+
+	assert(func->arg_begin() != func->arg_end());
+	Argument* ArgX = &*func->arg_begin(); // Get the arg
+	ArgX->setName("x");
+
+	variable = ArgX;
+	builderPtr = &builder;
+	contextPtr = context.get();
+	llvm::Value* result = generateCode(expr);
+	builder.CreateRet(result);
+	{
+		std::string llvmIR = "";
+		llvm::raw_string_ostream ros(llvmIR);
+		module->print(ros, nullptr, false, !PRODUCTION_BUILD);
+		ilog(llvmIR, '\n');
+	}
+
+	return ThreadSafeModule(std::move(module), std::move(context));
+
+}
+
+llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
 	switch (expr->type) {
 	case NodeType::Number:
-		return llvm::ConstantFP::get(*context, llvm::APFloat(expr->number));
+		return llvm::ConstantFP::get(*contextPtr, llvm::APFloat(expr->number));
 	case NodeType::Positive:
-		return generateCode(expr->unary.operand, variable);
+		return generateCode(expr->unary.operand);
 	case NodeType::Negative: {
-		llvm::Value* operand = generateCode(expr->unary.operand, variable);
-		return builder->CreateFNeg(operand);
+		llvm::Value* operand = generateCode(expr->unary.operand);
+		return builderPtr->CreateFNeg(operand);
 	}
 	case NodeType::Add: {
-		llvm::Value* left = generateCode(expr->binary.left, variable);
-		llvm::Value* right = generateCode(expr->binary.right, variable);
-		return builder->CreateFAdd(left, right, "addtmp");
+		llvm::Value* left = generateCode(expr->binary.left);
+		llvm::Value* right = generateCode(expr->binary.right);
+		return builderPtr->CreateFAdd(left, right, "addtmp");
 	}
 	case NodeType::Sub: {
-		llvm::Value* left = generateCode(expr->binary.left, variable);
-		llvm::Value* right = generateCode(expr->binary.right, variable);
-		return builder->CreateFSub(left, right, "subtmp");
+		llvm::Value* left = generateCode(expr->binary.left);
+		llvm::Value* right = generateCode(expr->binary.right);
+		return builderPtr->CreateFSub(left, right, "subtmp");
 	}
 	case NodeType::Mul: {
-		llvm::Value* left = generateCode(expr->binary.left, variable);
-		llvm::Value* right = generateCode(expr->binary.right, variable);
-		return builder->CreateFMul(left, right, "multmp");
+		llvm::Value* left = generateCode(expr->binary.left);
+		llvm::Value* right = generateCode(expr->binary.right);
+		return builderPtr->CreateFMul(left, right, "multmp");
 	}
 	case NodeType::Div: {
-		llvm::Value* left = generateCode(expr->binary.left, variable);
-		llvm::Value* right = generateCode(expr->binary.right, variable);
-		return builder->CreateFDiv(left, right, "divtmp");
+		llvm::Value* left = generateCode(expr->binary.left);
+		llvm::Value* right = generateCode(expr->binary.right);
+		return builderPtr->CreateFDiv(left, right, "divtmp");
 	}
 	case NodeType::Pow: {
 		createExternalFunction("pow");
-		llvm::Value* left = generateCode(expr->binary.left, variable);
-		llvm::Value* right = generateCode(expr->binary.right, variable);
+		llvm::Value* left = generateCode(expr->binary.left);
+		llvm::Value* right = generateCode(expr->binary.right);
 
 		// Check if both left and right are constants
 		if (llvm::ConstantFP* leftConst = llvm::dyn_cast<llvm::ConstantFP>(left)) {
@@ -116,7 +103,7 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 				// If both are constants, calculate the result and return it as a constant
 				double result =
 					std::pow(leftConst->getValueAPF().convertToDouble(), rightConst->getValueAPF().convertToDouble());
-				return llvm::ConstantFP::get(*context, llvm::APFloat(result));
+				return llvm::ConstantFP::get(*contextPtr, llvm::APFloat(result));
 			}
 		}
 
@@ -124,24 +111,31 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 		if (expr->binary.left->type == NodeType::Pow) {
 			// Get the base and inner exponent from the left power expression
 			ExpressionNode* innerPow = expr->binary.left; // This is the left Pow
-			llvm::Value* innerBase = generateCode(innerPow->binary.left, variable);
-			llvm::Value* innerExponent = generateCode(innerPow->binary.right, variable);
+			llvm::Value* innerBase = generateCode(innerPow->binary.left);
+			llvm::Value* innerExponent = generateCode(innerPow->binary.right);
 
 			// Combine the inner exponent with the right exponent
 			llvm::Value* outerExponent = right; // Use the exponent from the current Pow
-			llvm::Value* newExponent = builder->CreateFMul(innerExponent, outerExponent, "exponentProduct");
+			llvm::Value* newExponent = builderPtr->CreateFMul(innerExponent, outerExponent, "exponentProduct");
 
-			return builder->CreateCall(createdFunctions.at("pow"), {innerBase, newExponent}, "powtmp");
+			CallInst* callinst = builderPtr->CreateCall(createdFunctions.at("pow"), {innerBase, newExponent}, "powtmp");
+			callinst->setTailCall(true);
+			return callinst;
 		}
-		return builder->CreateCall(createdFunctions.at("pow"), {left, right}, "powtmp");
+		CallInst* callinst = builderPtr->CreateCall(createdFunctions.at("pow"), {left, right}, "powtmp");
+		callinst->setTailCall(true);
+		return callinst;
+
 	}
 	case NodeType::Variable: {
 		return variable; // Return the variable (the function's argument)
 	}
 	case NodeType::Function: {
 		createExternalFunction(expr->function.name);
-		llvm::Value* argValue = generateCode(expr->function.argument, variable);
-		return builder->CreateCall(createdFunctions.at(expr->function.name), {argValue}, "funccalltmp");
+		llvm::Value* argValue = generateCode(expr->function.argument);
+		CallInst* callinst = builderPtr->CreateCall(createdFunctions.at(expr->function.name), {argValue}, "funccalltmp");
+		callinst->setTailCall(true);
+		return callinst;
 	}
 	case NodeType::Error: {
 		assert(0 && "ERROR WAS FOUND!, YOU PROBABLY FORGOT TO CHECK FOR IT");
@@ -158,7 +152,7 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variab
 void JITCompiler::createExternalFunction(const std::string_view name) {
 	// Check if the function has already been created
 	if (createdFunctions.find(name) == createdFunctions.end()) {
-		auto funcType = llvm::FunctionType::get(builder->getDoubleTy(), {builder->getDoubleTy()}, false);
+		auto funcType = llvm::FunctionType::get(builderPtr->getDoubleTy(), {builderPtr->getDoubleTy()}, false);
 		llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, name, module.get());
 		func->addFnAttr(llvm::Attribute::ReadNone);
 		func->addFnAttr(llvm::Attribute::NoUnwind);

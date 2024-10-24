@@ -1,7 +1,7 @@
-#include <llvm/Support/TargetSelect.h>
 #include "arenaAllocator.hpp"
 #include "mainGui.hpp"
-
+#include <llvm/Support/TargetSelect.h>
+#include "llvm/Support/ManagedStatic.h"
 Arena global_arena;
 
 int main() {
@@ -15,5 +15,6 @@ int main() {
 	// The OS frees the memory when the program ends already
 	// arena_free(&global_arena);
 
+	llvm::llvm_shutdown();
 	return returnCode;
 }

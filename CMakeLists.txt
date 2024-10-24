@@ -39,7 +39,7 @@ find_package(LLVM REQUIRED CONFIG)
 
 # If LLVM is found, include the required directories and link the libraries
 if(LLVM_FOUND)
-    llvm_map_components_to_libnames(LLVM_LIBS support core native mcjit asmparser)
+    llvm_map_components_to_libnames(LLVM_LIBS support core native mcjit asmparser orcjit)
     message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
     message(STATUS "Found LLVM: ${LLVM_VERSION}")
     message(STATUS "LLVM Include Directories: ${LLVM_INCLUDE_DIRS}")
@@ -101,7 +101,7 @@ string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
 add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
 
 if(${USING_MSVC})
-    target_compile_options(${PROJECT_NAME} PRIVATE /W4)
+    # target_compile_options(${PROJECT_NAME} PRIVATE /W4)
     target_compile_options(${PROJECT_NAME} PRIVATE 
                         /wd4624  # Disable the warning for deleted destructors
                         /wd4533  # allow goto to skip variable decleration
