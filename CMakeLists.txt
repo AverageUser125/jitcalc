@@ -53,6 +53,9 @@ endif()
 
 if(${USING_MSVC})
     add_compile_options(/arch:AVX2 /GA /Gy /Gw /GF /GS- /GR-) # optimzations
+    
+    # llvm links it's own default library
+    add_link_options(/NODEFAULTLIB:library)
 
     add_compile_options(/permissive-)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
