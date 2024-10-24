@@ -41,7 +41,7 @@ static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
 
 static constexpr float initialNumPoints = 100;
-
+static constexpr float graphThreshold = 0.01;
 #pragma endregion
 #pragma region shader source
 static const char* const vertexShaderSource =
@@ -242,24 +242,22 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 	vertexData.reserve(targetNumPoints);
 	vertexData.clear();
 
-	float step = 2.0f / targetNumPoints; // Initial step size
+	float step = 2.0f / targetNumPoints;
 
-	float prevX = -1.0f;						  // Previous x value (start at -1)
-	float prevY = func(prevX / scale + origin.x); // Evaluate function at the start
+	float prevX = -1.0f;
+	float prevY = func(prevX / scale + origin.x);
 
 	for (int j = 0; j <= targetNumPoints; ++j) {
-		float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
-		float x = (normalizedX / scale) + origin.x; // Apply scaling (zoom) to X
+		float normalizedX = -1.0f + j * step;
+		float x = (normalizedX / scale) + origin.x;
 
-		// Evaluate the function at the new x value
 		float y = func(x);
 
-		// Calculate the change in function values (difference between successive y-values)
 		float deltaY = std::abs(y - prevY);
 
 		// If deltaY is large, reduce the step size to add more points for better precision
-		if (deltaY > 0.01) {			  // `threshold` is a small value indicating significant change
-			float refinedStep = step / 10.0f; // Increase precision by reducing step size
+		if (deltaY > graphThreshold) {
+			float refinedStep = step / 10.0f;
 			for (float refinedX = prevX + refinedStep; refinedX < normalizedX; refinedX += refinedStep) {
 				float refinedFuncX = (refinedX / scale) + origin.x;
 				float refinedY = func(refinedFuncX);
@@ -268,11 +266,9 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 			}
 		}
 
-		// Add the current point to vertex data
 		float scaledY = (y + origin.y) * scale;
 		vertexData.push_back({normalizedX, scaledY});
 
-		// Update previous values for the next iteration
 		prevX = normalizedX;
 		prevY = y;
 	}
@@ -402,7 +398,7 @@ void removeGraph(int index) {
 
 	GraphEquation& graph = graphEquations[index];
 
-	// graph.func = nullptr
+	graph.func = nullptr;
 	clearGraphData(graph.vboObj);
 	vboAllocator.freeVBO(graph.vboObj.id);
 	graphEquations.erase(graphEquations.begin() + index);
