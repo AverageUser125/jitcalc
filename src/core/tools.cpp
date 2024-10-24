@@ -43,6 +43,8 @@ void assertFuncProduction(const char* expression, const char* file_name, const u
 		_exit(3);
 	}
 	}
+
+	unreachable();
 }
 
 void assertFuncInternal(const char* expression, const char* file_name, const unsigned int line_number,
@@ -92,6 +94,7 @@ void assertFuncInternal(const char* expression, const char* file_name, const uns
 		abort();
 	}
 	}
+	unreachable();
 }
 
 void setConsoleColor(ConsoleColor color) {
