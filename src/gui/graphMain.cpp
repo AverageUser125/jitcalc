@@ -41,7 +41,7 @@ static constexpr float mouseSensitivity = 60;
 static constexpr float scrollSensitivity = 30;
 
 static constexpr float initialNumPoints = 100;
-static constexpr float graphThreshold = 0.01;
+static constexpr float graphThreshold = 0.01f;
 #pragma endregion
 #pragma region shader source
 static const char* const vertexShaderSource =
