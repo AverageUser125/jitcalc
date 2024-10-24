@@ -39,7 +39,7 @@ find_package(LLVM REQUIRED CONFIG)
 
 # If LLVM is found, include the required directories and link the libraries
 if(LLVM_FOUND)
-    llvm_map_components_to_libnames(LLVM_LIBS support core native mcjit asmparser orcjit)
+    llvm_map_components_to_libnames(LLVM_LIBS support core native asmparser orcjit)
     message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
     message(STATUS "Found LLVM: ${LLVM_VERSION}")
     message(STATUS "LLVM Include Directories: ${LLVM_INCLUDE_DIRS}")

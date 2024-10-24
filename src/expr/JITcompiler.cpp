@@ -7,7 +7,6 @@
 #undef NDEBUG
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
-#include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h> // For file writing support
 #include <llvm/Transforms/Scalar.h>
