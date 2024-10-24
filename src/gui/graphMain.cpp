@@ -136,8 +136,8 @@ void generateAxisData() {
 	std::vector<float, ArenaAllocator<float>> verticesMedium;
 	std::array<float, 8> verticesThick{};
 
-	verticesMedium.reserve(desiredLines * 0.2 * 2);
-	verticesThin.reserve(desiredLines * 0.8 * 2);
+	verticesMedium.reserve(desiredLines * 0.2 * 2 + 2);
+	verticesThin.reserve(desiredLines * 0.8 * 2 + 2);
 
 	// Generate vertical lines in world space
 
