@@ -20,7 +20,7 @@ JITCompiler::JITCompiler() {
 	builder = std::make_unique<llvm::IRBuilder<>>(*context);
 }
 
-calcFunction JITCompiler::compile(ExpressionNode* expr) {
+CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 	assert(module != nullptr);
 
 	// Create a function with a double parameter for the variable
@@ -59,18 +59,20 @@ calcFunction JITCompiler::compile(ExpressionNode* expr) {
 		llog(llvmIR);
 	}
 	#endif
+	llvm::Module* rawModule = module.get();
 	// Create the JIT execution engine
-	llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module)).create();
+	llvm::ExecutionEngine* engine =
+		(llvm::ExecutionEngine*)(llvm::EngineBuilder(std::move(module)).create());
+
 	if (!engine) {
 		std::cerr << "Failed to create execution engine." << std::endl;
-		return nullptr;
+		return {nullptr, nullptr, nullptr};
 	}
-
+	// return {nullptr, [](double x) { return x; }};
 	// Finalize the JIT object
 	engine->finalizeObject();
-
-	// Return the pointer to the compiled function
-	return (double (*)(double))engine->getPointerToFunction(func);
+	CompiledFunction compiledFunction(engine, rawModule, (calcFunction) engine->getPointerToFunction(func));
+	return compiledFunction;
 }
 
 llvm::Value* JITCompiler::generateCode(ExpressionNode* expr, llvm::Value* variable) {

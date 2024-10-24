@@ -26,7 +26,7 @@ struct GLBufferInfo {
 
 struct GraphEquation {
 	std::string input = "";
-	calcFunction func = nullptr;
+	CompiledFunction func{};
 	GLBufferInfo vboObj;
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
@@ -233,28 +233,48 @@ void clearGraphData(GLBufferInfo& vboObject) {
 	vboObject.amount = 0;
 }
 
-void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
+void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 					   std::vector<glm::vec2, ArenaAllocator<glm::vec2>>& vertexData) {
 	if (func == nullptr) {
 		return;
 	}
-	size_t numPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
-	vertexData.reserve(numPoints);
+	size_t targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
+	vertexData.reserve(targetNumPoints);
 	vertexData.clear();
-	// for small scale(zoom out) this needs more precision
-	// but just doing / scale gives 10000 vertexes, so no
 
-	float step = 2.0f / numPoints;
+	float step = 2.0f / targetNumPoints; // Initial step size
 
-	for (int j = 0; j <= numPoints; ++j) {
+	float prevX = -1.0f;						  // Previous x value (start at -1)
+	float prevY = func(prevX / scale + origin.x); // Evaluate function at the start
+
+	for (int j = 0; j <= targetNumPoints; ++j) {
 		float normalizedX = -1.0f + j * step;		// Generate normalized X in the range [-1, 1]
 		float x = (normalizedX / scale) + origin.x; // Apply scaling (zoom) to X
 
-		// Evaluate the function at the scaled X value
-		float y = func(x); // Evaluate the function
+		// Evaluate the function at the new x value
+		float y = func(x);
 
-		float scaledY = (y + origin.y) * scale; // Apply scaling (zoom) to the Y value
+		// Calculate the change in function values (difference between successive y-values)
+		float deltaY = std::abs(y - prevY);
+
+		// If deltaY is large, reduce the step size to add more points for better precision
+		if (deltaY > 0.01) {			  // `threshold` is a small value indicating significant change
+			float refinedStep = step / 10.0f; // Increase precision by reducing step size
+			for (float refinedX = prevX + refinedStep; refinedX < normalizedX; refinedX += refinedStep) {
+				float refinedFuncX = (refinedX / scale) + origin.x;
+				float refinedY = func(refinedFuncX);
+				float refinedScaledY = (refinedY + origin.y) * scale;
+				vertexData.push_back({refinedX, refinedScaledY});
+			}
+		}
+
+		// Add the current point to vertex data
+		float scaledY = (y + origin.y) * scale;
 		vertexData.push_back({normalizedX, scaledY});
+
+		// Update previous values for the next iteration
+		prevX = normalizedX;
+		prevY = y;
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
@@ -262,7 +282,8 @@ void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject,
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec2), vertexData.data(), GL_STATIC_DRAW);
 }
 
-void generateGraphData(const calcFunction& func, GLBufferInfo& vboObject) {
+
+void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject) {
 	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
 	generateGraphData(func, vboObject, vertexData);
 }
