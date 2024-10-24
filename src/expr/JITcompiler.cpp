@@ -47,6 +47,7 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 	// InstCombinePass [func] ( 1 + x - 0.5 converts to x - 0.5)
     llvm::legacy::PassManager passManager;
 	passManager.add(llvm::createInstructionCombiningPass());
+	passManager.add(llvm::createDeadArgEliminationPass());
 
 	if (J.get()->addIRModule(std::move(M))) {
 		elog("failed to link module to LLJIT");
