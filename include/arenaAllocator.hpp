@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "arena.h"
+#include "arena.hpp"
 
 extern Arena global_arena;
 

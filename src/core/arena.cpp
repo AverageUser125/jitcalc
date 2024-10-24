@@ -1,4 +1,4 @@
-#include "arena.h"
+#include "arena.hpp"
 #include "defines.hpp"
 
 #if ARENA_BACKEND == ARENA_BACKEND_LIBC_MALLOC
