@@ -10,114 +10,28 @@
 #include "defines.hpp"
 
 #define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
-
 #if PLATFORM_WIN
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <Windows.h>
-
-inline void assertFuncProduction(const char* expression, const char* file_name, unsigned const line_number,
-								 const char* comment = "---") {
-
-	char c[1024] = {};
-
-	sprintf(c,
-			"Assertion failed\n\n"
-			"File:\n"
-			"%s\n\n"
-			"Line:\n"
-			"%u\n\n"
-			"Expresion:\n"
-			"%s\n\n"
-			"Comment:\n"
-			"%s"
-			"\n\nPlease report this error to the developer.",
-			file_name, line_number, expression, comment);
-
-	int const action = MessageBoxA(0, c, "Platform Layer", MB_TASKMODAL | MB_ICONHAND | MB_OK | MB_SETFOREGROUND);
-
-	switch (action) {
-	case IDOK: // Abort the program:
-	{
-		raise(SIGABRT);
-
-		// We won't usually get here, but it's possible that a user-registered
-		// abort handler returns, so exit the program immediately.  Note that
-		// even though we are "aborting," we do not call abort() because we do
-		// not want to invoke Watson (the user has already had an opportunity
-		// to debug the error and chose not to).
-		_exit(3);
-	}
-	default: {
-		_exit(3);
-	}
-	}
-}
-
-inline void assertFuncInternal(const char* expression, const char* file_name, unsigned const line_number,
-							   const char* comment = "---") {
-
-	char c[1024] = {};
-
-	sprintf(c,
-			"Assertion failed\n\n"
-			"File:\n"
-			"%s\n\n"
-			"Line:\n"
-			"%u\n\n"
-			"Expresion:\n"
-			"%s\n\n"
-			"Comment:\n"
-			"%s"
-			"\n\nPress retry to debug.",
-			file_name, line_number, expression, comment);
-
-	int const action =
-		MessageBoxA(0, c, "Platform Layer", MB_TASKMODAL | MB_ICONHAND | MB_ABORTRETRYIGNORE | MB_SETFOREGROUND);
-
-	switch (action) {
-	case IDABORT: // Abort the program:
-	{
-		raise(SIGABRT);
-
-		// We won't usually get here, but it's possible that a user-registered
-		// abort handler returns, so exit the program immediately.  Note that
-		// even though we are "aborting," we do not call abort() because we do
-		// not want to invoke Watson (the user has already had an opportunity
-		// to debug the error and chose not to).
-		_exit(3);
-	}
-	case IDRETRY: // Break into the debugger then return control to caller
-	{
-		__debugbreak();
-		return;
-	}
-	case IDIGNORE: // Return control to caller
-	{
-		return;
-	}
-	default: // This should not happen; treat as fatal error:
-	{
-		abort();
-	}
-	}
-}
-
-#else //linux or others
-
-inline void assertFuncProduction(const char* expression, const char* file_name, unsigned const line_number,
-								 const char* comment = "---") {
-
-	raise(SIGABRT);
-}
-
-inline void assertFuncInternal(const char* expression, const char* file_name, unsigned const line_number,
-							   const char* comment = "---") {
-
-	raise(SIGABRT);
-}
-
+enum class ConsoleColor {
+	BLUE = 9,
+	GREEN = 10,
+	RED = 12,
+	YELLOW = 14,
+};
+#else
+enum class ConsoleColor {
+	BLUE = 34,
+	GREEN = 32,
+	RED = 31,
+	YELLOW = 33,
+};
 #endif
+void assertFuncProduction(const char* expression, const char* file_name, unsigned const line_number,
+								 const char* comment = "---");
+void assertFuncInternal(const char* expression, const char* file_name, unsigned const line_number,
+							   const char* comment = "---");
+
+void setConsoleColor(ConsoleColor color);
+void resetConsoleColor();
 
 #if PRODUCTION_BUILD == 0
 
@@ -163,15 +77,11 @@ template <class F, class... T> inline void llog(F f, T... args) {
 #ifdef FORCE_LOG
 inline void wlog() {
 	std::cout << "\n";
-#if PLATFORM_WIN
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-#endif
+	resetConsoleColor();
 }
 
 template <class F, class... T> inline void wlog(F f, T... args) {
-#if PLATFORM_WIN
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-#endif
+	setConsoleColor(ConsoleColor::YELLOW);
 	std::cout << f << " ";
 	wlog(args...);
 }
@@ -184,15 +94,11 @@ template <class F, class... T> inline void wlog(F f, T... args) {
 #ifdef FORCE_LOG
 inline void ilog() {
 	std::cout << "\n";
-#if PLATFORM_WIN
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-#endif
+	resetConsoleColor();
 }
 
 template <class F, class... T> inline void ilog(F f, T... args) {
-#if PLATFORM_WIN
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9);
-#endif
+	setConsoleColor(ConsoleColor::BLUE);
 
 	std::cout << f << " ";
 	ilog(args...);
@@ -206,15 +112,11 @@ template <class F, class... T> inline void ilog(F f, T... args) {
 #ifdef FORCE_LOG
 inline void glog() {
 	std::cout << "\n";
-#if PLATFORM_WIN
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-#endif
+	resetConsoleColor();
 }
 
 template <class F, class... T> inline void glog(F f, T... args) {
-#if PLATFORM_WIN
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-#endif
+	setConsoleColor(ConsoleColor::GREEN);
 
 	std::cout << f << " ";
 	glog(args...);
@@ -228,15 +130,11 @@ template <class F, class... T> inline void glog(F f, T... args) {
 #ifdef FORCE_LOG
 inline void elog() {
 	std::cout << "\n";
-#if PLATFORM_WIN
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-#endif
+	resetConsoleColor();
 }
 
 template <class F, class... T> inline void elog(F f, T... args) {
-#if PLATFORM_WIN
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-#endif
+	setConsoleColor(ConsoleColor::RED);
 
 	std::cout << f << " ";
 	elog(args...);
