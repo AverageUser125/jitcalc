@@ -2,12 +2,13 @@
 #define TOOLS_H_INCLUDE
 
 
-#include <signal.h>
-#include <string.h>
-#include <stdio.h>
-#include <iostream>
-#include <sstream>
 #include "defines.hpp"
+#include <iosfwd>
+#include <iostream>
+#include <signal.h>
+#include <sstream>
+#include <stdio.h>
+#include <string.h>
 
 #define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
 #if PLATFORM_WIN
@@ -166,11 +167,13 @@ template <class F, class... T> inline void elog(F&& f, T&&... args) {
 
 #else
 template <class F, class... T> inline void elog(F f, T... args) {
-	std::stringstream stream;
+	// TODO: fix this
+	/**std::stringstream stream;
 
 	stream << std::forward<F>(f) << " ";
 
 	elog(std::move(stream), args...);
+	*/
 }
 
 template <class F, class... T> inline void elog(std::stringstream&& stream, F&& f, T&&... args) {
