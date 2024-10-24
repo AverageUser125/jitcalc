@@ -1,5 +1,6 @@
 #include "vboAllocator.hpp"
 #include "arenaAllocator.hpp"
+#include "tools.hpp"
 #include <algorithm>
 
 VBOAllocator::VBOAllocator() {
@@ -36,8 +37,10 @@ void VBOAllocator::freeVBO(GLuint& vbo) {
 	if (it != allocatedVBOs.end()) {
 		allocatedVBOs.erase(it);
 		freeList.push_back(vbo);
+		vbo = 0;
+	} else {
+		elog("Tried to free a a VBO not allocated by vboAllocator");
 	}
-	vbo = 0;
 }
 
 void VBOAllocator::cleanup() {
