@@ -307,6 +307,7 @@ int guiLoop() {
 			assert(hwnd != nullptr);
 			BOOL value = TRUE;
 			fnDwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
+			glog("successfully called DwmSetWindowAttribute");
 		} else {
 			wlog("failed to get DwmSetWindowAttribute from Dwmapi.dll");
 		}

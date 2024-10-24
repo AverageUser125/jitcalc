@@ -25,9 +25,9 @@ enum class ConsoleColor {
 	YELLOW = 33,
 };
 #endif
-void assertFuncProduction(const char* expression, const char* file_name, unsigned const line_number,
+void assertFuncProduction(const char* expression, const char* file_name, const unsigned int line_number,
 								 const char* comment = "---");
-void assertFuncInternal(const char* expression, const char* file_name, unsigned const line_number,
+void assertFuncInternal(const char* expression, const char* file_name, const unsigned int line_number,
 							   const char* comment = "---");
 
 void setConsoleColor(ConsoleColor color);

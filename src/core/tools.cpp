@@ -7,7 +7,7 @@
 
 constexpr auto defaultConsoleColor = 15;
 
-void assertFuncProduction(const char* expression, const char* file_name, unsigned const line_number,
+void assertFuncProduction(const char* expression, const char* file_name, const unsigned int line_number,
 								 const char* comment) {
 
 	char c[1024] = {};
@@ -45,7 +45,7 @@ void assertFuncProduction(const char* expression, const char* file_name, unsigne
 	}
 }
 
-void assertFuncInternal(const char* expression, const char* file_name, unsigned const line_number,
+void assertFuncInternal(const char* expression, const char* file_name, const unsigned int line_number,
 							   const char* comment){
 
 	char c[1024] = {};
@@ -103,20 +103,20 @@ void resetConsoleColor() {
 }
 #else //linux or others
 
-inline void assertFuncProduction(const char* expression, const char* file_name, unsigned const line_number,
+void assertFuncProduction(const char* expression, const char* file_name, const unsigned int line_number,
 								 const char* comment){
 
 	raise(SIGABRT);
 }
 
-inline void assertFuncInternal(const char* expression, const char* file_name, unsigned const line_number,
+void assertFuncInternal(const char* expression, const char* file_name, const unsigned int line_number,
 							   const char* comment) {
 
 	raise(SIGABRT);
 }
 
 void setConsoleColor(ConsoleColor color) {
-	std::string colorCode = std::to_string(color + 30);
+	std::string colorCode = std::to_string(static_cast<int>(color));
 	std::cout << "\033[" << colorCode << "m";
 }
 
