@@ -21,6 +21,14 @@ template <typename T> class ArenaAllocator {
 		using other = ArenaAllocator<U>;
 	};
 
+	template <typename U> ArenaAllocator(const ArenaAllocator<U>&) noexcept {
+	}
+
+	template <typename U, typename = std::enable_if_t<std::is_same_v<U, ArenaAllocator<typename U::value_type>>>>
+	operator U() const noexcept {
+		return U();
+	}
+
 	[[nodiscard]] T* allocate(size_type n) {
 		void* ptr = arena_alloc(&global_arena, n * sizeof(T));
 		if (!ptr) {
