@@ -11,8 +11,12 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h> // For file writing support
 #include <llvm/Transforms/Scalar.h>
-#include "llvm/IR/BasicBlock.h"
- 
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
+#include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
+#include <llvm/TargetParser/Host.h>
+#include <llvm/Analysis/TargetLibraryInfo.h>
+#include <llvm/Transforms/Utils/BuildLibCalls.h>
 using namespace llvm;
 using namespace llvm::orc;
 
@@ -20,23 +24,43 @@ JITCompiler::JITCompiler() {
 }
 
 CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
+
 	auto J = LLJITBuilder().create();
+	if (!J) {
+		elog("failed to create LLJITBuilder");
+		return {};
+	}
 	auto M = createModule(expr);
-	J.get()->addIRModule(std::move(M));
+
+	// link all libraries already linked with the parent program
+	{
+		auto& JD = J.get()->getMainJITDylib();
+		auto& DL = J.get()->getDataLayout();
+		JD.addGenerator(cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix())));
+	}
+
+	if (J.get()->addIRModule(std::move(M))) {
+		elog("failed to link module to LLJIT");
+		return {};
+	}
 	auto evalFunc = J.get()->lookup("eval");
+	if (!evalFunc) {
+		elog("failed to get \"eval\" function");
+		return {};	
+	}
 	calcFunction func = evalFunc.get().toPtr<calcFunction>();
-	wlog(func(1), " ", func(2));
+
 	CompiledFunction compFunc(func, std::move(J.get()));
 	return compFunc;
 }
 
 ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	auto context = std::make_unique<llvm::LLVMContext>();
-	auto module = std::make_unique<llvm::Module>("test", *context);
+	funcType = FunctionType::get(Type::getDoubleTy(*context), {Type::getDoubleTy(*context)}, false);
 
+	auto module = std::make_unique<llvm::Module>("test", *context);
 	Module* M = module.get();
-	Function* func =
-		Function::Create(FunctionType::get(Type::getDoubleTy(*context), {Type::getDoubleTy(*context)}, false),
+	Function* func = Function::Create(funcType,
 						 Function::ExternalLinkage, "eval", M);
 
 	llvm::BasicBlock* BB = llvm::BasicBlock::Create(*context, "EntryBlock", func);
@@ -49,6 +73,7 @@ ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	variable = ArgX;
 	builderPtr = &builder;
 	contextPtr = context.get();
+	modulePtr = M;
 	llvm::Value* result = generateCode(expr);
 	builder.CreateRet(result);
 	{
@@ -152,8 +177,7 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
 void JITCompiler::createExternalFunction(const std::string_view name) {
 	// Check if the function has already been created
 	if (createdFunctions.find(name) == createdFunctions.end()) {
-		auto funcType = llvm::FunctionType::get(builderPtr->getDoubleTy(), {builderPtr->getDoubleTy()}, false);
-		llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, name, module.get());
+		llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, name, modulePtr);
 		func->addFnAttr(llvm::Attribute::ReadNone);
 		func->addFnAttr(llvm::Attribute::NoUnwind);
 		func->addFnAttr(llvm::Attribute::AlwaysInline);

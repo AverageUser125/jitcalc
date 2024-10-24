@@ -99,8 +99,9 @@ class JITCompiler {
 	
 	llvm::IRBuilder<>* builderPtr = nullptr;
 	llvm::LLVMContext* contextPtr = nullptr;
+	llvm::Module* modulePtr = nullptr;
 	llvm::Value* variable = nullptr;
+	llvm::FunctionType* funcType = nullptr;
 	
-	std::unique_ptr<llvm::Module> module;
 	std::unordered_map<std::string_view, llvm::Function*> createdFunctions;
 };
