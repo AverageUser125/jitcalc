@@ -25,6 +25,8 @@
 using namespace llvm;
 using namespace llvm::orc;
 
+static constexpr auto evaluateFunctionName = "eval";
+
 JITCompiler::JITCompiler() {
 }
 
@@ -53,9 +55,9 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 		elog("failed to link module to LLJIT");
 		return {};
 	}
-	auto evalFunc = J.get()->lookup("eval");
+	auto evalFunc = J.get()->lookup(evaluateFunctionName);
 	if (!evalFunc) {
-		elog("failed to get \"eval\" function");
+		elog("failed to get \"", evaluateFunctionName, "\" function");
 		return {};	
 	}
 	calcFunction func = evalFunc.get().toPtr<calcFunction>();
@@ -71,7 +73,7 @@ ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	auto module = std::make_unique<llvm::Module>("test", *context);
 	Module* M = module.get();
 	Function* func = Function::Create(funcType,
-						 Function::ExternalLinkage, "eval", M);
+						 Function::ExternalLinkage, evaluateFunctionName, M);
 	func->addFnAttr(llvm::Attribute::NoUnwind); // no exceptions
 
 	llvm::BasicBlock* BB = llvm::BasicBlock::Create(*context, "EntryBlock", func);
