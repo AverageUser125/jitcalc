@@ -72,6 +72,7 @@ ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	Module* M = module.get();
 	Function* func = Function::Create(funcType,
 						 Function::ExternalLinkage, "eval", M);
+	func->addFnAttr(llvm::Attribute::NoUnwind); // no exceptions
 
 	llvm::BasicBlock* BB = llvm::BasicBlock::Create(*context, "EntryBlock", func);
 	llvm::IRBuilder<> builder(BB);
@@ -188,9 +189,9 @@ void JITCompiler::createExternalFunction(const std::string_view name) {
 	// Check if the function has already been created
 	if (createdFunctions.find(name) == createdFunctions.end()) {
 		llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, name, modulePtr);
-		func->addFnAttr(llvm::Attribute::ReadNone);
-		func->addFnAttr(llvm::Attribute::NoUnwind);
-		func->addFnAttr(llvm::Attribute::AlwaysInline);
-		createdFunctions[name] = func; // Mark this function as created
+		func->addFnAttr(llvm::Attribute::Builtin);
+		func->addFnAttr(llvm::Attribute::NoUnwind); // no exceptions
+
+		createdFunctions[name] = func;
 	}
 }
