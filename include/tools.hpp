@@ -46,6 +46,8 @@ void resetConsoleColor();
 
 #if PRODUCTION_BUILD == 0
 #define FORCE_LOG
+#elif
+#define ERRORS_ONLY
 #endif
 
 #ifdef ERRORS_ONLY
@@ -104,14 +106,20 @@ template <class F, class... T> ALWAYS_INLINE void elog(F f, T... args) {
 #endif
 #endif
 #include <fstream>
+#include <sstream>
 
 #ifdef ERRORS_ONLY
 template <class... Args> void ALWAYS_INLINE elog(Args&&... args) {
-	std::stringstream stream;
+	std::stringstream stream{};
 	(stream << ... << std::forward<Args>(args)) << " ";
 	std::ofstream f(RESOURCES_PATH "../errorLogs.txt", std::ios::app);
 	if (f.is_open()) {
 		f << stream.str() << "\n";
 	}
+	#if PRODUCTION_BUILD == 0
+	setConsoleColor(ConsoleColor::RED);
+	std::cout << stream.str() << '\n';
+	resetConsoleColor();
+	#endif
 }
 #endif
