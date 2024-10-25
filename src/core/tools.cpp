@@ -1,5 +1,7 @@
 #include "tools.hpp"
 
+#include <signal.h>
+
 #if PLATFORM_WIN
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

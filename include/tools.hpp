@@ -1,14 +1,7 @@
-#ifndef TOOLS_H_INCLUDE
-#define TOOLS_H_INCLUDE
-
+#pragma once
 
 #include "defines.hpp"
-#include <iosfwd>
 #include <iostream>
-#include <signal.h>
-#include <sstream>
-#include <stdio.h>
-#include <string.h>
 
 #define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
 #if PLATFORM_WIN
@@ -51,7 +44,6 @@ void resetConsoleColor();
 	(void)((!!(expression)) || (assertFuncProduction(#expression, __FILENAME__, (unsigned)(__LINE__), comment), 1))
 #endif
 
-
 #if PRODUCTION_BUILD == 0
 #define FORCE_LOG
 #endif
@@ -61,140 +53,65 @@ void resetConsoleColor();
 #endif // ERRORS_ONLY
 
 #ifdef FORCE_LOG
-inline void llog() {
-	std::cout << "\n";
+template <class... Args> inline void llog(Args&&... args) {
+	(std::cout << ... << args) << "\n";
 }
-
-template <class F, class... T> inline void llog(F f, T... args) {
-	std::cout << f << " ";
-	llog(args...);
-}
-#else
-template <class F, class... T> inline void llog(F f, T... args) {
-}
-#endif
 
 ///warning log
-#ifdef FORCE_LOG
-inline void wlog() {
-	std::cout << "\n";
+template <class... Args> inline void wlog(Args&&... args) {
+	setConsoleColor(ConsoleColor::YELLOW);
+	(std::cout << ... << args) << "\n";
 	resetConsoleColor();
 }
-
-template <class F, class... T> inline void wlog(F f, T... args) {
-	setConsoleColor(ConsoleColor::YELLOW);
-	std::cout << f << " ";
-	wlog(args...);
-}
-#else
-template <class F, class... T> inline void wlog(F f, T... args) {
-}
-#endif
 
 ///important log
-#ifdef FORCE_LOG
-inline void ilog() {
-	std::cout << "\n";
+template <class... Args> inline void ilog(Args&&... args) {
+	setConsoleColor(ConsoleColor::BLUE);
+	(std::cout << ... << args) << "\n";
 	resetConsoleColor();
 }
 
-template <class F, class... T> inline void ilog(F f, T... args) {
-	setConsoleColor(ConsoleColor::BLUE);
-
-	std::cout << f << " ";
-	ilog(args...);
-}
-#else
-template <class F, class... T> inline void ilog(F f, T... args) {
-}
-#endif
 
 ///good log
-#ifdef FORCE_LOG
-inline void glog() {
-	std::cout << "\n";
+template <class... Args> inline void glog(Args&&... args) {
+	setConsoleColor(ConsoleColor::GREEN);
+	(std::cout << ... << args) << "\n";
 	resetConsoleColor();
 }
-
-template <class F, class... T> inline void glog(F f, T... args) {
-	setConsoleColor(ConsoleColor::GREEN);
-
-	std::cout << f << " ";
-	glog(args...);
-}
-#else
-template <class F, class... T> inline void glog(F f, T... args) {
-}
-#endif
 
 ///error log
-#ifdef FORCE_LOG
-inline void elog() {
-	std::cout << "\n";
+template <class... Args> inline void elog(Args&&... args) {
+	setConsoleColor(ConsoleColor::RED);
+	(std::cout << ... << args) << "\n";
 	resetConsoleColor();
 }
-
-template <class F, class... T> inline void elog(F f, T... args) {
-	setConsoleColor(ConsoleColor::RED);
-
-	std::cout << f << " ";
-	elog(args...);
-}
 #else
+template <class F, class... T> ALWAYS_INLINE void wlog(F f, T... args) {
+}
 
-#ifdef ERRORS_ONLY
+template <class F, class... T> ALWAYS_INLINE void ilog(F f, T... args) {
+}
 
-inline void elog(std::stringstream&& stream) {
-#if PLATFORM_WIN
-	MessageBoxA(0, stream.str().c_str(), "error", MB_ICONERROR);
+template <class F, class... T> ALWAYS_INLINE void glog(F f, T... args) {
+}
+
+template <class F, class... T> ALWAYS_INLINE void llog(F f, T... args) {
+}
+
+#ifndef ERRORS_ONLY
+template <class F, class... T> ALWAYS_INLINE void elog(F f, T... args) {
+}
 #endif
-}
-
-template <class F, class... T> inline void elog(std::stringstream&& stream, F&& f, T&&... args) {
-	stream << std::forward<F>(f) << " ";
-
-	elog(std::move(stream), args...);
-}
-
-template <class F, class... T> inline void elog(F&& f, T&&... args) {
-	std::stringstream stream;
-
-	stream << std::forward<F>(f) << " ";
-
-	elog(std::move(stream), args...);
-}
-
-
-#else
-template <class F, class... T> inline void elog(F f, T... args) {
-	// TODO: fix this
-	/**std::stringstream stream;
-
-	stream << std::forward<F>(f) << " ";
-
-	elog(std::move(stream), args...);
-	*/
-}
-
-template <class F, class... T> inline void elog(std::stringstream&& stream, F&& f, T&&... args) {
-	stream << std::forward<F>(f) << " ";
-
-	elog(std::move(stream), args...);
-}
-
+#endif
 #include <fstream>
 
-inline void elog(std::stringstream&& stream) {
+#ifdef ERRORS_ONLY
+template <class... Args> void ALWAYS_INLINE elog(Args&&... args) {
+	std::stringstream stream;
+	(stream << ... << std::forward<Args>(args)) << " ";
 	std::ofstream f(RESOURCES_PATH "../errorLogs.txt", std::ios::app);
-
-	f << stream.str() << "\n";
-
-	f.close();
+	if (f.is_open()) {
+		f << stream.str() << "\n";
+	}
 }
-
-#endif
-
-#endif
-
-
 #endif
