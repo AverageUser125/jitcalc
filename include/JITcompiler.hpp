@@ -2,12 +2,12 @@
 
 #include <memory>
 #include <utility>
-#include <string_view>
 #include <unordered_map>
 #include <tools.hpp>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 struct ExpressionNode;
+class string_view;
 
 // Forward declarations of LLVM types
 namespace llvm

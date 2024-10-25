@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include <cmath>
 #include <tools.hpp>
+#include <unordered_map>
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
