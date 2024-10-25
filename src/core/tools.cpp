@@ -132,11 +132,7 @@ void assertFuncProduction(const char* expression, const char* file_name, const u
 
 	raise(SIGABRT);
 
-	// We won't usually get here, but it's possible that a user-registered
-	// abort handler returns, so exit the program immediately.  Note that
-	// even though we are "aborting," we do not call abort() because we do
-	// not want to invoke Watson (the user has already had an opportunity
-	// to debug the error and chose not to).	
+	// should never reach, unless abort handler
 	_exit(3);
 }
 
@@ -172,7 +168,7 @@ void assertFuncInternal(const char* expression, const char* file_name, const uns
 		return;
 	default:
 		raise(SIGABRT);
-		break;
+		_exit(3);
 	}
 	unreachable();
 }
