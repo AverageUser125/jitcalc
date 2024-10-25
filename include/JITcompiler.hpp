@@ -1,24 +1,28 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 #include <string_view>
 #include <unordered_map>
-
-using calcFunction = double (*)(double);
-
-// Forward declarations of LLVM types
-
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
+#include <tools.hpp>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
-#include <tools.hpp>
-#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 struct ExpressionNode;
 
-#include <memory>  // For std::shared_ptr
-#include <utility> // For std::move
+// Forward declarations of LLVM types
+namespace llvm
+{
+class Value;
+class Function;
+class FunctionType;
+class Module;
+namespace orc
+{
+class ThreadSafeModule;
+}
+}
+
+using calcFunction = double (*)(double);
 
 class CompiledFunction {
   public:

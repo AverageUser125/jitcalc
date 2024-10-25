@@ -1,8 +1,6 @@
 #include "arenaAllocator.hpp"
 #include "graphMain.hpp"
-#include "JITcompiler.hpp"
 #include "mainGui.hpp"
-#include "parser.hpp"
 #include "platformInput.h"
 #include <array>
 #include <chrono>
@@ -15,6 +13,7 @@
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
 #include "vboAllocator.hpp"
+#include "compilerPipeline.hpp"
 #include "tools.hpp"
 
 #pragma region defines
@@ -363,26 +362,11 @@ bool setGraph(GraphEquation& graph) {
 	}
 
 	{
-		// the tokens have a string_view to a member string of the lexer
-		// therfore you cannot call the destructor on the lexer before the parser has finished
-		Lexer lexer(graph.input);
-		std::optional<std::vector<Token, ArenaAllocator<Token>>> tokenArrayOpt = lexer.lexerLexAllTokens();
-		// lexer.lexerDebugPrintArray(*tokenArrayOpt);
-
-		if (!tokenArrayOpt.has_value()) {
+		auto funcOpt = compileFromSource(graph.input);
+		if (!funcOpt.has_value()) {
 			return false;
 		}
-
-		Parser parser(*tokenArrayOpt);
-		// lifetime of tree pointer is the same as the parser object lifetime
-		ExpressionNode* tree = parser.parserParseExpression();
-		// parser.parserDebugDumpTree(tree);
-		if (parser.hasError) {
-			return false;
-		}
-
-		JITCompiler jit;
-		graph.func = jit.compile(tree);
+		graph.func = std::move(funcOpt.value());
 	}
 
 	if (graph.color.x == 0.0f && graph.color.y == 0.0f && graph.color.z == 0.0f) {

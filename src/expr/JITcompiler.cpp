@@ -1,23 +1,22 @@
+#undef NDEBUG
+
 #include "JITcompiler.hpp"
 #include "parser.hpp"
 #include <cmath>
-#include <iostream>
 #include <tools.hpp>
 
-#undef NDEBUG
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/FileSystem.h> // For file writing support
+#include <llvm/Support/FileSystem.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
 #include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
-#include <llvm/TargetParser/Host.h>
 #include <llvm/Analysis/TargetLibraryInfo.h>
-#include <llvm/Transforms/Utils/BuildLibCalls.h>
-#include <llvm/Transforms/Scalar.h>
-#include <llvm/Transforms/IPO.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>
 #include <llvm/Transforms/InstCombine/InstCombiner.h>
