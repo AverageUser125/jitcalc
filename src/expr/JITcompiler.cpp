@@ -87,13 +87,14 @@ ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	modulePtr = M;
 	llvm::Value* result = generateCode(expr);
 	builder.CreateRet(result);
+#if PRODUCTION_BUILD == 0
 	{
 		std::string llvmIR = "";
 		llvm::raw_string_ostream ros(llvmIR);
 		module->print(ros, nullptr, false, !PRODUCTION_BUILD);
 		ilog(llvmIR, '\n');
 	}
-
+#endif
 	return ThreadSafeModule(std::move(module), std::move(context));
 
 }
