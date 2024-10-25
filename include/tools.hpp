@@ -46,7 +46,7 @@ void resetConsoleColor();
 
 #if PRODUCTION_BUILD == 0
 #define FORCE_LOG
-#elif
+#else
 #define ERRORS_ONLY
 #endif
 
