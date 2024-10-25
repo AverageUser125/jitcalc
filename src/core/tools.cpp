@@ -131,6 +131,13 @@ void assertFuncProduction(const char* expression, const char* file_name, const u
 	elog(c);
 
 	raise(SIGABRT);
+
+	// We won't usually get here, but it's possible that a user-registered
+	// abort handler returns, so exit the program immediately.  Note that
+	// even though we are "aborting," we do not call abort() because we do
+	// not want to invoke Watson (the user has already had an opportunity
+	// to debug the error and chose not to).	
+	_exit(3);
 }
 
 void assertFuncInternal(const char* expression, const char* file_name, const unsigned int line_number,
