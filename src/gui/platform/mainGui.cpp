@@ -28,7 +28,11 @@ using DwmSetWindowAttributeType = HRESULT(__stdcall*)(HWND hwnd, DWORD dwAttribu
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
+#if PRODUCTION_BUILD == 0
+WORD consoleAttributes; // for reseting logging color
 #endif
+#endif
+
 static GLFWwindow* wind = nullptr;
 static bool currentFullScreen = 0;
 static bool fullScreen = 0;
@@ -272,6 +276,12 @@ int guiLoop() {
 	(void)freopen("conout$", "w", stdout);
 	(void)freopen("conout$", "w", stderr);
 	std::cout.sync_with_stdio();
+	{
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO info;
+		GetConsoleScreenBufferInfo(hConsole, &info);
+		consoleAttributes = info.wAttributes;
+	}
 #endif
 #endif
 #pragma endregion

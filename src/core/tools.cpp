@@ -98,14 +98,18 @@ void assertFuncInternal(const char* expression, const char* file_name, const uns
 	}
 	unreachable();
 }
+#if PRODUCTION_BUILD == 0
+
+extern WORD consoleAttributes;
 
 void setConsoleColor(ConsoleColor color) {
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), static_cast<int>(color));
 }
 
 void resetConsoleColor() {
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), defaultConsoleColor);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), consoleAttributes);
 }
+#endif
 #else //linux or others
 
 void assertFuncProduction(const char* expression, const char* file_name, const unsigned int line_number,
