@@ -155,22 +155,8 @@ void assertFuncInternal(const char* expression, const char* file_name, const uns
 
 	elog(c);
 
-	// User input for action
-	char choice;
-	std::cout << "Enter your choice (r to retry, i to ignore, any other key to abort): ";
-	std::cin >> choice;
-
-	switch (choice) {
-	case 'r':
-		DEBUG_BREAK();
-		return;
-	case 'i':
-		return;
-	default:
-		raise(SIGABRT);
-		_exit(3);
-	}
-	unreachable();
+	DEBUG_BREAK();
+	return;
 }
 
 void setConsoleColor(ConsoleColor color) {
