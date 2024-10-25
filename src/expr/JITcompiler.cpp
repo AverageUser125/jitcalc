@@ -22,9 +22,6 @@
 #include <llvm/Transforms/InstCombine/InstCombine.h>
 #include <llvm/Transforms/InstCombine/InstCombiner.h>
 
-using namespace llvm;
-using namespace llvm::orc;
-
 static constexpr auto evaluateFunctionName = "eval";
 
 JITCompiler::JITCompiler() {
@@ -32,7 +29,7 @@ JITCompiler::JITCompiler() {
 
 CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 
-	auto J = LLJITBuilder().create();
+	auto J = llvm::orc::LLJITBuilder().create();
 	if (!J) {
 		elog("failed to create LLJITBuilder");
 		return {};
@@ -43,7 +40,9 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 	{
 		auto& JD = J.get()->getMainJITDylib();
 		auto& DL = J.get()->getDataLayout();
-		JD.addGenerator(cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix())));
+		auto globalLibrary = llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix());
+		permaAssertComment(globalLibrary, "The LLVM failed to linked to the global scope");
+		JD.addGenerator(std::move(globalLibrary.get()));
 	}
 
 	// InstCombinePass [func] ( 1 + x - 0.5 converts to x - 0.5)
@@ -66,21 +65,20 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 	return compFunc;
 }
 
-ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
+llvm::orc::ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	auto context = std::make_unique<llvm::LLVMContext>();
-	funcType = FunctionType::get(Type::getDoubleTy(*context), {Type::getDoubleTy(*context)}, false);
+	funcType = llvm::FunctionType::get(llvm::Type::getDoubleTy(*context), {llvm::Type::getDoubleTy(*context)}, false);
 
 	auto module = std::make_unique<llvm::Module>("test", *context);
-	Module* M = module.get();
-	Function* func = Function::Create(funcType,
-						 Function::ExternalLinkage, evaluateFunctionName, M);
+	llvm::Module* M = module.get();
+	llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, evaluateFunctionName, M);
 	func->addFnAttr(llvm::Attribute::NoUnwind); // no exceptions
 
 	llvm::BasicBlock* BB = llvm::BasicBlock::Create(*context, "EntryBlock", func);
 	llvm::IRBuilder<> builder(BB);
 
 	assert(func->arg_begin() != func->arg_end());
-	Argument* ArgX = &*func->arg_begin(); // Get the arg
+	llvm::Argument* ArgX = &*func->arg_begin(); // Get the arg
 	ArgX->setName("x");
 
 	variable = ArgX;
@@ -97,7 +95,7 @@ ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 		ilog(llvmIR, '\n');
 	}
 #endif
-	return ThreadSafeModule(std::move(module), std::move(context));
+	return llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
 
 }
 
@@ -157,11 +155,12 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
 			llvm::Value* outerExponent = right; // Use the exponent from the current Pow
 			llvm::Value* newExponent = builderPtr->CreateFMul(innerExponent, outerExponent, "exponentProduct");
 
-			CallInst* callinst = builderPtr->CreateCall(createdFunctions.at("pow"), {innerBase, newExponent}, "powtmp");
+			llvm::CallInst* callinst =
+				builderPtr->CreateCall(createdFunctions.at("pow"), {innerBase, newExponent}, "powtmp");
 			callinst->setTailCall(true);
 			return callinst;
 		}
-		CallInst* callinst = builderPtr->CreateCall(createdFunctions.at("pow"), {left, right}, "powtmp");
+		llvm::CallInst* callinst = builderPtr->CreateCall(createdFunctions.at("pow"), {left, right}, "powtmp");
 		callinst->setTailCall(true);
 		return callinst;
 
@@ -172,7 +171,8 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
 	case NodeType::Function: {
 		createExternalFunction(expr->function.name);
 		llvm::Value* argValue = generateCode(expr->function.argument);
-		CallInst* callinst = builderPtr->CreateCall(createdFunctions.at(expr->function.name), {argValue}, "funccalltmp");
+		llvm::CallInst* callinst =
+			builderPtr->CreateCall(createdFunctions.at(expr->function.name), {argValue}, "funccalltmp");
 		callinst->setTailCall(true);
 		return callinst;
 	}
