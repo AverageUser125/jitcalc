@@ -84,7 +84,7 @@ void assertFuncInternal(const char* expression, const char* file_name, const uns
 	}
 	case IDRETRY: // Break into the debugger then return control to caller
 	{
-		__debugbreak();
+		DEBUG_BREAK();
 		return;
 	}
 	case IDIGNORE: // Return control to caller

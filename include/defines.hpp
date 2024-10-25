@@ -70,3 +70,15 @@
 #elif COMPILER_GCC || COMPILER_CLANG
 #define ALWAYS_INLINE __attribute__((always_inline))
 #endif
+
+#if PLATFORM_WIN
+#define DEBUG_BREAK() __debugbreak()
+#elif PLATFORM_LINUX
+#define DEBUG_BREAK() __builtin_debugtrap()
+#elif PLATFORM_MAC
+#define DEBUG_BREAK() __builtin_trap()
+#endif
+
+#define KB(x) ((unsigned long long)1024 * x)
+#define MB(x) ((unsigned long long)1024 * KB(x))
+#define GB(x) ((unsigned long long)1024 * MB(x))
