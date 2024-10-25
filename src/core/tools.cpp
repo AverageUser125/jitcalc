@@ -114,14 +114,60 @@ void resetConsoleColor() {
 
 void assertFuncProduction(const char* expression, const char* file_name, const unsigned int line_number,
 								 const char* comment){
+	char c[1024] = {};
+
+	snprintf(c, sizeof(c),
+			 "Assertion failed\n\n"
+			 "File:\n"
+			 "%s\n\n"
+			 "Line:\n"
+			 "%u\n\n"
+			 "Expression:\n"
+			 "%s\n\n"
+			 "Comment:\n"
+			 "%s"
+			 "\n\nPlease report this error to the developer.",
+			 file_name, line_number, expression, comment);
+	elog(c);
 
 	raise(SIGABRT);
 }
 
 void assertFuncInternal(const char* expression, const char* file_name, const unsigned int line_number,
 							   const char* comment) {
+	char c[1024] = {};
 
-	raise(SIGABRT);
+	snprintf(c, sizeof(c),
+			 "Assertion failed\n\n"
+			 "File:\n"
+			 "%s\n\n"
+			 "Line:\n"
+			 "%u\n\n"
+			 "Expression:\n"
+			 "%s\n\n"
+			 "Comment:\n"
+			 "%s"
+			 "\n\nPress Enter to abort, or type 'r' to debug.",
+			 file_name, line_number, expression, comment);
+
+	elog(c);
+
+	// User input for action
+	char choice;
+	std::cout << "Enter your choice (r to retry, i to ignore, any other key to abort): ";
+	std::cin >> choice;
+
+	switch (choice) {
+	case 'r':
+		DEBUG_BREAK();
+		return;
+	case 'i':
+		return;
+	default:
+		raise(SIGABRT);
+		break;
+	}
+	unreachable();
 }
 
 void setConsoleColor(ConsoleColor color) {

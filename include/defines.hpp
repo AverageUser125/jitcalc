@@ -20,14 +20,14 @@
 #endif
 
 // Compiler detection
-#if defined(__clang__)
-#define COMPILER_CLANG 1
-#define COMPILER_MSVC 0
-#define COMPILER_GCC 0
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
 #define COMPILER_CLANG 0
 #define COMPILER_MSVC 0
 #define COMPILER_GCC 1
+#elif defined(__clang__)
+#define COMPILER_CLANG 1
+#define COMPILER_MSVC 0
+#define COMPILER_GCC 0
 #elif defined(_MSC_VER)
 #define COMPILER_CLANG 0
 #define COMPILER_MSVC 1
@@ -40,6 +40,34 @@
 #define COMPILER_CLANG 0
 #define COMPILER_MSVC 0
 #define COMPILER_GCC 0
+#endif
+
+// Architecture detection
+#if defined(_M_IX86) || defined(__i386__) // x86
+#define ARCH_X86 1
+#define ARCH_X86_64 0
+#define ARCH_ARM 0
+#define ARCH_ARM64 0
+#elif defined(_M_X64) || defined(__x86_64__) || defined(__amd64__) // x86_64
+#define ARCH_X86 0
+#define ARCH_X86_64 1
+#define ARCH_ARM 0
+#define ARCH_ARM64 0
+#elif defined(__arm__) // ARM
+#define ARCH_X86 0
+#define ARCH_X86_64 0
+#define ARCH_ARM 1
+#define ARCH_ARM64 0
+#elif defined(__aarch64__) // ARM64
+#define ARCH_X86 0
+#define ARCH_X86_64 0
+#define ARCH_ARM 0
+#define ARCH_ARM64 1
+#else
+#define ARCH_X86 0
+#define ARCH_X86_64 0
+#define ARCH_ARM 0
+#define ARCH_ARM64 0
 #endif
 
 [[noreturn]] inline void unreachable() {
@@ -71,14 +99,27 @@
 #define ALWAYS_INLINE __attribute__((always_inline))
 #endif
 
-#if PLATFORM_WIN
-#define DEBUG_BREAK() __debugbreak()
-#elif PLATFORM_LINUX
-#define DEBUG_BREAK() __builtin_debugtrap()
-#elif PLATFORM_MAC
-#define DEBUG_BREAK() __builtin_trap()
-#endif
-
 #define KB(x) ((unsigned long long)1024 * x)
 #define MB(x) ((unsigned long long)1024 * KB(x))
 #define GB(x) ((unsigned long long)1024 * MB(x))
+
+#if COMPILER_MSVC
+#define DEBUG_BREAK() __debugbreak()
+#elif COMPILER_CLANG && __has_builtin(__builtin_debugtrap)
+#define DEBUG_BREAK() __builtin_debugtrap()
+#elif PLATFORM_MAC && ARCH_ARM64
+#define DEBUG_BREAK() __builtin_trap()
+#elif ARCH_X86 || ARCH_X86_64
+#define DEBUG_BREAK() __asm__ volatile("int $0x03")
+#elif ARCH_ARM
+#define DEBUG_BREAK() __asm__ volatile(".inst 0xe7f001f0")
+#elif ARCH_ARM64
+#define DEBUG_BREAK() __asm__ volatile(".inst 0xd4200000")
+#else
+#include <signal.h>
+#ifdef SIGTRAP
+#define DEBUG_BREAK() raise(SIGTRAP)
+#else
+#define DEBUG_BREAK() raise(SIGTRAP)
+#endif
+#endif
