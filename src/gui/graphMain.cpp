@@ -196,15 +196,15 @@ void generateAxisData() {
 
 	size_t offset = 0;
 
-	assert(!verticesThin.empty());
+	debugAssert(!verticesThin.empty());
 	glBufferSubData(GL_ARRAY_BUFFER, offset, thinSize, verticesThin.data());
 	offset += thinSize;
 
-	assert(!verticesMedium.empty());
+	debugAssert(!verticesMedium.empty());
 	glBufferSubData(GL_ARRAY_BUFFER, offset, mediumSize, verticesMedium.data());
 	offset += mediumSize;
 
-	assert(!verticesThick.empty());
+	debugAssert(!verticesThick.empty());
 	glBufferSubData(GL_ARRAY_BUFFER, offset, thickSize, verticesThick.data());
 
 	// Data for VAOs (amount of lines and offset in floats)

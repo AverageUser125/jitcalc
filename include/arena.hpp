@@ -33,11 +33,8 @@
 #endif // ARENA_NOSTDIO
 
 #ifndef ARENA_ASSERT
-#if PRODUCTION_BUILD == 0
-#undef NDEBUG
-#endif
-#include <assert.h>
-#define ARENA_ASSERT assert
+#include "tools.hpp"
+#define ARENA_ASSERT debugAssert
 #endif
 
 #define ARENA_BACKEND_LIBC_MALLOC 0

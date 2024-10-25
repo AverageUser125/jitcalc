@@ -13,7 +13,7 @@ VBOAllocator::~VBOAllocator() {
 }
 
 void VBOAllocator::reserve(size_t amount) {
-	assert(freeList.empty());
+	debugAssert(freeList.empty());
 	freeList.resize(amount);
 	glGenBuffers(amount, freeList.data());
 }

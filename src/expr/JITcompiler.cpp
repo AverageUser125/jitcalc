@@ -1,5 +1,3 @@
-#undef NDEBUG
-
 #include "JITcompiler.hpp"
 #include "parser.hpp"
 #include <cmath>
@@ -77,7 +75,7 @@ llvm::orc::ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	llvm::BasicBlock* BB = llvm::BasicBlock::Create(*context, "EntryBlock", func);
 	llvm::IRBuilder<> builder(BB);
 
-	assert(func->arg_begin() != func->arg_end());
+	debugAssert(func->arg_begin() != func->arg_end());
 	llvm::Argument* ArgX = &*func->arg_begin(); // Get the arg
 	ArgX->setName("x");
 
@@ -163,7 +161,6 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
 		llvm::CallInst* callinst = builderPtr->CreateCall(createdFunctions.at("pow"), {left, right}, "powtmp");
 		callinst->setTailCall(true);
 		return callinst;
-
 	}
 	case NodeType::Variable: {
 		return variable; // Return the variable (the function's argument)
@@ -177,12 +174,11 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
 		return callinst;
 	}
 	case NodeType::Error: {
-		assert(0 && "ERROR WAS FOUND!, YOU PROBABLY FORGOT TO CHECK FOR IT");
+		permaAssertComment(expr->type == NodeType::Error,
+						   "The JIT compiler found an error in the parsed tree, please make sure to check for parser "
+						   "errors before calling the JIT compiler");
 		break;
 	}
-	default:
-		return nullptr;
-		break;
 	}
 	// llvm_unreachable();
 	unreachable();

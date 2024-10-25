@@ -314,7 +314,7 @@ int guiLoop() {
 			(DwmSetWindowAttributeType)GetProcAddress(dwamapidll, "DwmSetWindowAttribute");
 		if (fnDwmSetWindowAttribute) {
 			HWND hwnd = glfwGetWin32Window(wind);
-			assert(hwnd != nullptr);
+			debugAssert(hwnd != nullptr);
 			BOOL value = TRUE;
 			fnDwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, sizeof(value));
 			glog("successfully called DwmSetWindowAttribute");

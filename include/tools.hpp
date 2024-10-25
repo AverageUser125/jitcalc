@@ -35,6 +35,12 @@ void resetConsoleColor();
 #define permaAssertComment(expression, comment)                                                                        \
 	(void)((!!(expression)) || (assertFuncInternal(#expression, __FILENAME__, (unsigned)(__LINE__), comment), 1))
 
+#define debugAssert(expression)                                                                                        \
+	(void)((!!(expression)) || (assertFuncInternal(#expression, __FILENAME__, (unsigned)(__LINE__)), 0))
+
+#define debugAssertComment(expression, comment)                                                                        \
+	(void)((!!(expression)) || (assertFuncInternal(#expression, __FILENAME__, (unsigned)(__LINE__), comment), 1))
+
 #else
 
 #define permaAssert(expression)                                                                                        \
@@ -42,6 +48,11 @@ void resetConsoleColor();
 
 #define permaAssertComment(expression, comment)                                                                        \
 	(void)((!!(expression)) || (assertFuncProduction(#expression, __FILENAME__, (unsigned)(__LINE__), comment), 1))
+
+#define debugAssert(expression) ((void)(0))
+
+#define debugAssert(expression, comment) ((void)(0))
+
 #endif
 
 #if PRODUCTION_BUILD == 0

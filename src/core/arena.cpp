@@ -168,7 +168,7 @@ char* arena_sprintf(Arena* a, const char* format, ...) {
 #endif // ARENA_NOSTDIO
 
 void arena_init(Arena* a, size_t reservedCapacity) {
-	assert(a->end == nullptr && a->begin == nullptr);
+	ARENA_ASSERT(a->end == nullptr && a->begin == nullptr);
 	a->end = new_region(reservedCapacity);
 	a->begin = a->end;
 }
