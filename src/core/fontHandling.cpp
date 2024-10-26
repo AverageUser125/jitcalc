@@ -49,7 +49,7 @@ stbtt_aligned_quad fontGetGlyphQuad(const Font& font, const char c) {
 	float x = 0;
 	float y = 0;
 
-	stbtt_GetPackedQuad(font.packedCharsBuffer, font.size.x, font.size.y, c - ' ', &x, &y, &quad, 1);
+	stbtt_GetPackedQuad(font.packedCharsBuffer.data(), font.size.x, font.size.y, c - ' ', &x, &y, &quad, 1);
 
 	return quad;
 }
@@ -251,21 +251,21 @@ void Texture::cleanup() {
 #pragma endregion
 #pragma region font
 void Font::createFromTTF(const unsigned char* ttf_data, const size_t ttf_data_size) {
-	size.x = 2000, size.y = 2000, max_height = 0, packedCharsBufferSize = ('~' - ' ');
+	size.x = 2000, size.y = 2000, max_height = 0;
+	constexpr size_t packedCharsBufferSize = ('~' - ' ');
 
 	//STB TrueType will give us a one channel buffer of the font that we then convert to RGBA for OpenGL
 	const size_t fontMonochromeBufferSize = size.x * size.y;
 	const size_t fontRgbaBufferSize = size.x * size.y * 4;
 
-	unsigned char* fontMonochromeBuffer = new unsigned char[fontMonochromeBufferSize];
-	unsigned char* fontRgbaBuffer = new unsigned char[fontRgbaBufferSize];
-
-	packedCharsBuffer = new stbtt_packedchar[packedCharsBufferSize]{};
+	unsigned char* fontMonochromeBuffer = (unsigned char*)arena_alloc(&global_arena, fontMonochromeBufferSize);
+	unsigned char* fontRgbaBuffer = (unsigned char*)arena_alloc(&global_arena, fontRgbaBufferSize);
+	packedCharsBuffer.resize(packedCharsBufferSize);
 
 	stbtt_pack_context stbtt_context;
 	stbtt_PackBegin(&stbtt_context, fontMonochromeBuffer, size.x, size.y, 0, 2, NULL);
 	stbtt_PackSetOversampling(&stbtt_context, 2, 2);
-	stbtt_PackFontRange(&stbtt_context, ttf_data, 0, 65, ' ', '~' - ' ', packedCharsBuffer);
+	stbtt_PackFontRange(&stbtt_context, ttf_data, 0, 65, ' ', '~' - ' ', packedCharsBuffer.data());
 	stbtt_PackEnd(&stbtt_context);
 
 	for (int i = 0; i < fontMonochromeBufferSize; i++) {
@@ -293,9 +293,6 @@ void Font::createFromTTF(const unsigned char* ttf_data, const size_t ttf_data_si
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 
-	delete[] fontMonochromeBuffer;
-	delete[] fontRgbaBuffer;
-
 	for (char c = ' '; c <= '~'; c++) {
 		Font* fontptr = this;
 		const stbtt_aligned_quad q = fontGetGlyphQuad(*fontptr, c);
@@ -319,13 +316,11 @@ void Font::createFromFile(const char* file) {
 	fileFont.seekg(0, std::ios::end);
 	fileSize = (int)fileFont.tellg();
 	fileFont.seekg(0, std::ios::beg);
-	unsigned char* fileData = new unsigned char[fileSize];
+	unsigned char* fileData = (unsigned char*)arena_alloc(&global_arena, fileSize);
 	fileFont.read((char*)fileData, fileSize);
 	fileFont.close();
 
 	createFromTTF(fileData, fileSize);
-
-	delete[] fileData;
 }
 
 void Font::cleanup() {

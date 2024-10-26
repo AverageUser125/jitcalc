@@ -89,8 +89,7 @@ struct Texture {
 struct Font {
 	Texture texture = {};
 	glm::ivec2 size = {};
-	stbtt_packedchar* packedCharsBuffer = 0;
-	int packedCharsBufferSize = 0;
+	std::vector<stbtt_packedchar> packedCharsBuffer{};
 	float max_height = 0.f;
 
 	Font() {
