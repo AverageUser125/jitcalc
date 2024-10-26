@@ -406,7 +406,7 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
 	renderer.updateWindowMetrics(w, h);
-	renderer.renderText({500, 500}, "Hello world", font, {1.0f, 0, 0, 1.0f}, 1.0f, 0.1f, 2.0f, false, {}, {});
+	renderer.renderText({}, "Hello world", font, {1.0f, 0, 0, 1.0f}, 0.001f, 0.1f, 2.0f, false, {}, {});
 	bool shouldRecalculateEverything = false;
 
 #pragma region draw grid using shader

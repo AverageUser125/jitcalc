@@ -54,11 +54,11 @@ stbtt_aligned_quad fontGetGlyphQuad(const Font& font, const char c) {
 }
 
 float positionToScreenCoordsX(const float position, float w) {
-	return (position / w) * 2 - 1;
+	return position;
 }
 
 float positionToScreenCoordsY(const float position, float h) {
-	return -((-position / h) * 2 - 1);
+	return position;
 }
 #pragma endregion
 #pragma region shader program
