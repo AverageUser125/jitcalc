@@ -3,6 +3,7 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <imstb_truetype.h>
 #undef STB_TRUETYPE_IMPLEMENTATION
+#include "arenaAllocator.hpp"
 
 #pragma region shader code
 static ShaderProgram defaultShader = {};
@@ -188,126 +189,6 @@ void Texture::create1PxSquare(const char* b) {
 	} else {
 		createFromBuffer(b, 1, 1);
 	}
-}
-
-void Texture::createFromFileData(const unsigned char* image_file_data, const size_t image_file_size, bool pixelated,
-								 bool useMipMaps) {
-	/*
-	stbi_set_flip_vertically_on_load(true);
-
-	int width = 0;
-	int height = 0;
-	int channels = 0;
-
-	const unsigned char* decodedImage =
-		stbi_load_from_memory(image_file_data, (int)image_file_size, &width, &height, &channels, 4);
-
-	createFromBuffer((const char*)decodedImage, width, height, pixelated, useMipMaps);
-
-	STBI_FREE(decodedImage);
-	*/
-}
-
-void Texture::createFromFileDataWithPixelPadding(const unsigned char* image_file_data, const size_t image_file_size,
-												 int blockSize, bool pixelated, bool useMipMaps) {
-	/*
-	stbi_set_flip_vertically_on_load(true);
-
-	int width = 0;
-	int height = 0;
-	int channels = 0;
-
-	const unsigned char* decodedImage =
-		stbi_load_from_memory(image_file_data, (int)image_file_size, &width, &height, &channels, 4);
-
-	int newW = width + ((width * 2) / blockSize);
-	int newH = height + ((height * 2) / blockSize);
-
-	auto getOld = [decodedImage, width](int x, int y, int c) -> const unsigned char {
-		return decodedImage[4 * (x + (y * width)) + c];
-	};
-
-
-	unsigned char* newData = new unsigned char[newW * newH * 4]{};
-
-	auto getNew = [newData, newW](int x, int y, int c) { return &newData[4 * (x + (y * newW)) + c]; };
-
-	int newDataCursor = 0;
-	int dataCursor = 0;
-
-	//first copy data
-	for (int y = 0; y < newH; y++) {
-		int yNo = 0;
-		if ((y == 0 || y == newH - 1 || ((y) % (blockSize + 2)) == 0 || ((y + 1) % (blockSize + 2)) == 0)) {
-			yNo = 1;
-		}
-
-		for (int x = 0; x < newW; x++) {
-			if (yNo ||
-
-				((x == 0 || x == newW - 1 || (x % (blockSize + 2)) == 0 || ((x + 1) % (blockSize + 2)) == 0))
-
-			) {
-				newData[newDataCursor++] = 0;
-				newData[newDataCursor++] = 0;
-				newData[newDataCursor++] = 0;
-				newData[newDataCursor++] = 0;
-			} else {
-				newData[newDataCursor++] = decodedImage[dataCursor++];
-				newData[newDataCursor++] = decodedImage[dataCursor++];
-				newData[newDataCursor++] = decodedImage[dataCursor++];
-				newData[newDataCursor++] = decodedImage[dataCursor++];
-			}
-		}
-	}
-
-	//then add margins
-
-
-	for (int x = 1; x < newW - 1; x++) {
-		//copy on left
-		if (x == 1 || (x % (blockSize + 2)) == 1) {
-			for (int y = 0; y < newH; y++) {
-				*getNew(x - 1, y, 0) = *getNew(x, y, 0);
-				*getNew(x - 1, y, 1) = *getNew(x, y, 1);
-				*getNew(x - 1, y, 2) = *getNew(x, y, 2);
-				*getNew(x - 1, y, 3) = *getNew(x, y, 3);
-			}
-
-		} else //copy on rigght
-			if (x == newW - 2 || (x % (blockSize + 2)) == blockSize) {
-				for (int y = 0; y < newH; y++) {
-					*getNew(x + 1, y, 0) = *getNew(x, y, 0);
-					*getNew(x + 1, y, 1) = *getNew(x, y, 1);
-					*getNew(x + 1, y, 2) = *getNew(x, y, 2);
-					*getNew(x + 1, y, 3) = *getNew(x, y, 3);
-				}
-			}
-	}
-
-	for (int y = 1; y < newH - 1; y++) {
-		if (y == 1 || (y % (blockSize + 2)) == 1) {
-			for (int x = 0; x < newW; x++) {
-				*getNew(x, y - 1, 0) = *getNew(x, y, 0);
-				*getNew(x, y - 1, 1) = *getNew(x, y, 1);
-				*getNew(x, y - 1, 2) = *getNew(x, y, 2);
-				*getNew(x, y - 1, 3) = *getNew(x, y, 3);
-			}
-		} else if (y == newH - 2 || (y % (blockSize + 2)) == blockSize) {
-			for (int x = 0; x < newW; x++) {
-				*getNew(x, y + 1, 0) = *getNew(x, y, 0);
-				*getNew(x, y + 1, 1) = *getNew(x, y, 1);
-				*getNew(x, y + 1, 2) = *getNew(x, y, 2);
-				*getNew(x, y + 1, 3) = *getNew(x, y, 3);
-			}
-		}
-	}
-
-	createFromBuffer((const char*)newData, newW, newH, pixelated, useMipMaps);
-
-	STBI_FREE(decodedImage);
-	delete[] newData;
-	*/
 }
 
 void Texture::loadFromFile(const char* fileName, bool pixelated, bool useMipMaps) {

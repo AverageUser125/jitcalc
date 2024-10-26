@@ -63,18 +63,6 @@ struct Texture {
 	//used internally. It creates a 1by1 white texture
 	void create1PxSquare(const char* b = 0);
 
-	void createFromFileData(const unsigned char* image_file_data, const size_t image_file_size,
-							bool pixelated = GL2D_DEFAULT_TEXTURE_LOAD_MODE_PIXELATED,
-							bool useMipMaps = GL2D_DEFAULT_TEXTURE_LOAD_MODE_USE_MIPMAPS);
-
-	//For texture atlases.
-	//Adds a pixel padding between sprites elements to avoid some visual bugs.
-	//Block size is the size of a block in pixels.
-	//To be used with texture atlas padding to get the texture coordonates.
-	void createFromFileDataWithPixelPadding(const unsigned char* image_file_data, const size_t image_file_size,
-											int blockSize, bool pixelated = GL2D_DEFAULT_TEXTURE_LOAD_MODE_PIXELATED,
-											bool useMipMaps = GL2D_DEFAULT_TEXTURE_LOAD_MODE_USE_MIPMAPS);
-
 	void loadFromFile(const char* fileName, bool pixelated = GL2D_DEFAULT_TEXTURE_LOAD_MODE_PIXELATED,
 					  bool useMipMaps = GL2D_DEFAULT_TEXTURE_LOAD_MODE_USE_MIPMAPS);
 
