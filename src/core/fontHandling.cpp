@@ -602,20 +602,13 @@ void Renderer2D::create(GLuint fbo, size_t quadCount) {
 
 void Renderer2D::cleanup() {
 	glDeleteVertexArrays(1, &vao);
-
-	internalPostProcessFlip = 0;
 }
 
-void Renderer2D::renderRectangle(const Rect transforms, const Texture texture, const Color4f colors[4],
-								 const glm::vec2 origin, const float rotation, const glm::vec4 textureCoords) {
-	glm::vec2 newOrigin{};
-	newOrigin.x = origin.x + transforms.x + (transforms.z / 2);
-	newOrigin.y = origin.y + transforms.y + (transforms.w / 2);
-	renderRectangleAbsRotation(transforms, texture, colors, newOrigin, rotation, textureCoords);
+void Renderer2D::renderRectangle(const Rect transforms, const Texture texture, const Color4f colors[4], const glm::vec4 textureCoords) {
+	renderRectangleAbsRotation(transforms, texture, colors, textureCoords);
 }
 
 void Renderer2D::renderRectangleAbsRotation(const Rect transforms, const Texture texture, const Color4f colors[4],
-												  const glm::vec2 origin, const float rotation,
 												  const glm::vec4 textureCoords) {
 	debugAssertComment(texture.id != 0, "Invalid texture");
 	Texture textureCopy = texture;
@@ -779,17 +772,17 @@ void Renderer2D::renderText(glm::vec2 position, const char* text, const Font fon
 				glm::vec2 pos = {-5, 3};
 				pos *= size;
 				renderRectangle({rectangle.x + pos.x, rectangle.y + pos.y, rectangle.z, rectangle.w}, font.texture,
-								ShadowColor, glm::vec2{0, 0}, 0, glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
+								ShadowColor, glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
 			}
 
-			renderRectangle(rectangle, font.texture, colorData, glm::vec2{0, 0}, 0,
+			renderRectangle(rectangle, font.texture, colorData,
 							glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
 
 			if (LightColor.w) {
 				glm::vec2 pos = {-2, 1}; 
 				pos *= size;
 				renderRectangle({rectangle.x + pos.x, rectangle.y + pos.y, rectangle.z, rectangle.w}, font.texture,
-								LightColor, glm::vec2{0, 0}, 0, glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
+								LightColor, glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
 			}
 
 
