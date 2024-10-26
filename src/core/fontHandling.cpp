@@ -1,8 +1,5 @@
 #include "fontHandling.hpp"
 #include "tools.hpp"
-#define STB_TRUETYPE_IMPLEMENTATION
-#include <imstb_truetype.h>
-#undef STB_TRUETYPE_IMPLEMENTATION
 #include "arenaAllocator.hpp"
 
 #pragma region shader code

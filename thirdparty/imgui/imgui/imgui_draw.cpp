@@ -139,7 +139,7 @@ namespace IMGUI_STB_NAMESPACE
 #define STBTT_fabs(x)       ImFabs(x)
 #define STBTT_ifloor(x)     ((int)ImFloor(x))
 #define STBTT_iceil(x)      ((int)ImCeil(x))
-#define STBTT_STATIC
+// #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #else
 #define STBTT_DEF extern
