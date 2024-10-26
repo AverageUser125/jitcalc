@@ -172,6 +172,8 @@ void generateAxisData() {
 		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
 
 		if (y == 0) {
+			renderer.renderText({screenMaxX, -ndcY}, "X", font, {0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f,
+								{ -1.125f, -0.25f } ,{0.0f, 2 * 5 / 1000.0f}, {}, {});
 			verticesThick[4] = screenMinX;
 			verticesThick[5] = ndcY;
 			verticesThick[6] = screenMaxX;
@@ -406,7 +408,6 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
 	renderer.updateWindowMetrics(w, h);
-	renderer.renderText({}, "Hello world", font, {1.0f, 0, 0, 1.0f}, 0.001f, 0.1f, 2.0f, false, {}, {});
 	bool shouldRecalculateEverything = false;
 
 #pragma region draw grid using shader
@@ -488,12 +489,15 @@ bool gameLogic(float deltaTime, int w, int h) {
 #pragma endregion
 	// reset early
 	if (shouldRecalculateEverything) {
+		renderer.flush();
 		generateAxisData();
 		arena_reset(&global_arena); // early reset cause this requires alot of vertexes
 		std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
 		for (GraphEquation& graph : graphEquations) {
 			generateGraphData(graph.func, graph.vboObj, vertexData);
 		}
+	} else {
+		renderer.flush(false);
 	}
 
 #pragma region fullscreen
@@ -515,7 +519,6 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 #pragma endregion
 
-	renderer.flush();
 	arena_reset(&global_arena);
 	return true;
 }

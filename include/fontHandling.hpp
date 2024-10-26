@@ -207,12 +207,12 @@ struct Renderer2D {
 	GLuint buffers[Renderer2DBufferType::bufferSize] = {};
 
 	//window metrics, should be up to date at all times
-	int windowW = -1;
-	int windowH = -1;
+	int windowW = 1;
+	int windowH = 1;
 
 	void updateWindowMetrics(int w, int h) {
-		windowW = w;
-		windowH = h;
+		//windowW = w;
+		//windowH = h;
 	}
 
 	//clears the things that are to be drawn when calling flush
@@ -232,7 +232,8 @@ struct Renderer2D {
 	//Pacing and lineSpace are influenced by size
 	//todo the function should returns the size of the text drawn also refactor
 	void renderText(glm::vec2 position, const char* text, const Font font, const Color4f color, const float size = 1.5f,
-					const float spacing = 4, const float line_space = 3, bool showInCenter = 1,
+					const float spacing = 4, const float line_space = 3, const glm::vec2 relativeCenter = {-0.5, -0.5},
+					const glm::vec2 absoluteCenter = {0.0f, 0.0f},
 					const Color4f ShadowColor = {0.1, 0.1, 0.1, 1}, const Color4f LightColor = {});
 
 	void renderRectangle(const Rect transforms, const Texture texture, const Color4f colors[4],

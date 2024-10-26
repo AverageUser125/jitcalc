@@ -713,8 +713,9 @@ glm::vec2 Renderer2D::getTextSize(const char* text, const Font font, const float
 	return glm::vec2{paddX, paddY};
 }
 
-void Renderer2D::renderText(glm::vec2 position, const char* text, const Font font, const Color4f color, const float size,
-					const float spacing, const float line_space, bool showInCenter,
+void Renderer2D::renderText(glm::vec2 position, const char* text, const Font font, const Color4f color,
+							const float size, const float spacing, const float line_space,
+							const glm::vec2 relativeCenter , const glm::vec2 absoluteCenter,
 					const Color4f ShadowColor, const Color4f LightColor) {
 	debugAssertComment(font.texture.id != 0, "Missing font");
 
@@ -723,13 +724,13 @@ void Renderer2D::renderText(glm::vec2 position, const char* text, const Font fon
 	rectangle.x = position.x;
 	float linePositionY = position.y;
 
-	if (showInCenter) {
+	if (relativeCenter.x != 0.0f || relativeCenter.y != 0.0f) {
 		auto textSize = getTextSize(text, font, size, spacing, line_space);
-
-		position.x -= textSize.x / 2.f;
-		position.y += textSize.y / 2.f;
+		position += relativeCenter * textSize;
 	}
-
+	if (absoluteCenter.x != 0.0f || absoluteCenter.y != 0.0f) {
+		position += absoluteCenter;
+	}
 	rectangle = {};
 	rectangle.x = position.x;
 
