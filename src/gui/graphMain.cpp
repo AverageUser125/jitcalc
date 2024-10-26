@@ -15,6 +15,7 @@
 #include "vboAllocator.hpp"
 #include "compilerPipeline.hpp"
 #include "tools.hpp"
+#include "fontHandling.hpp"
 
 #pragma region defines
 
@@ -89,6 +90,9 @@ static GLuint gridVbo = 0;
 static std::vector<GraphEquation> graphEquations{};
 
 static VBOAllocator vboAllocator{};
+
+static Renderer2D renderer;
+static Font font;
 
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
@@ -401,10 +405,12 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 
 bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
-
+	renderer.updateWindowMetrics(w, h);
+	renderer.renderText({500, 500}, "Hello world", font, {1.0f, 0, 0, 1.0f}, 1.0f, 4.0f, 3.0f, false, {}, {});
 	bool shouldRecalculateEverything = false;
 
 #pragma region draw grid using shader
+	glUseProgram(shaderProgram);
 	glUniform4f(lineColorUniform, 0.1f, 0.1f, 0.1f, 1.0f);
 	for (size_t i = 0; i < gridVaos.size(); ++i) {
 		glUniform1f(lineThicknessUniform, (2 * i + 1) / 1000.0f);
@@ -428,7 +434,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.amount); // Draw the line strip
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
-// glUseProgram(0);
+	glUseProgram(0);
 #pragma endregion
 #pragma region display equations widget
 	ImGui::Begin("Equations", nullptr,
@@ -509,13 +515,17 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 #pragma endregion
 
-
+	renderer.flush();
 	arena_reset(&global_arena);
 	return true;
 }
 
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
+
+	gldInit();
+	renderer.create();
+	font.createFromFile(RESOURCES_PATH "trim.ttf");
 
 #pragma region shader init
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -560,7 +570,6 @@ bool gameInit() {
 	generateGraphData(firstGraph.func, firstGraph.vboObj);
 	generateAxisData();
 
-	glUseProgram(shaderProgram);
 	return true;
 }
 
