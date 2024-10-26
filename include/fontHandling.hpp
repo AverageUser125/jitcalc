@@ -16,6 +16,30 @@ typedef glm::vec4 Texture_Coords;
 #define GL2D_DEFAULT_TEXTURE_LOAD_MODE_PIXELATED false
 #define GL2D_DEFAULT_TEXTURE_LOAD_MODE_USE_MIPMAPS true
 #define GL2D_DefaultTextureCoords (glm::vec4{0, 1, 1, 0})
+#define GL2D_OPNEGL_SHADER_VERSION "#version 330"
+#define GL2D_OPNEGL_SHADER_PRECISION "precision highp float;"
+
+void gldInit();
+
+#pragma region shader program
+struct ShaderProgram {
+	GLuint id = 0;
+	int u_sampler = 0;
+
+	void bind() {
+		glUseProgram(id);
+	};
+
+	void clear() {
+		glDeleteProgram(id);
+		*this = {};
+	}
+};
+
+void validateProgram(GLuint id);
+GLuint loadShader(const char* source, GLenum shaderType);
+ShaderProgram createShaderProgram(const char* vertex, const char* fragment);
+#pragma endregion
 
 #pragma region texture
 struct Texture {
@@ -107,7 +131,7 @@ struct Font {
 	void cleanup();
 };
 
-stbtt_aligned_quad fontGetGlyphQuad(const Font font, const char c);
+stbtt_aligned_quad fontGetGlyphQuad(const Font& font, const char c);
 
 #pragma endregion
 
@@ -139,6 +163,15 @@ struct FrameBuffer {
 
 void enableNecessaryGLFeatures();
 
+enum Renderer2DBufferType{
+	quadPositions,
+	quadColors,
+	texturePositions,
+
+	bufferSize
+};
+
+
 struct Renderer2D {
 	Renderer2D(){};
 
@@ -159,6 +192,8 @@ struct Renderer2D {
 	//does not clear resources allocated by user like textures, fonts and fbos!
 	void cleanup();
 
+	ShaderProgram currentShader = {};
+
 	GLuint defaultFBO = 0;
 
 	GLuint vao = {};
@@ -168,6 +203,8 @@ struct Renderer2D {
 	std::vector<glm::vec4> spriteColors;
 	std::vector<glm::vec2> texturePositions;
 	std::vector<Texture> spriteTextures;
+
+	GLuint buffers[Renderer2DBufferType::bufferSize] = {};
 
 	//window metrics, should be up to date at all times
 	int windowW = -1;
@@ -186,7 +223,7 @@ struct Renderer2D {
 		spriteTextures.clear();
 	}
 
-	void flush(bool clearDrawData);
+	void flush(bool clearDrawData = true);
 
 	glm::vec2 getTextSize(const char* text, const Font font, const float size = 1.5f, const float spacing = 4,
 						  const float line_space = 3);

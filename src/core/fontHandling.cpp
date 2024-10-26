@@ -4,7 +4,45 @@
 #include <imstb_truetype.h>
 #undef STB_TRUETYPE_IMPLEMENTATION
 
-stbtt_aligned_quad fontGetGlyphQuad(const Font font, const char c) {
+#pragma region shader code
+static ShaderProgram defaultShader = {};
+static const char* defaultVertexShader =
+	GL2D_OPNEGL_SHADER_VERSION "\n"
+	GL2D_OPNEGL_SHADER_PRECISION "\n"
+	"in vec2 quad_positions;\n"
+	"in vec4 quad_colors;\n"
+	"in vec2 texturePositions;\n"
+	"out vec4 v_color;\n"
+	"out vec2 v_texture;\n"
+	"out vec2 v_positions;\n"
+	"void main()\n"
+	"{\n"
+	"	gl_Position = vec4(quad_positions, 0, 1);\n"
+	"	v_color = quad_colors;\n"
+	"	v_texture = texturePositions;\n"
+	"	v_positions = gl_Position.xy;\n"
+	"}\n";
+
+static const char* defaultFragmentShader =
+	GL2D_OPNEGL_SHADER_VERSION "\n"
+	GL2D_OPNEGL_SHADER_PRECISION "\n"
+	"out vec4 color;\n"
+	"in vec4 v_color;\n"
+	"in vec2 v_texture;\n"
+	"uniform sampler2D u_sampler;\n"
+	"void main()\n"
+	"{\n"
+	"    color = v_color * texture2D(u_sampler, v_texture);\n"
+	"}\n";
+#pragma endregion
+#pragma region utils
+
+void gldInit() {
+	enableNecessaryGLFeatures();
+	defaultShader = createShaderProgram(defaultVertexShader, defaultFragmentShader);
+}
+
+stbtt_aligned_quad fontGetGlyphQuad(const Font& font, const char c) {
 	stbtt_aligned_quad quad = {0};
 
 	float x = 0;
@@ -22,7 +60,81 @@ float positionToScreenCoordsX(const float position, float w) {
 float positionToScreenCoordsY(const float position, float h) {
 	return -((-position / h) * 2 - 1);
 }
+#pragma endregion
+#pragma region shader program
 
+void validateProgram(GLuint id) {
+	int info = 0;
+	glGetProgramiv(id, GL_LINK_STATUS, &info);
+
+	if (info != GL_TRUE) {
+		int l = 0;
+
+		glGetProgramiv(id, GL_INFO_LOG_LENGTH, &l);
+
+		std::string message;
+		message.resize(l);
+
+		glGetProgramInfoLog(id, l, &l, message.data());
+
+		elog(message);
+
+	}
+
+	glValidateProgram(id);
+}
+
+GLuint loadShader(const char* source, GLenum shaderType) {
+	GLuint id = glCreateShader(shaderType);
+
+	glShaderSource(id, 1, &source, 0);
+	glCompileShader(id);
+
+	int result = 0;
+	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+
+	if (!result) {
+		int l = 0;
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &l);
+
+		std::string message;
+		message.resize(l + 1);
+
+		glGetShaderInfoLog(id, l, &l, message.data());
+
+		elog(message);
+	}
+
+	return id;
+}
+
+ShaderProgram createShaderProgram(const char* vertex, const char* fragment) {
+	ShaderProgram shader = {0};
+
+	const GLuint vertexId = loadShader(vertex, GL_VERTEX_SHADER);
+	const GLuint fragmentId = loadShader(fragment, GL_FRAGMENT_SHADER);
+
+	shader.id = glCreateProgram();
+	glAttachShader(shader.id, vertexId);
+	glAttachShader(shader.id, fragmentId);
+
+	glBindAttribLocation(shader.id, 0, "quad_positions");
+	glBindAttribLocation(shader.id, 1, "quad_colors");
+	glBindAttribLocation(shader.id, 2, "texturePositions");
+
+	glLinkProgram(shader.id);
+
+	glDeleteShader(vertexId);
+	glDeleteShader(fragmentId);
+
+	validateProgram(shader.id);
+
+	shader.u_sampler = glGetUniformLocation(shader.id, "u_sampler");
+
+	return shader;
+}
+
+#pragma endregion
 #pragma region texture
 
 glm::ivec2 Texture::GetSize() {
@@ -346,7 +458,8 @@ void Font::createFromTTF(const unsigned char* ttf_data, const size_t ttf_data_si
 	delete[] fontRgbaBuffer;
 
 	for (char c = ' '; c <= '~'; c++) {
-		const stbtt_aligned_quad q = fontGetGlyphQuad(*this, c);
+		Font* fontptr = this;
+		const stbtt_aligned_quad q = fontGetGlyphQuad(*fontptr, c);
 		const float m = q.y1 - q.y0;
 
 		if (m > max_height && m < 1.e+8f) {
@@ -457,6 +570,8 @@ void enableNecessaryGLFeatures() {
 
 void Renderer2D::create(GLuint fbo, size_t quadCount) {
 	
+	currentShader = defaultShader;
+
 	defaultFBO = fbo;
 
 	clearDrawData();
@@ -467,6 +582,20 @@ void Renderer2D::create(GLuint fbo, size_t quadCount) {
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
+	glGenBuffers(Renderer2DBufferType::bufferSize, buffers);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Renderer2DBufferType::quadPositions]);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Renderer2DBufferType::quadColors]);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Renderer2DBufferType::texturePositions]);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	glBindVertexArray(0);
 }
@@ -534,13 +663,13 @@ void Renderer2D::renderRectangleAbsRotation(const Rect transforms, const Texture
 }
 
 glm::vec2 Renderer2D::getTextSize(const char* text, const Font font, const float size, const float spacing,
-					  const float line_space) {
+								  const float line_space) {
 	debugAssertComment(font.texture.id != 0, "Missing font");
 
 	glm::vec2 position = {};
 
 	const int text_length = (int)strlen(text);
-	glm::vec4 rectangle = {};
+	Rect rectangle = {};
 	rectangle.x = position.x;
 	float linePositionY = position.y;
 
@@ -692,6 +821,24 @@ void internalFlush(Renderer2D& renderer, bool clearDrawData) {
 	permaAssertComment(renderer.windowH > 0 && renderer.windowW > 0,
 					   "Negative Window sized ave you forgotten to call updateWindowMetrics(w, h)");
 
+
+	glUseProgram(renderer.currentShader.id);
+
+	glUniform1i(renderer.currentShader.u_sampler, 0);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, renderer.buffers[Renderer2DBufferType::quadPositions]);
+	glBufferData(GL_ARRAY_BUFFER, renderer.spritePositions.size() * sizeof(glm::vec2), renderer.spritePositions.data(),
+				 GL_STREAM_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, renderer.buffers[Renderer2DBufferType::quadColors]);
+	glBufferData(GL_ARRAY_BUFFER, renderer.spriteColors.size() * sizeof(glm::vec4), renderer.spriteColors.data(),
+				 GL_STREAM_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, renderer.buffers[Renderer2DBufferType::texturePositions]);
+	glBufferData(GL_ARRAY_BUFFER, renderer.texturePositions.size() * sizeof(glm::vec2),
+				 renderer.texturePositions.data(), GL_STREAM_DRAW);
+
+
 	glBindVertexArray(renderer.vao);
 
 	//Instance render the textures
@@ -721,6 +868,7 @@ void internalFlush(Renderer2D& renderer, bool clearDrawData) {
 	if (clearDrawData) {
 		renderer.clearDrawData();
 	}
+	glUseProgram(0);
 }
 
 #pragma endregion

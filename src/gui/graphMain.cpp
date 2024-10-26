@@ -15,6 +15,10 @@
 #include "vboAllocator.hpp"
 #include "compilerPipeline.hpp"
 #include "tools.hpp"
+#include "fontHandling.hpp"
+
+static Renderer2D renderer;
+static Font font;
 
 #pragma region defines
 
@@ -218,9 +222,11 @@ void generateAxisData() {
 		glBindVertexArray(gridVaos[i].id);
 		glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
 		gridVaos[i].amount = vaoData[i].first; // Set the amount
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(vaoData[i].second * sizeof(float)));
 		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(vaoData[i].second * sizeof(float)));
 	}
+	glDisableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
@@ -407,18 +413,21 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 
 bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
+	renderer.updateWindowMetrics(w, h);
 
+	renderer.renderText({300, 0}, "hello from g2lf", font, {1.0, 0.1, 0.1, 0.5f});
 	bool shouldRecalculateEverything = false;
 
+	glUseProgram(shaderProgram);
 #pragma region draw grid using shader
 	glUniform4f(lineColorUniform, 0.1f, 0.1f, 0.1f, 1.0f);
-	for (int i = 0; i < 3; i++) {
+	glEnableVertexAttribArray(0); // Enable outside the loop
+	for (int i = 0; i < gridVaos.size(); i++) {
 		glUniform1f(lineThicknessUniform, (2 * i + 1) / 1000.0f);
-		glEnableVertexAttribArray(0);
 		glBindVertexArray(gridVaos[i].id);
 		glDrawArrays(GL_LINES, 0, gridVaos[i].amount);
-		glDisableVertexAttribArray(0);
 	}
+	glDisableVertexAttribArray(0); // Disable after the loop
 #pragma endregion
 #pragma region draw graphs
 	// Draw graph for each function
@@ -433,8 +442,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.amount); // Draw the line strip
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
-// glUseProgram(0);
+	glUseProgram(0);
 #pragma endregion
+	
 #pragma region display equations widget
 	ImGui::Begin("Equations", nullptr,
 				 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
@@ -514,7 +524,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 #pragma endregion
 
-
+	renderer.flush();
 	arena_reset(&global_arena);
 	return true;
 }
@@ -522,6 +532,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
 
+	gldInit();
+	renderer.create();
+	font.createFromFile(RESOURCES_PATH "trim.ttf");
 #pragma region shader init
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
@@ -565,7 +578,6 @@ bool gameInit() {
 	generateGraphData(firstGraph.func, firstGraph.vboObj);
 	generateAxisData();
 
-	glUseProgram(shaderProgram);
 	return true;
 }
 
@@ -576,7 +588,9 @@ void gameEnd() {
 	return;
 	/*
 	glUseProgram(0);
-	
+
+	renderer.cleanup();
+
 	vboAllocator.cleanup();
 	for (const auto& gridVao : gridVaos) {
 		if (gridVao.id != 0) {
