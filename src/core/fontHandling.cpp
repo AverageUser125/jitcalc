@@ -191,48 +191,6 @@ void Texture::create1PxSquare(const char* b) {
 	}
 }
 
-void Texture::loadFromFile(const char* fileName, bool pixelated, bool useMipMaps) {
-	std::ifstream file(fileName, std::ios::binary);
-
-	if (!file.is_open()) {
-		elog("error opening: ", fileName, " ,for creating font");
-		return;
-	}
-
-	int fileSize = 0;
-	file.seekg(0, std::ios::end);
-	fileSize = (int)file.tellg();
-	file.seekg(0, std::ios::beg);
-	unsigned char* fileData = new unsigned char[fileSize];
-	file.read((char*)fileData, fileSize);
-	file.close();
-
-	createFromFileData(fileData, fileSize, pixelated, useMipMaps);
-
-	delete[] fileData;
-}
-
-void Texture::loadFromFileWithPixelPadding(const char* fileName, int blockSize, bool pixelated, bool useMipMaps) {
-	std::ifstream file(fileName, std::ios::binary);
-
-	if (!file.is_open()) {
-		elog("error opening: ", fileName, " ,for creating font");
-		return;
-	}
-
-	int fileSize = 0;
-	file.seekg(0, std::ios::end);
-	fileSize = (int)file.tellg();
-	file.seekg(0, std::ios::beg);
-	unsigned char* fileData = new unsigned char[fileSize];
-	file.read((char*)fileData, fileSize);
-	file.close();
-
-	createFromFileDataWithPixelPadding(fileData, fileSize, blockSize, pixelated, useMipMaps);
-
-	delete[] fileData;
-}
-
 size_t Texture::getMemorySize(int mipLevel, glm::ivec2* outSize) {
 	glBindTexture(GL_TEXTURE_2D, id);
 
