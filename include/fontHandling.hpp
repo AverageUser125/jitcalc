@@ -49,7 +49,6 @@ struct Texture {
 
 	explicit Texture(const char* file, bool pixelated = GL2D_DEFAULT_TEXTURE_LOAD_MODE_PIXELATED,
 					 bool useMipMaps = GL2D_DEFAULT_TEXTURE_LOAD_MODE_USE_MIPMAPS) {
-		loadFromFile(file, pixelated, useMipMaps);
 	}
 
 	//returns the texture dimensions
