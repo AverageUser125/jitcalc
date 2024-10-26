@@ -149,6 +149,8 @@ void generateAxisData() {
 		float ndcX = (x - origin.x) * scale;
 
 		if (x == 0) {
+			renderer.renderText({ndcX, screenMinY}, "Y", font, {0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f,
+								{0.25f, 0.75f}, {-5 / 1000.0f, 0.0f}, {}, {});
 			verticesThick[0] = ndcX;
 			verticesThick[1] = screenMinY;
 			verticesThick[2] = ndcX;
