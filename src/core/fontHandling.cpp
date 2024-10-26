@@ -344,18 +344,6 @@ void FrameBuffer::create(unsigned int w, unsigned int h) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0);
 
-	//glDrawBuffer(GL_COLOR_ATTACHMENT0); //todo why is this commented out ?
-
-	//glGenTextures(1, &depthtTexture);
-	//glBindTexture(GL_TEXTURE_2D, depthtTexture);
-
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, w, h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthtTexture, 0);
-
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -363,9 +351,6 @@ void FrameBuffer::create(unsigned int w, unsigned int h) {
 void FrameBuffer::resize(unsigned int w, unsigned int h) {
 	glBindTexture(GL_TEXTURE_2D, texture.id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-	//glBindTexture(GL_TEXTURE_2D, depthtTexture);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 }
 
 void FrameBuffer::cleanup() {
@@ -378,16 +363,11 @@ void FrameBuffer::cleanup() {
 		glDeleteTextures(1, &texture.id);
 		texture = {};
 	}
-
-	//glDeleteTextures(1, &depthtTexture);
-	//depthtTexture = 0;
 }
 
 void FrameBuffer::clear() {
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	//glClearColor(1, 1, 1, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//glClearColor(0, 0, 0, 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
