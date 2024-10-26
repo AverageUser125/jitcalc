@@ -15,6 +15,7 @@
 #include "vboAllocator.hpp"
 #include "compilerPipeline.hpp"
 #include "tools.hpp"
+#include "fontHandling.hpp"
 
 #pragma region defines
 
@@ -90,6 +91,9 @@ static std::vector<GraphEquation> graphEquations{};
 
 static VBOAllocator vboAllocator{};
 
+static Renderer2D renderer;
+static Font font;
+
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
 static float scale = 1;
@@ -145,6 +149,8 @@ void generateAxisData() {
 		float ndcX = (x - origin.x) * scale;
 
 		if (x == 0) {
+			renderer.renderText({ndcX, screenMinY}, "Y", font, {0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f,
+								{0.25f, 0.75f}, {-5 / 1000.0f, 0.0f}, {}, {});
 			verticesThick[0] = ndcX;
 			verticesThick[1] = screenMinY;
 			verticesThick[2] = ndcX;
@@ -168,6 +174,8 @@ void generateAxisData() {
 		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
 
 		if (y == 0) {
+			renderer.renderText({screenMaxX, -ndcY}, "X", font, {0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f,
+								{ -1.125f, -0.25f } ,{0.0f, 2 * 5 / 1000.0f}, {}, {});
 			verticesThick[4] = screenMinX;
 			verticesThick[5] = ndcY;
 			verticesThick[6] = screenMaxX;
@@ -401,10 +409,11 @@ int inputTextCallback(ImGuiInputTextCallbackData* data) {
 
 bool gameLogic(float deltaTime, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT); // Clear screen
-
+	renderer.updateWindowMetrics(w, h);
 	bool shouldRecalculateEverything = false;
 
 #pragma region draw grid using shader
+	glUseProgram(shaderProgram);
 	glUniform4f(lineColorUniform, 0.1f, 0.1f, 0.1f, 1.0f);
 	for (size_t i = 0; i < gridVaos.size(); ++i) {
 		glUniform1f(lineThicknessUniform, (2 * i + 1) / 1000.0f);
@@ -428,7 +437,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.amount); // Draw the line strip
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
-// glUseProgram(0);
+	glUseProgram(0);
 #pragma endregion
 #pragma region display equations widget
 	ImGui::Begin("Equations", nullptr,
@@ -482,12 +491,15 @@ bool gameLogic(float deltaTime, int w, int h) {
 #pragma endregion
 	// reset early
 	if (shouldRecalculateEverything) {
+		renderer.flush();
 		generateAxisData();
 		arena_reset(&global_arena); // early reset cause this requires alot of vertexes
 		std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
 		for (GraphEquation& graph : graphEquations) {
 			generateGraphData(graph.func, graph.vboObj, vertexData);
 		}
+	} else {
+		renderer.flush(false);
 	}
 
 #pragma region fullscreen
@@ -509,13 +521,16 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 #pragma endregion
 
-
 	arena_reset(&global_arena);
 	return true;
 }
 
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
+
+	gldInit();
+	renderer.create();
+	font.createFromFile(RESOURCES_PATH "trim.ttf");
 
 #pragma region shader init
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -560,7 +575,6 @@ bool gameInit() {
 	generateGraphData(firstGraph.func, firstGraph.vboObj);
 	generateAxisData();
 
-	glUseProgram(shaderProgram);
 	return true;
 }
 

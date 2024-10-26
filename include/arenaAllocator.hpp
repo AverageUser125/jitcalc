@@ -29,7 +29,7 @@ template <typename T> class ArenaAllocator {
 		return U();
 	}
 
-	[[nodiscard]] T* allocate(size_type n) {
+	[[nodiscard]] static T* allocate(size_type n) {
 		void* ptr = arena_alloc(&global_arena, n * sizeof(T));
 		if (!ptr) {
 			throw std::bad_alloc();
