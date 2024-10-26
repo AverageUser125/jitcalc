@@ -95,7 +95,7 @@ template <class... Args> inline void glog(Args&&... args) {
 ///error log
 template <class... Args> inline void elog(Args&&... args) {
 	setConsoleColor(ConsoleColor::RED);
-	(std::cout << ... << args) << "\n";
+	(std::cerr << ... << args) << "\n";
 	resetConsoleColor();
 }
 #else
