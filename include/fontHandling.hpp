@@ -6,6 +6,7 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
+#include <array>
 
 using Color4f = glm::vec4;
 using Rect = glm::vec4;
@@ -89,7 +90,7 @@ struct Texture {
 struct Font {
 	Texture texture = {};
 	glm::ivec2 size = {};
-	std::vector<stbtt_packedchar> packedCharsBuffer{};
+	std::array<stbtt_packedchar, ('~' - ' ')> packedCharsBuffer;
 	float max_height = 0.f;
 
 	Font() {
