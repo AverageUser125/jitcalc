@@ -244,17 +244,6 @@ struct Renderer2D {
 		renderRectangle(transforms, texture, c, textureCoords);
 	}
 
-	//abs rotation means that the rotaion is relative to the screen rather than object
-	void renderRectangleAbsRotation(const Rect transforms, const Texture texture, const Color4f colors[4],
-									const glm::vec4 textureCoords = GL2D_DefaultTextureCoords);
-
-	inline void renderRectangleAbsRotation(const Rect transforms, const Texture texture, const Color4f colors,
-										   const glm::vec4 textureCoords = GL2D_DefaultTextureCoords) {
-		Color4f c[4] = {colors, colors, colors, colors};
-		renderRectangleAbsRotation(transforms, texture, c, textureCoords);
-	}
-
-
 	inline void renderRectangle(const Rect transforms, const Texture texture, const Color4f colors = {1, 1, 1, 1}) {
 		const Color4f c[4] = {colors, colors, colors, colors};
 		renderRectangle(transforms, texture, c, GL2D_DefaultTextureCoords);

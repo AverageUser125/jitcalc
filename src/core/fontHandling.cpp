@@ -604,11 +604,7 @@ void Renderer2D::cleanup() {
 	glDeleteVertexArrays(1, &vao);
 }
 
-void Renderer2D::renderRectangle(const Rect transforms, const Texture texture, const Color4f colors[4], const glm::vec4 textureCoords) {
-	renderRectangleAbsRotation(transforms, texture, colors, textureCoords);
-}
-
-void Renderer2D::renderRectangleAbsRotation(const Rect transforms, const Texture texture, const Color4f colors[4],
+void Renderer2D::renderRectangle(const Rect transforms, const Texture texture, const Color4f colors[4],
 												  const glm::vec4 textureCoords) {
 	debugAssertComment(texture.id != 0, "Invalid texture");
 	Texture textureCopy = texture;
@@ -753,7 +749,7 @@ void Renderer2D::renderText(glm::vec2 position, const char* text, const Font fon
 			const stbtt_aligned_quad quad = fontGetGlyphQuad(font, '_');
 			auto x = quad.x1 - quad.x0;
 			rectangle.x += x * size + spacing * size;
-		} else if (text[i] >= ' ' && text[i] <= '~') {
+		} else if (text[i] > ' ' && text[i] <= '~') {
 
 			const stbtt_aligned_quad quad = fontGetGlyphQuad(font, text[i]);
 
