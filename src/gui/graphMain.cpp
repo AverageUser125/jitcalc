@@ -190,38 +190,32 @@ void generateAxisData() {
 	const size_t thickSize = verticesThick.size() * sizeof(float);
 	const size_t totalSize = thinSize + mediumSize + thickSize;
 
+
 	// Create buffer and allocate space for all vertices
 	glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
-	glBufferData(GL_ARRAY_BUFFER, totalSize, nullptr, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, totalSize, nullptr, GL_DYNAMIC_DRAW);
 
 	size_t offset = 0;
 
-	debugAssert(!verticesThin.empty());
-	glBufferSubData(GL_ARRAY_BUFFER, offset, thinSize, verticesThin.data());
-	offset += thinSize;
-
-	debugAssert(!verticesMedium.empty());
-	glBufferSubData(GL_ARRAY_BUFFER, offset, mediumSize, verticesMedium.data());
-	offset += mediumSize;
-
-	debugAssert(!verticesThick.empty());
-	glBufferSubData(GL_ARRAY_BUFFER, offset, thickSize, verticesThick.data());
-
-	// Data for VAOs (amount of lines and offset in floats)
-	const std::array<std::pair<size_t, size_t>, 3> vaoData = {
-		{{verticesThin.size() / 2, 0},
-		 {verticesMedium.size() / 2, verticesThin.size()},
-		 {verticesThick.size() / 2, verticesThin.size() + verticesMedium.size()}}};
-	static_assert(gridVaos.size() == vaoData.size());
-
-	for (int i = 0; i < gridVaos.size(); ++i) {
-		glBindVertexArray(gridVaos[i].id);
-		glBindBuffer(GL_ARRAY_BUFFER, gridVbo);
-		gridVaos[i].amount = vaoData[i].first; // Set the amount
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(vaoData[i].second * sizeof(float)));
+	const auto setupVertexData = [&offset](auto& gridVaos, const auto& vertices,
+												size_t index) {
+		debugAssert(!vertices.empty());
+		glBufferSubData(GL_ARRAY_BUFFER, offset, vertices.size() * sizeof(float), vertices.data());
+		gridVaos[index].amount = vertices.size() / 2;
+		glBindVertexArray(gridVaos[index].id); // Bind the VAO
 		glEnableVertexAttribArray(0);
-	}
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(offset)); // Set pointer
+		offset += vertices.size() * sizeof(float);											 // Update offset
+	};
+
+	setupVertexData(gridVaos, verticesThin, 0);
+	setupVertexData(gridVaos, verticesMedium, 1);
+	setupVertexData(gridVaos, verticesThick, 2);
+
+	// Clean up state
+	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void clearGraphData(GLBufferInfo& vboObject) {
@@ -412,13 +406,14 @@ bool gameLogic(float deltaTime, int w, int h) {
 
 #pragma region draw grid using shader
 	glUniform4f(lineColorUniform, 0.1f, 0.1f, 0.1f, 1.0f);
-	for (int i = 0; i < 3; i++) {
+	for (size_t i = 0; i < gridVaos.size(); ++i) {
 		glUniform1f(lineThicknessUniform, (2 * i + 1) / 1000.0f);
-		glEnableVertexAttribArray(0);
 		glBindVertexArray(gridVaos[i].id);
+		glEnableVertexAttribArray(0);
 		glDrawArrays(GL_LINES, 0, gridVaos[i].amount);
 		glDisableVertexAttribArray(0);
 	}
+	glBindVertexArray(0); // Clean up
 #pragma endregion
 #pragma region draw graphs
 	// Draw graph for each function
