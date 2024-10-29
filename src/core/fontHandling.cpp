@@ -30,7 +30,10 @@ static const char* defaultFragmentShader =
 	"uniform sampler2D u_sampler;\n"
 	"void main()\n"
 	"{\n"
-	"    color = v_color * texture2D(u_sampler, v_texture);\n"
+	"    float d = texture2D(u_sampler, v_texture).r;\n"
+	"    float aaf = fwidth(d);\n"
+	"    float alpha = smoothstep(0.5 - aaf, 0.5 + aaf, d);\n"
+	"    color = vec4(v_color.rgb, v_color.a * alpha);\n"
 	"}\n";
 #pragma endregion
 #pragma region utils
