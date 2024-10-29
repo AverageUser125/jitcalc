@@ -263,7 +263,7 @@ void Font::createFromTTF(const unsigned char* ttf_data, const size_t ttf_data_si
 	stbtt_pack_context stbtt_context;
 	stbtt_PackBegin(&stbtt_context, fontMonochromeBuffer, size.x, size.y, 0, 2, NULL);
 	stbtt_PackSetOversampling(&stbtt_context, 2, 2);
-	stbtt_PackFontRange(&stbtt_context, ttf_data, 0, 65, ' ', '~' - ' ', packedCharsBuffer.data());
+	stbtt_PackFontRange(&stbtt_context, ttf_data, 0, FONT_SIZE, ' ', '~' - ' ', packedCharsBuffer.data());
 	stbtt_PackEnd(&stbtt_context);
 
 	for (int i = 0; i < fontMonochromeBufferSize; i++) {

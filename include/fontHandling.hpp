@@ -93,6 +93,7 @@ struct Font {
 	std::array<stbtt_packedchar, ('~' - ' ')> packedCharsBuffer;
 	float max_height = 0.f;
 
+	static constexpr float FONT_SIZE = 45;
 	Font() {
 	}
 
