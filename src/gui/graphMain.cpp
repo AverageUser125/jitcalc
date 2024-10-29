@@ -66,7 +66,7 @@ std::string formatFloat(double num) {
 	if (absNum >= 1e6 || absNum < 1e-6) { // Adjust the threshold as needed
 		int power = static_cast<int>(std::floor(std::log10(absNum)));
 		double mantissa = absNum / std::pow(10.0, power);
-		oss << std::fixed << std::setprecision(1) << mantissa << " * 10^" << power;
+		oss << std::fixed << std::setprecision(1) << mantissa << "*10^" << power;
 	} else {
 		oss << std::fixed << std::setprecision(decimalPlaces);
 		oss << absNum; // Output the number directly
@@ -207,7 +207,7 @@ void generateAxisData() {
 			verticesThin.push_back(screenMaxY); // y2
 		} else {
 			renderer.renderText({ndcX, -origin.y * scale}, formatFloat(x).c_str(), font,
-								{0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f, {-1, 0}, {}, {}, {});
+								{0.0f, 0, 0, 1.0f}, 0.00065f, 0.1f, 2.0f, {-1, 0}, {}, {}, {});
 			verticesMedium.push_back(ndcX);		  // x1
 			verticesMedium.push_back(screenMinY); // y1
 			verticesMedium.push_back(ndcX);		  // x2
@@ -221,7 +221,7 @@ void generateAxisData() {
 		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
 
 		if (y == 0) {
-			renderer.renderText({screenMaxX, -ndcY}, "X", font, {0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f,
+			renderer.renderText({screenMaxX, -ndcY}, "X", font, {0.0f, 0, 0, 1.0f}, 0.0007f, 0.1f, 2.0f,
 								{ -1.125f, -0.25f } ,{0.0f, 2 * 5 / 1000.0f}, {}, {});
 			verticesThick[4] = screenMinX;
 			verticesThick[5] = ndcY;
@@ -291,7 +291,7 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 	if (func == nullptr) {
 		return;
 	}
-	size_t targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
+	size_t targetNumPoints = std::min(static_cast<size_t>(initialNumPoints / std::sqrt(scale)), static_cast<size_t>(1e-6));
 	vertexData.reserve(targetNumPoints);
 	vertexData.clear();
 
