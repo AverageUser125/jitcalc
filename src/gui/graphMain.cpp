@@ -340,20 +340,9 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject) {
 #pragma endregion
 #pragma region color gen
 
-float getFloatRand() {
-	std::mt19937_64 rng;
-	// initialize the random number generator with time-dependent seed
-	uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
-	rng.seed(ss);
-	std::uniform_real_distribution<float> unif(0, 1);
-	return unif(rng);
-}
-
 // TODO: reconsider the entire method of this function
 glm::vec3 generateColor() {
 	static int index = 0;
-	static float rndStart = fmod(getFloatRand(), 360.0f);
 	// Helper lambda to convert HSV to RGB
 	static constexpr auto hsvToRgb = [](const float h, const float s, const float v) -> glm::vec3 {
 		float c = v * s;
@@ -391,8 +380,7 @@ glm::vec3 generateColor() {
 		return glm::vec3(r + m, g + m, b + m);
 	};
 
-	float hue = rndStart;
-	hue += index * goldenAngle;
+	float hue = index * goldenAngle;
 	hue = fmod(hue, 360.0f);
 
 	index++;
