@@ -1,21 +1,23 @@
 #include "arenaAllocator.hpp"
+#include "compilerPipeline.hpp"
+#include "fontHandling.hpp"
 #include "graphMain.hpp"
 #include "mainGui.hpp"
 #include "platformInput.h"
+#include "tools.hpp"
+#include "vboAllocator.hpp"
 #include <array>
 #include <chrono>
 #include <cmath> // Include for std::log10 and std::floor
 #include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <imgui_stdlib.h>
+#include <iomanip>
+#include <iosfwd>
 #include <iostream>
 #include <random>
 #include <vector>
-#include <glm/gtc/type_ptr.hpp>
-#include "vboAllocator.hpp"
-#include "compilerPipeline.hpp"
-#include "tools.hpp"
-#include "fontHandling.hpp"
 
 #pragma region defines
 
@@ -30,6 +32,49 @@ struct GraphEquation {
 	GLBufferInfo vboObj;
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
+
+std::string formatFloat(double num) {
+	// Handle zero case
+	if (num == 0.0)
+		return "0";
+
+	// Get the absolute value
+	double absNum = std::abs(num);
+	std::ostringstream oss;
+
+	// Convert to string to manipulate
+	std::string strNum = std::to_string(absNum);
+
+	// Remove trailing zeros
+	size_t end = strNum.find_last_not_of('0');
+	if (end == std::string::npos) {
+		strNum = "0";
+	} else {
+		size_t decimalPos = strNum.find('.');
+		if (decimalPos != std::string::npos && end > decimalPos) {
+			strNum = strNum.substr(0, end + 1);
+		} else {
+			strNum = strNum.substr(0, end + 1);
+		}
+	}
+
+	// Determine the number of decimal places
+	size_t decimalPos = strNum.find('.');
+	size_t decimalPlaces = (decimalPos != std::string::npos) ? strNum.length() - decimalPos - 1 : 0;
+
+	// Convert to scientific notation if necessary
+	if (absNum >= 1e6 || absNum < 1e-6) { // Adjust the threshold as needed
+		int power = static_cast<int>(std::floor(std::log10(absNum)));
+		double mantissa = absNum / std::pow(10.0, power);
+		oss << std::fixed << std::setprecision(1) << mantissa << " * 10^" << power;
+	} else {
+		oss << std::fixed << std::setprecision(decimalPlaces);
+		oss << absNum; // Output the number directly
+	}
+
+	// Return the formatted string, adding negative sign if necessary
+	return (num < 0) ? "-" + oss.str() : oss.str();
+}
 
 #pragma endregion
 #pragma region constants
@@ -161,6 +206,8 @@ void generateAxisData() {
 			verticesThin.push_back(ndcX);		// x2
 			verticesThin.push_back(screenMaxY); // y2
 		} else {
+			renderer.renderText({ndcX, -origin.y * scale}, formatFloat(x).c_str(), font,
+								{0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f, {-1, 0}, {}, {}, {});
 			verticesMedium.push_back(ndcX);		  // x1
 			verticesMedium.push_back(screenMinY); // y1
 			verticesMedium.push_back(ndcX);		  // x2
@@ -186,6 +233,8 @@ void generateAxisData() {
 			verticesThin.push_back(screenMaxX); // x2
 			verticesThin.push_back(ndcY);		// y2
 		} else {
+			renderer.renderText({-origin.x * scale, -ndcY}, formatFloat(-y).c_str(), font,
+								{0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f, {-1, 0}, {}, {}, {});
 			verticesMedium.push_back(screenMinX); // x1
 			verticesMedium.push_back(ndcY);		  // y1
 			verticesMedium.push_back(screenMaxX); // x2
@@ -207,7 +256,9 @@ void generateAxisData() {
 
 	const auto setupVertexData = [&offset](auto& gridVaos, const auto& vertices,
 												size_t index) {
-		debugAssert(!vertices.empty());
+		if (vertices.empty()) {
+			return;
+		}
 		glBufferSubData(GL_ARRAY_BUFFER, offset, vertices.size() * sizeof(float), vertices.data());
 		gridVaos[index].amount = vertices.size() / 2;
 		glBindVertexArray(gridVaos[index].id); // Bind the VAO
@@ -457,9 +508,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 	if (ImGui::Button("add equation", {100.0f, 25.0f})) {
 		graphEquations.resize(graphEquations.size() + 1);
 	}
-	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.001f, 10.0f);
-	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -5.0f, 5.0f);
-	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -5.0f, 5.0f);
+	shouldRecalculateEverything |= ImGui::SliderFloat("Scale", &scale, 0.00001f, 100000.0f);
+	shouldRecalculateEverything |= ImGui::SliderFloat("OriginX", &origin.x, -50.0f, 50.0f);
+	shouldRecalculateEverything |= ImGui::SliderFloat("OriginY", &origin.y, -50.0f, 50.0f);
 	ImGui::End();
 #pragma endregion
 
@@ -484,7 +535,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	double scrollSize = platform::getScrollSize();
 	if (scrollSize != 0) {
 		scale *= exp(scrollSize / scrollSensitivity);
-		scale = std::clamp(scale, 0.001f, 1000.0f);
+		// scale = std::clamp(scale, 0.001f, 1000.0f);
 		shouldRecalculateEverything = true;
 	}
 
@@ -530,7 +581,7 @@ bool gameInit() {
 
 	gldInit();
 	renderer.create();
-	font.createFromFile(RESOURCES_PATH "trim.ttf");
+	font.createFromFile(RESOURCES_PATH "RobotoMono-Medium.ttf");
 
 #pragma region shader init
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);

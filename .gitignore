@@ -9,7 +9,5 @@ old/
 *.dll
 *.so
 *.a
-*.ttf
-*.otf
 errorLogs.txt
 CMakePresets.json
