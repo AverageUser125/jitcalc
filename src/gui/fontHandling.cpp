@@ -1,42 +1,40 @@
-#include "gl2d.hpp"
+#include "fontHandling.hpp"
 #include "tools.hpp"
 #include "arenaAllocator.hpp"
 
-namespace gl2d
-{
-
-	static Texture white1pxSquareTexture = {};
-
 #pragma region shader code
 static ShaderProgram defaultShader = {};
-static const char* defaultVertexShader = GL2D_OPNEGL_SHADER_VERSION "\n" GL2D_OPNEGL_SHADER_PRECISION "\n"
-																	"in vec2 quad_positions;\n"
-																	"in vec4 quad_colors;\n"
-																	"in vec2 texturePositions;\n"
-																	"out vec4 v_color;\n"
-																	"out vec2 v_texture;\n"
-																	"out vec2 v_positions;\n"
-																	"void main()\n"
-																	"{\n"
-																	"	gl_Position = vec4(quad_positions, 0, 1);\n"
-																	"	v_color = quad_colors;\n"
-																	"	v_texture = texturePositions;\n"
-																	"	v_positions = gl_Position.xy;\n"
-																	"}\n";
+static const char* defaultVertexShader =
+	GL2D_OPNEGL_SHADER_VERSION "\n"
+	GL2D_OPNEGL_SHADER_PRECISION "\n"
+	"in vec2 quad_positions;\n"
+	"in vec4 quad_colors;\n"
+	"in vec2 texturePositions;\n"
+	"out vec4 v_color;\n"
+	"out vec2 v_texture;\n"
+	"out vec2 v_positions;\n"
+	"void main()\n"
+	"{\n"
+	"	gl_Position = vec4(quad_positions, 0, 1);\n"
+	"	v_color = quad_colors;\n"
+	"	v_texture = texturePositions;\n"
+	"	v_positions = gl_Position.xy;\n"
+	"}\n";
 
 static const char* defaultFragmentShader =
-	GL2D_OPNEGL_SHADER_VERSION "\n" GL2D_OPNEGL_SHADER_PRECISION "\n"
-							   "out vec4 color;\n"
-							   "in vec4 v_color;\n"
-							   "in vec2 v_texture;\n"
-							   "uniform sampler2D u_sampler;\n"
-							   "void main()\n"
-							   "{\n"
-							   "    float d = texture2D(u_sampler, v_texture).r;\n"
-							   "    float aaf = fwidth(d);\n"
-							   "    float alpha = smoothstep(0.5 - aaf, 0.5 + aaf, d);\n"
-							   "    color = vec4(v_color.rgb, v_color.a * alpha);\n"
-							   "}\n";
+	GL2D_OPNEGL_SHADER_VERSION "\n"
+	GL2D_OPNEGL_SHADER_PRECISION "\n"
+	"out vec4 color;\n"
+	"in vec4 v_color;\n"
+	"in vec2 v_texture;\n"
+	"uniform sampler2D u_sampler;\n"
+	"void main()\n"
+	"{\n"
+	"    float d = texture2D(u_sampler, v_texture).r;\n"
+	"    float aaf = fwidth(d);\n"
+	"    float alpha = smoothstep(0.5 - aaf, 0.5 + aaf, d);\n"
+	"    color = vec4(v_color.rgb, v_color.a * alpha);\n"
+	"}\n";
 #pragma endregion
 #pragma region utils
 
@@ -74,6 +72,7 @@ void validateProgram(GLuint id) {
 		glGetProgramInfoLog(id, l, &l, message.data());
 
 		elog(message);
+
 	}
 
 	glValidateProgram(id);
@@ -244,17 +243,16 @@ void Texture::cleanup() {
 
 #pragma endregion
 #pragma region font
-
 void Font::createFromTTF(const unsigned char* ttf_data, const size_t ttf_data_size) {
 	size.x = 2000, size.y = 2000, max_height = 0;
-
+	
 	//STB TrueType will give us a one channel buffer of the font that we then convert to RGBA for OpenGL
 	const size_t fontMonochromeBufferSize = size.x * size.y;
 	const size_t fontRgbaBufferSize = size.x * size.y * 4;
 
 	unsigned char* fontMonochromeBuffer = (unsigned char*)arena_alloc(&global_arena, fontMonochromeBufferSize);
 	unsigned char* fontRgbaBuffer = (unsigned char*)arena_alloc(&global_arena, fontRgbaBufferSize);
-
+	
 	stbtt_pack_context stbtt_context;
 	stbtt_PackBegin(&stbtt_context, fontMonochromeBuffer, size.x, size.y, 0, 2, NULL);
 	stbtt_PackSetOversampling(&stbtt_context, 2, 2);
@@ -376,7 +374,7 @@ void enableNecessaryGLFeatures() {
 }
 
 void Renderer2D::create(GLuint fbo, size_t quadCount) {
-
+	
 	currentShader = defaultShader;
 
 	defaultFBO = fbo;
@@ -412,7 +410,7 @@ void Renderer2D::cleanup() {
 }
 
 void Renderer2D::renderRectangle(const Rect transforms, const Texture texture, const Color4f colors[4],
-								 const glm::vec4 textureCoords) {
+												  const glm::vec4 textureCoords) {
 	debugAssertComment(texture.id != 0, "Invalid texture");
 	Texture textureCopy = texture;
 
@@ -447,185 +445,6 @@ void Renderer2D::renderRectangle(const Rect transforms, const Texture texture, c
 	texturePositions.push_back(glm::vec2{textureCoords.z, textureCoords.y}); //4
 
 	spriteTextures.push_back(textureCopy);
-}
-
-void Renderer2D::renderRectangle(const Rect transforms, const Color4f colors[4]) {
-	renderRectangle(transforms, white1pxSquareTexture, colors);
-}
-
-void Renderer2D::render9Patch2(const Rect position, const Color4f color, const glm::vec2 origin, const float rotation,
-							   const Texture texture, const Texture_Coords textureCoords,
-							   const Texture_Coords inner_texture_coords) {
-	glm::vec4 colorData[4] = {color, color, color, color};
-
-	int w = 0;
-	int h = 0;
-	glBindTexture(GL_TEXTURE_2D, texture.id);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
-
-	float textureSpaceW = textureCoords.z - textureCoords.x;
-	float textureSpaceH = textureCoords.y - textureCoords.w;
-
-	float topBorder = (textureCoords.y - inner_texture_coords.y) / textureSpaceH * position.w;
-	float bottomBorder = (inner_texture_coords.w - textureCoords.w) / textureSpaceH * position.w;
-	float leftBorder = (inner_texture_coords.x - textureCoords.x) / textureSpaceW * position.z;
-	float rightBorder = (textureCoords.z - inner_texture_coords.z) / textureSpaceW * position.z;
-
-	float newAspectRatio = position.z / position.w;
-
-	if (newAspectRatio < 1.f) {
-		topBorder *= newAspectRatio;
-		bottomBorder *= newAspectRatio;
-	} else {
-		leftBorder /= newAspectRatio;
-		rightBorder /= newAspectRatio;
-	}
-
-
-	//topBorder = 50;
-	//bottomBorder = -50;
-	//leftBorder = 0;
-	//rightBorder = 0;
-
-
-	//inner
-	Rect innerPos = position;
-	innerPos.x += leftBorder;
-	innerPos.y += topBorder;
-	innerPos.z -= leftBorder + rightBorder;
-	innerPos.w -= topBorder + bottomBorder;
-	renderRectangle(innerPos, texture, colorData, inner_texture_coords);
-
-	//top
-	Rect topPos = position;
-	topPos.x += leftBorder;
-	topPos.z -= leftBorder + rightBorder;
-	topPos.w = topBorder;
-	glm::vec4 upperTexPos;
-	upperTexPos.x = inner_texture_coords.x;
-	upperTexPos.y = textureCoords.y;
-	upperTexPos.z = inner_texture_coords.z;
-	upperTexPos.w = inner_texture_coords.y;
-	renderRectangle(topPos, texture, colorData, upperTexPos);
-
-	//Rect topPos = position;
-	//topPos.x += leftBorder;
-	//topPos.w = topBorder;
-	//topPos.z = topBorder;
-	//float end = rightBorder;
-	//float size = topBorder;
-	//
-	//while(1)
-	//{
-	//	if(topPos.x + size <= end)
-	//	{
-	//
-	//		//draw
-	//		renderRectangle(topPos, colorData, Position2D{ 0, 0 }, 0, texture, upperTexPos);
-	//
-	//		topPos += size;
-	//	}else
-	//	{
-	//		float newW = end - topPos.x;
-	//		if(newW>0)
-	//		{
-	//			topPos.z = newW;
-	//			renderRectangle(topPos, colorData, Position2D{ 0, 0 }, 0, texture, upperTexPos);
-	//		}
-	//		break;
-	//	}
-	//
-	//}
-
-
-	//bottom
-	Rect bottom = position;
-	bottom.x += leftBorder;
-	bottom.y += (float)position.w - bottomBorder;
-	bottom.z -= leftBorder + rightBorder;
-	bottom.w = bottomBorder;
-	glm::vec4 bottomTexPos;
-	bottomTexPos.x = inner_texture_coords.x;
-	bottomTexPos.y = inner_texture_coords.w;
-	bottomTexPos.z = inner_texture_coords.z;
-	bottomTexPos.w = textureCoords.w;
-	renderRectangle(bottom, texture, colorData, bottomTexPos);
-
-	//left
-	Rect left = position;
-	left.y += topBorder;
-	left.z = leftBorder;
-	left.w -= topBorder + bottomBorder;
-	glm::vec4 leftTexPos;
-	leftTexPos.x = textureCoords.x;
-	leftTexPos.y = inner_texture_coords.y;
-	leftTexPos.z = inner_texture_coords.x;
-	leftTexPos.w = inner_texture_coords.w;
-	renderRectangle(left, texture, colorData, leftTexPos);
-
-	//right
-	Rect right = position;
-	right.x += position.z - rightBorder;
-	right.y += topBorder;
-	right.z = rightBorder;
-	right.w -= topBorder + bottomBorder;
-	glm::vec4 rightTexPos;
-	rightTexPos.x = inner_texture_coords.z;
-	rightTexPos.y = inner_texture_coords.y;
-	rightTexPos.z = textureCoords.z;
-	rightTexPos.w = inner_texture_coords.w;
-	renderRectangle(right, texture, colorData, rightTexPos);
-
-	//topleft
-	Rect topleft = position;
-	topleft.z = leftBorder;
-	topleft.w = topBorder;
-	glm::vec4 topleftTexPos;
-	topleftTexPos.x = textureCoords.x;
-	topleftTexPos.y = textureCoords.y;
-	topleftTexPos.z = inner_texture_coords.x;
-	topleftTexPos.w = inner_texture_coords.y;
-	renderRectangle(topleft, texture, colorData, topleftTexPos);
-	//repair here?
-
-
-	//topright
-	Rect topright = position;
-	topright.x += position.z - rightBorder;
-	topright.z = rightBorder;
-	topright.w = topBorder;
-	glm::vec4 toprightTexPos;
-	toprightTexPos.x = inner_texture_coords.z;
-	toprightTexPos.y = textureCoords.y;
-	toprightTexPos.z = textureCoords.z;
-	toprightTexPos.w = inner_texture_coords.y;
-	renderRectangle(topright, texture, colorData, toprightTexPos);
-
-	//bottomleft
-	Rect bottomleft = position;
-	bottomleft.y += position.w - bottomBorder;
-	bottomleft.z = leftBorder;
-	bottomleft.w = bottomBorder;
-	glm::vec4 bottomleftTexPos;
-	bottomleftTexPos.x = textureCoords.x;
-	bottomleftTexPos.y = inner_texture_coords.w;
-	bottomleftTexPos.z = inner_texture_coords.x;
-	bottomleftTexPos.w = textureCoords.w;
-	renderRectangle(bottomleft, texture, colorData, bottomleftTexPos);
-
-	//bottomright
-	Rect bottomright = position;
-	bottomright.y += position.w - bottomBorder;
-	bottomright.x += position.z - rightBorder;
-	bottomright.z = rightBorder;
-	bottomright.w = bottomBorder;
-	glm::vec4 bottomrightTexPos;
-	bottomrightTexPos.x = inner_texture_coords.z;
-	bottomrightTexPos.y = inner_texture_coords.w;
-	bottomrightTexPos.z = textureCoords.z;
-	bottomrightTexPos.w = textureCoords.w;
-	renderRectangle(bottomright, texture, colorData, bottomrightTexPos);
 }
 
 glm::vec2 Renderer2D::getTextSize(const char* text, const Font font, const float size, const float spacing,
@@ -692,8 +511,8 @@ glm::vec2 Renderer2D::getTextSize(const char* text, const Font font, const float
 
 void Renderer2D::renderText(glm::vec2 position, const char* text, const Font font, const Color4f color,
 							const float size, const float spacing, const float line_space,
-							const glm::vec2 relativeCenter, const glm::vec2 absoluteCenter, const Color4f ShadowColor,
-							const Color4f LightColor) {
+							const glm::vec2 relativeCenter , const glm::vec2 absoluteCenter,
+					const Color4f ShadowColor, const Color4f LightColor) {
 	debugAssertComment(font.texture.id != 0, "Missing font");
 
 	const int text_length = (int)strlen(text);
@@ -749,10 +568,11 @@ void Renderer2D::renderText(glm::vec2 position, const char* text, const Font fon
 								ShadowColor, glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
 			}
 
-			renderRectangle(rectangle, font.texture, colorData, glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
+			renderRectangle(rectangle, font.texture, colorData,
+							glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
 
 			if (LightColor.w) {
-				glm::vec2 pos = {-2, 1};
+				glm::vec2 pos = {-2, 1}; 
 				pos *= size;
 				renderRectangle({rectangle.x + pos.x, rectangle.y + pos.y, rectangle.z, rectangle.w}, font.texture,
 								LightColor, glm::vec4{quad.s0, quad.t0, quad.s1, quad.t1});
@@ -770,8 +590,7 @@ void Renderer2D::flush(bool clearDrawData) {
 }
 
 void internalFlush(Renderer2D& renderer, bool clearDrawData) {
-	debugAssertComment(renderer.vao,
-					   "Renderer not initialized. Have you forgotten to call gl2d::Renderer2D::create() ?");
+	debugAssertComment(renderer.vao, "Renderer not initialized. Have you forgotten to call gl2d::Renderer2D::create() ?");
 
 	if (renderer.spriteTextures.empty()) {
 		return;
@@ -781,7 +600,7 @@ void internalFlush(Renderer2D& renderer, bool clearDrawData) {
 	glUseProgram(renderer.currentShader.id);
 
 	glUniform1i(renderer.currentShader.u_sampler, 0);
-
+	
 	glBindBuffer(GL_ARRAY_BUFFER, renderer.buffers[Renderer2DBufferType::quadPositions]);
 	glBufferData(GL_ARRAY_BUFFER, renderer.spritePositions.size() * sizeof(glm::vec2), renderer.spritePositions.data(),
 				 GL_STREAM_DRAW);
@@ -826,6 +645,5 @@ void internalFlush(Renderer2D& renderer, bool clearDrawData) {
 	}
 	glUseProgram(0);
 }
-} // namespace gl2d
 
 #pragma endregion
