@@ -328,8 +328,6 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 		prevX = normalizedX;
 		prevY = y;
 	}
-
-	debugAssertComment(targetNumPoints == vertexData.size(), "The target and recieved number of points vary");
 }
 
 
