@@ -298,11 +298,11 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 	vertexData.reserve(targetNumPoints);
 	vertexData.clear();
 
-	float step = 2.0f / targetNumPoints;
+	float step = 2.0f / (targetNumPoints - 1);
 
 	float prevX = -1.0f;
 
-	for (int j = 0; j <= targetNumPoints; ++j) {
+	for (int j = 0; j < targetNumPoints; ++j) {
 		float normalizedX = -1.0f + j * step;
 		float x = (normalizedX / scale) + origin.x;
 
