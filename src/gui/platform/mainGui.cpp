@@ -47,7 +47,7 @@ constexpr int WINDOW_DEFAULT_HEIGHT = 1280;
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
 	if ((action == GLFW_REPEAT || action == GLFW_PRESS) && key == GLFW_KEY_BACKSPACE) {
-		platform::internal::addToTypedInput(key);
+		platform::internal::addToTypedInput(8);
 	}
 
 	bool state = 0;
