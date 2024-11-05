@@ -17,6 +17,8 @@
 #include <iosfwd>
 #include <iostream>
 #include <random>
+#include <imgui_decomp.h>
+#include "RobotoMono.h"
 #include <vector>
 
 #pragma region defines
@@ -555,7 +557,12 @@ bool gameInit() {
 
 	gldInit();
 	renderer.create();
-	font.createFromFile(RESOURCES_PATH "RobotoMono-Medium.ttf");
+	{
+		int length = stb_decompress_length((const unsigned char*)RobotoMono_compressed_data);
+		unsigned char* data = (unsigned char*)arena_alloc(&global_arena, length);
+		stb_decompress(data, (const unsigned char*)RobotoMono_compressed_data, RobotoMono_compressed_size);
+		font.createFromTTF(data, length);
+	}
 
 #pragma region shader init
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -601,6 +608,8 @@ bool gameInit() {
 
 	generateAxisData();
 
+
+	arena_reset(&global_arena);
 	return true;
 }
 

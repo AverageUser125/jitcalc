@@ -8,6 +8,7 @@ target_sources(imgui PRIVATE
 "${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_draw.cpp"
 "${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_tables.cpp"
 "${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_widgets.cpp"
+"${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_decomp.cpp"
 "${CMAKE_CURRENT_SOURCE_DIR}/imgui/misc/cpp/imgui_stdlib.cpp"
 "${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.cpp"
 "${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp")
