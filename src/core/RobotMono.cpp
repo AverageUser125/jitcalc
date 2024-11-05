@@ -1,9 +1,12 @@
 // File: 'RobotoMono-Medium.ttf' (86820 bytes)
 // Exported using binary_to_compressed_c.cpp
 #include "RobotoMono.h"
+#include "defines.hpp"
 
+#if COMPILER_GCC
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
+#endif
 
 const unsigned int RobotoMono_compressed_size = 66743;
 const unsigned int RobotoMono_compressed_data[66744 / 4] = {
@@ -1863,5 +1866,6 @@ const unsigned int RobotoMono_compressed_data[66744 / 4] = {
 	0x05821000, 0x01231182, 0x82f4010f, 0x82032006, 0x01022a0d, 0x00000011, 0x00010000, 0x7ffa0500, 0x00b8af1d,
 };
 
-
+#if COMPILER_GCC
 #pragma GCC diagnostic pop
+#endif
