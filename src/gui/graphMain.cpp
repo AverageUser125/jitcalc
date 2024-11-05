@@ -29,7 +29,6 @@ struct GLBufferInfo {
 struct GraphEquation {
 	std::string input = "";
 	CompiledFunction func{};
-	GLBufferInfo vboObj;
 	glm::vec3 color = {0.0f, 0.0f, 0.0f};
 };
 
@@ -288,23 +287,19 @@ void clearGraphData(GLBufferInfo& vboObject) {
 	vboObject.amount = 0;
 }
 
-void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
+void generateGraphData(const CompiledFunction& func,
 					   std::vector<glm::vec2, ArenaAllocator<glm::vec2>>& vertexData,
 					   size_t targetNumPoints) {
 	if (func == nullptr) {
 		return;
 	}
-	// the real amount is this + 2
 	permaAssertComment(targetNumPoints != 0, "Tried to display zero points for a graph");
 
-	vertexData.reserve(targetNumPoints);
-	vertexData.clear();
-
-	float step = 2.0f / targetNumPoints;
+	float step = 2.0f / (targetNumPoints -1);
 
 	float prevX = -1.0f;
 
-	for (int j = 0; j <= targetNumPoints; ++j) {
+	for (int j = 0; j < targetNumPoints; ++j) {
 		float normalizedX = -1.0f + j * step;
 		float x = (normalizedX / scale) + origin.x;
 
@@ -317,40 +312,30 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 	}
 }
 
-std::vector<glm::vec2, ArenaAllocator<glm::vec2>> setGraphData(const CompiledFunction& func,
-																	GLBufferInfo& vboObject, int index) {
+void setGraphData(const CompiledFunction& func, int index) {
 	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
 	size_t targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
-	generateGraphData(func, vboObject, vertexData, targetNumPoints);
+	generateGraphData(func, vertexData, targetNumPoints);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
-	vboObject.amount = vertexData.size();
-	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec2), vertexData.data(), GL_STATIC_DRAW);
-
-
-	//glBindBuffer(GL_ARRAY_BUFFER, graphData.id);
-	//glBufferSubData(GL_ARRAY_BUFFER, index * targetNumPoints * sizeof(glm::vec2),
-	//				vertexData.size() * sizeof(glm::vec2),
-	//				vertexData.data());
-
-	return vertexData;
-
+	glBindBuffer(GL_ARRAY_BUFFER, graphData.id);
+	glBufferSubData(GL_ARRAY_BUFFER, index * targetNumPoints * sizeof(glm::vec2),
+					vertexData.size() * sizeof(glm::vec2),
+					vertexData.data());
 }
 void generateAllGraphs() {
 	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> buffer;
-	int targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
 
-	//graphData.amount = 0;
-	//glBindBuffer(GL_ARRAY_BUFFER, graphData.id);
-	//glBufferData(GL_ARRAY_BUFFER, (targetNumPoints + 1) * graphEquations.size() * sizeof(glm::vec2), nullptr,
-	//			 GL_DYNAMIC_DRAW);
+	const int targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
+	buffer.clear();
+	buffer.reserve(targetNumPoints * graphEquations.size());
 
-	for (GraphEquation& graph : graphEquations) {
-		generateGraphData(graph.func, graph.vboObj, buffer, targetNumPoints);
-		glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.id);
-		graph.vboObj.amount = buffer.size();
-		glBufferData(GL_ARRAY_BUFFER, buffer.size() * sizeof(glm::vec2), buffer.data(), GL_STATIC_DRAW);
+	for (const GraphEquation& graph : graphEquations) {
+		generateGraphData(graph.func, buffer, targetNumPoints);
 	}
+	glBindBuffer(GL_ARRAY_BUFFER, graphData.id);
+	glBufferData(GL_ARRAY_BUFFER, buffer.size() * sizeof(glm::vec2), buffer.data(),
+				 GL_DYNAMIC_DRAW);
+	graphData.amount = buffer.size() /2;
 }
 
 #pragma endregion
@@ -409,13 +394,9 @@ glm::vec3 generateColor() {
 bool setGraph(int index) {
 	GraphEquation& graph = graphEquations[index];
 
-	if (graph.vboObj.id == 0) {
-		graph.vboObj.id = vboAllocator.allocateVBO();
-	}
-
 	if (graph.input.empty()) {
 		graph.func = nullptr;
-		clearGraphData(graph.vboObj);
+		// clearGraphData(graph.vboObj);
 		return true;
 	}
 
@@ -430,7 +411,7 @@ bool setGraph(int index) {
 	if (graph.color.x == 0.0f && graph.color.y == 0.0f && graph.color.z == 0.0f) {
 		graph.color = generateColor();
 	}
-	setGraphData(graph.func, graph.vboObj, index);
+	setGraphData(graph.func, index);
 	return true;
 }
 
@@ -441,8 +422,8 @@ void removeGraph(int index) {
 	GraphEquation& graph = graphEquations[index];
 
 	graph.func = nullptr;
-	clearGraphData(graph.vboObj);
-	vboAllocator.freeVBO(graph.vboObj.id);
+	// clearGraphData(graph.vboObj);
+	// vboAllocator.freeVBO(graph.vboObj.id);
 	graphEquations.erase(graphEquations.begin() + index);
 }
 
@@ -482,16 +463,13 @@ bool gameLogic(float deltaTime, int w, int h) {
 #pragma region draw graphs
 	// Draw graph for each function
 	glUniform1f(lineThicknessUniform, 8.0f / 1000.0f);
-	for (const auto& graph : graphEquations) {
-		glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.id);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
-		glUniform4f(lineColorUniform, graph.color.x, graph.color.y, graph.color.z,
-					1.0f);									 // Set different color for each function
-		glDrawArrays(GL_LINE_STRIP, 0, graph.vboObj.amount); // Draw the line strip
-		glDisableClientState(GL_VERTEX_ARRAY);
-	}
+	glBindBuffer(GL_ARRAY_BUFFER, graphData.id);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_FLOAT, 0, nullptr); // Set up vertex pointer
+	glDrawArrays(GL_LINE_STRIP, graphData.id, graphData.amount);
+	glDisableClientState(GL_VERTEX_ARRAY);
 	glUseProgram(0);
+
 #pragma endregion
 #pragma region display equations widget
 	ImGui::Begin("Equations", nullptr,
@@ -615,14 +593,13 @@ bool gameInit() {
 	for (auto& gridVao : gridVaos) {
 		glGenVertexArrays(1, &gridVao.id);
 	}
-	glGenBuffers(1, &graphData.id);
-
+	graphData.id = vboAllocator.allocateVBO();
+	
 	graphEquations.resize(1);
 	GraphEquation& firstGraph = graphEquations[0];
 	firstGraph.input = "x*x";
 	firstGraph.color = generateColor();
 	firstGraph.func = [](double x) { return x * x; };
-	firstGraph.vboObj.id = vboAllocator.allocateVBO();	
 	generateAllGraphs();
 
 	generateAxisData();
