@@ -301,8 +301,6 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 
 	float step = 2.0f / (targetNumPoints - 1);
 
-	float prevX = -1.0f;
-
 	for (int j = 0; j < targetNumPoints; ++j) {
 		float normalizedX = -1.0f + j * step;
 		float x = (normalizedX / scale) + origin.x;

@@ -99,20 +99,20 @@ template <class... Args> inline void elog(Args&&... args) {
 	resetConsoleColor();
 }
 #else
-template <class F, class... T> ALWAYS_INLINE void wlog(F f, T... args) {
+template <class F, class... T> inline void wlog(F f, T... args) {
 }
 
-template <class F, class... T> ALWAYS_INLINE void ilog(F f, T... args) {
+template <class F, class... T> inline void ilog(F f, T... args) {
 }
 
-template <class F, class... T> ALWAYS_INLINE void glog(F f, T... args) {
+template <class F, class... T> inline void glog(F f, T... args) {
 }
 
-template <class F, class... T> ALWAYS_INLINE void llog(F f, T... args) {
+template <class F, class... T> inline void llog(F f, T... args) {
 }
 
 #ifndef ERRORS_ONLY
-template <class F, class... T> ALWAYS_INLINE void elog(F f, T... args) {
+template <class F, class... T> inline void elog(F f, T... args) {
 }
 #endif
 #endif
@@ -120,7 +120,7 @@ template <class F, class... T> ALWAYS_INLINE void elog(F f, T... args) {
 #include <sstream>
 
 #ifdef ERRORS_ONLY
-template <class... Args> void ALWAYS_INLINE elog(Args&&... args) {
+template <class... Args> void inline elog(Args&&... args) {
 	std::stringstream stream{};
 	(stream << ... << std::forward<Args>(args)) << " ";
 	std::ofstream f(RESOURCES_PATH "../errorLogs.txt", std::ios::app);
