@@ -288,10 +288,15 @@ void clearGraphData(GLBufferInfo& vboObject) {
 	vboObject.amount = 0;
 }
 
-int generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
+void uploadGraphData(std::vector<glm::vec2, ArenaAllocator<glm::vec2>>& data, GLBufferInfo& vboObj) {
+	glBindBuffer(GL_ARRAY_BUFFER, vboObj.id);
+	vboObj.amount = data.size();
+	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(glm::vec2), data.data(), GL_STATIC_DRAW);
+}
+void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 					   std::vector<glm::vec2, ArenaAllocator<glm::vec2>>& vertexData) {
 	if (func == nullptr) {
-		return 0;
+		return;
 	}
 	// the real amount is this + 2
 	size_t targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
@@ -315,17 +320,22 @@ int generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 
 		prevX = normalizedX;
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
-	vboObject.amount = vertexData.size();
-	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec2), vertexData.data(), GL_STATIC_DRAW);
-
-	return vertexData.size();
 }
 
-
-int generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject) {
+std::vector<glm::vec2, ArenaAllocator<glm::vec2>> generateGraphData(const CompiledFunction& func,
+																	GLBufferInfo& vboObject) {
 	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
-	return generateGraphData(func, vboObject, vertexData);
+	generateGraphData(func, vboObject, vertexData);
+	return vertexData;
+
+}
+void generateAllGraphs() {
+	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> buffer;
+
+	for (GraphEquation& graph : graphEquations) {
+		generateGraphData(graph.func, graph.vboObj, buffer);
+		uploadGraphData(buffer, graph.vboObj);
+	}
 }
 
 #pragma endregion
@@ -404,7 +414,8 @@ bool setGraph(GraphEquation& graph) {
 	if (graph.color.x == 0.0f && graph.color.y == 0.0f && graph.color.z == 0.0f) {
 		graph.color = generateColor();
 	}
-	generateGraphData(graph.func, graph.vboObj);
+	auto vertexData = generateGraphData(graph.func, graph.vboObj);
+	uploadGraphData(vertexData, graph.vboObj);
 
 	return true;
 }
@@ -522,11 +533,8 @@ bool gameLogic(float deltaTime, int w, int h) {
 	if (shouldRecalculateEverything) {
 		renderer.flush();
 		generateAxisData();
-		arena_reset(&global_arena); // early reset cause this requires alot of vertexes
-		std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
-		for (GraphEquation& graph : graphEquations) {
-			generateGraphData(graph.func, graph.vboObj, vertexData);
-		}
+		arena_reset(&global_arena); // early reset cause this requires alot of memory
+		generateAllGraphs();
 		graphData.amount = 0;
 	} else {
 		renderer.flush(false);
@@ -603,7 +611,9 @@ bool gameInit() {
 	firstGraph.color = generateColor();
 	firstGraph.func = [](double x) { return x * x; };
 	firstGraph.vboObj.id = vboAllocator.allocateVBO();
-	generateGraphData(firstGraph.func, firstGraph.vboObj);
+	auto buffer = generateGraphData(firstGraph.func, firstGraph.vboObj);
+	uploadGraphData(buffer, firstGraph.vboObj);
+
 	generateAxisData();
 
 	return true;
