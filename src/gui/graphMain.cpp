@@ -300,15 +300,33 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 	vertexData.clear();
 
 	float step = 2.0f / (targetNumPoints - 1);
+	float prevX = -1.0f;
+	float prevY = func(prevX / scale + origin.x);
 
-	for (int j = 0; j < targetNumPoints; ++j) {
+	for (int j = 0; j <= targetNumPoints; ++j) {
 		float normalizedX = -1.0f + j * step;
 		float x = (normalizedX / scale) + origin.x;
 
 		float y = func(x);
 
+		float deltaY = std::abs(y - prevY);
+
+		// If deltaY is large, reduce the step size to add more points for better precision
+		if (deltaY > graphThreshold) {
+			float refinedStep = step / 10.0f;
+			for (float refinedX = prevX + refinedStep; refinedX < normalizedX; refinedX += refinedStep) {
+				float refinedFuncX = (refinedX / scale) + origin.x;
+				float refinedY = func(refinedFuncX);
+				float refinedScaledY = (refinedY + origin.y) * scale;
+				vertexData.push_back({refinedX, refinedScaledY});
+			}
+		}
+
 		float scaledY = (y + origin.y) * scale;
 		vertexData.push_back({normalizedX, scaledY});
+
+		prevX = normalizedX;
+		prevY = y;
 	}
 
 	debugAssertComment(targetNumPoints == vertexData.size(), "The target and recieved number of points vary");
