@@ -766,7 +766,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
     int glsl_version = 130;
     sscanf(bd->GlslVersionString, "#version %d", &glsl_version);
 
-    const GLchar* vertex_shader_glsl_120 =
+    const GLchar* const vertex_shader_glsl_120 =
         "uniform mat4 ProjMtx;\n"
         "attribute vec2 Position;\n"
         "attribute vec2 UV;\n"
@@ -780,7 +780,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
         "}\n";
 
-    const GLchar* vertex_shader_glsl_130 =
+    const GLchar* const vertex_shader_glsl_130 =
         "uniform mat4 ProjMtx;\n"
         "in vec2 Position;\n"
         "in vec2 UV;\n"
@@ -794,7 +794,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
         "}\n";
 
-    const GLchar* vertex_shader_glsl_300_es =
+    const GLchar* const vertex_shader_glsl_300_es =
         "precision highp float;\n"
         "layout (location = 0) in vec2 Position;\n"
         "layout (location = 1) in vec2 UV;\n"
@@ -809,7 +809,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
         "}\n";
 
-    const GLchar* vertex_shader_glsl_410_core =
+    const GLchar* const vertex_shader_glsl_410_core =
         "layout (location = 0) in vec2 Position;\n"
         "layout (location = 1) in vec2 UV;\n"
         "layout (location = 2) in vec4 Color;\n"
@@ -823,48 +823,60 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
         "}\n";
 
-    const GLchar* fragment_shader_glsl_120 =
-        "#ifdef GL_ES\n"
-        "    precision mediump float;\n"
-        "#endif\n"
-        "uniform sampler2D Texture;\n"
-        "varying vec2 Frag_UV;\n"
-        "varying vec4 Frag_Color;\n"
-        "void main()\n"
-        "{\n"
-        "    gl_FragColor = Frag_Color * texture2D(Texture, Frag_UV.st);\n"
-        "}\n";
+    const GLchar* const fragment_shader_glsl_120 =
+		"#ifdef GL_ES\n"
+		"    precision mediump float;\n"
+		"#endif\n"
+		"uniform sampler2D Texture;\n"
+		"varying vec2 Frag_UV;\n"
+		"varying vec4 Frag_Color;\n"
+		"void main()\n"
+		"{\n"
+		"    float d = texture2D(Texture, Frag_UV.st).r;\n"
+		"    float aaf = fwidth(d);\n"
+		"    float alpha = smoothstep(0.5 - aaf, 0.5 + aaf, d);\n"
+		"    gl_FragColor = Frag_Color * texture2D(Texture, Frag_UV.st) * vec4(1.0, 1.0, 1.0, alpha);\n"
+		"}\n";
 
-    const GLchar* fragment_shader_glsl_130 =
-        "uniform sampler2D Texture;\n"
-        "in vec2 Frag_UV;\n"
-        "in vec4 Frag_Color;\n"
-        "out vec4 Out_Color;\n"
-        "void main()\n"
-        "{\n"
-        "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
-        "}\n";
+    const GLchar* const fragment_shader_glsl_130 =
+		"uniform sampler2D Texture;\n"
+		"in vec2 Frag_UV;\n"
+		"in vec4 Frag_Color;\n"
+		"out vec4 Out_Color;\n"
+		"void main()\n"
+		"{\n"
+		"    float d = texture(Texture, Frag_UV.st).r;\n"
+		"    float aaf = fwidth(d);\n"
+		"    float alpha = smoothstep(0.5 - aaf, 0.5 + aaf, d);\n"
+		"    Out_Color = Frag_Color * texture(Texture, Frag_UV.st) * vec4(1.0, 1.0, 1.0, alpha);\n"
+		"}\n";
 
-    const GLchar* fragment_shader_glsl_300_es =
-        "precision mediump float;\n"
-        "uniform sampler2D Texture;\n"
-        "in vec2 Frag_UV;\n"
-        "in vec4 Frag_Color;\n"
-        "layout (location = 0) out vec4 Out_Color;\n"
-        "void main()\n"
-        "{\n"
-        "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
-        "}\n";
+    const GLchar* const fragment_shader_glsl_300_es =
+		"precision mediump float;\n"
+		"uniform sampler2D Texture;\n"
+		"in vec2 Frag_UV;\n"
+		"in vec4 Frag_Color;\n"
+		"layout (location = 0) out vec4 Out_Color;\n"
+		"void main()\n"
+		"{\n"
+		"    float d = texture(Texture, Frag_UV.st).r;\n"
+		"    float aaf = fwidth(d);\n"
+		"    float alpha = smoothstep(0.5 - aaf, 0.5 + aaf, d);\n"
+		"    Out_Color = Frag_Color * texture(Texture, Frag_UV.st) * vec4(1.0, 1.0, 1.0, alpha);\n"
+		"}\n";
 
-    const GLchar* fragment_shader_glsl_410_core =
-        "in vec2 Frag_UV;\n"
-        "in vec4 Frag_Color;\n"
-        "uniform sampler2D Texture;\n"
-        "layout (location = 0) out vec4 Out_Color;\n"
-        "void main()\n"
-        "{\n"
-        "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
-        "}\n";
+    const GLchar* const fragment_shader_glsl_410_core =
+		"in vec2 Frag_UV;\n"
+		"in vec4 Frag_Color;\n"
+		"uniform sampler2D Texture;\n"
+		"layout (location = 0) out vec4 Out_Color;\n"
+		"void main()\n"
+		"{\n"
+		"    float d = texture(Texture, Frag_UV.st).r;\n"
+		"    float aaf = fwidth(d);\n"
+		"    float alpha = smoothstep(0.5 - aaf, 0.5 + aaf, d);\n"
+		"    Out_Color = Frag_Color * texture(Texture, Frag_UV.st) * vec4(1.0, 1.0, 1.0, alpha);\n"
+		"}\n";
 
     // Select shaders matching our GLSL versions
     const GLchar* vertex_shader = nullptr;
