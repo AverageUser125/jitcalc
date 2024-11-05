@@ -51,7 +51,7 @@ void resetConsoleColor();
 
 #define debugAssert(expression) ((void)(0))
 
-#define debugAssert(expression, comment) ((void)(0))
+#define debugAssertComment(expression, comment) ((void)(0))
 
 #endif
 
