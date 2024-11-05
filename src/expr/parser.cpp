@@ -7,7 +7,7 @@ constexpr double E = 2.718281828459045235360;
 // all functions from math.h that take 1 parameter
 const std::unordered_set<std::string_view> Parser::functionSet = {"sin",  "cos",  "tan",   "acos", "asin",	"atan",
 																  "cosh", "sinh", "tanh",  "log",  "log10", "sqrt",
-																  "ceil", "fabs", "floor", "round"};
+																  "ceil", "fabs", "floor", "round", "exp"};
 
 Parser::Parser(const std::vector<Token, ArenaAllocator<Token>>& arr) : tokenArray(arr), tokenIndex(0) {
 	if (!tokenArray.empty()) {
