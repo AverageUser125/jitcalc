@@ -54,13 +54,6 @@ stbtt_aligned_quad fontGetGlyphQuad(const Font& font, const char c) {
 	return quad;
 }
 
-float positionToScreenCoordsX(const float position, float w) {
-	return position;
-}
-
-float positionToScreenCoordsY(const float position, float h) {
-	return position;
-}
 #pragma endregion
 #pragma region shader program
 
@@ -429,15 +422,6 @@ void Renderer2D::renderRectangle(const Rect transforms, const Texture texture, c
 	glm::vec2 v3 = {transforms.x + transforms.z, transformsY - transforms.w};
 	glm::vec2 v4 = {transforms.x + transforms.z, transformsY};
 
-	v1.x = positionToScreenCoordsX(v1.x, (float)windowW);
-	v2.x = positionToScreenCoordsX(v2.x, (float)windowW);
-	v3.x = positionToScreenCoordsX(v3.x, (float)windowW);
-	v4.x = positionToScreenCoordsX(v4.x, (float)windowW);
-	v1.y = positionToScreenCoordsY(v1.y, (float)windowH);
-	v2.y = positionToScreenCoordsY(v2.y, (float)windowH);
-	v3.y = positionToScreenCoordsY(v3.y, (float)windowH);
-	v4.y = positionToScreenCoordsY(v4.y, (float)windowH);
-
 	spritePositions.push_back(glm::vec2{v1.x, v1.y});
 	spritePositions.push_back(glm::vec2{v2.x, v2.y});
 	spritePositions.push_back(glm::vec2{v4.x, v4.y});
@@ -608,20 +592,9 @@ void Renderer2D::flush(bool clearDrawData) {
 void internalFlush(Renderer2D& renderer, bool clearDrawData) {
 	debugAssertComment(renderer.vao, "Renderer not initialized. Have you forgotten to call gl2d::Renderer2D::create() ?");
 
-	if (renderer.windowH == 0 || renderer.windowW == 0) {
-		if (clearDrawData) {
-			renderer.clearDrawData();
-		}
-
-		return;
-	}
-
 	if (renderer.spriteTextures.empty()) {
 		return;
 	}
-
-	permaAssertComment(renderer.windowH > 0 && renderer.windowW > 0,
-					   "Negative Window sized ave you forgotten to call updateWindowMetrics(w, h)");
 
 
 	glUseProgram(renderer.currentShader.id);

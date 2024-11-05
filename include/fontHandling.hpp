@@ -182,15 +182,6 @@ struct Renderer2D {
 
 	GLuint buffers[Renderer2DBufferType::bufferSize] = {};
 
-	//window metrics, should be up to date at all times
-	int windowW = 1;
-	int windowH = 1;
-
-	void updateWindowMetrics(int w, int h) {
-		//windowW = w;
-		//windowH = h;
-	}
-
 	//clears the things that are to be drawn when calling flush
 	inline void clearDrawData() {
 		spritePositions.clear();
