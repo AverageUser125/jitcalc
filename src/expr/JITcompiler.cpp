@@ -90,7 +90,7 @@ llvm::orc::ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 		std::string llvmIR = "";
 		llvm::raw_string_ostream ros(llvmIR);
 		module->print(ros, nullptr, false, !PRODUCTION_BUILD);
-		ilog(llvmIR, '\n');
+		llog(llvmIR, '\n');
 	}
 #endif
 	return llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
