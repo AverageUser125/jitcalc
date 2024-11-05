@@ -315,16 +315,7 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 	}
 }
 
-void setGraphData(const CompiledFunction& func,
-																	GLBufferInfo& vboObject, int index) {
-	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
-	size_t targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
-	generateGraphData(func, vboObject, vertexData, targetNumPoints);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
-	vboObject.amount = vertexData.size();
-	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec2), vertexData.data(), GL_STATIC_DRAW);
-}
 void generateAllGraphs() {
 	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> buffer;
 	int targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
@@ -414,7 +405,15 @@ bool setGraph(int index) {
 	if (graph.color.x == 0.0f && graph.color.y == 0.0f && graph.color.z == 0.0f) {
 		graph.color = generateColor();
 	}
-	setGraphData(graph.func, graph.vboObj, index);
+
+	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
+	size_t targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
+	generateGraphData(graph.func, graph.vboObj, vertexData, targetNumPoints);
+
+	glBindBuffer(GL_ARRAY_BUFFER, graph.vboObj.id);
+	graph.vboObj.amount = vertexData.size();
+	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec2), vertexData.data(), GL_STATIC_DRAW);
+
 	return true;
 }
 
