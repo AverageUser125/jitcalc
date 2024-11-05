@@ -562,8 +562,17 @@ bool gameInit() {
 		unsigned char* data = (unsigned char*)arena_alloc(&global_arena, length);
 		stb_decompress(data, (const unsigned char*)RobotoMono_compressed_data, RobotoMono_compressed_size);
 		font.createFromTTF(data, length);
-	}
 
+
+		ImGuiIO& io = ImGui::GetIO();
+		ImFont imguiFont{};
+		ImFontConfig font_cfg = ImFontConfig();
+		font_cfg.FontDataOwnedByAtlas = false;
+		font_cfg.FontData = data;
+		font_cfg.SizePixels = 15.0f;
+		font_cfg.FontDataSize = length;
+		io.Fonts->AddFont(&font_cfg);
+	}
 #pragma region shader init
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
@@ -607,7 +616,6 @@ bool gameInit() {
 	generateAllGraphs();
 
 	generateAxisData();
-
 
 	arena_reset(&global_arena);
 	return true;
