@@ -113,8 +113,7 @@ void mouseCallback(GLFWwindow* window, int key, int action, int mods) {
 		platform::internal::setLeftMouseState(state);
 	} else if (key == GLFW_MOUSE_BUTTON_RIGHT) {
 		platform::internal::setRightMouseState(state);
-	}
-	else if (key == GLFW_MOUSE_BUTTON_MIDDLE) {
+	} else if (key == GLFW_MOUSE_BUTTON_MIDDLE) {
 		platform::internal::setMiddleMouseState(state);
 	}
 }
