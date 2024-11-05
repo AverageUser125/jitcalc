@@ -129,8 +129,6 @@ static GLint lineThicknessUniform = 0;
 static GLint lineColorUniform = 0;
 static GLuint shaderProgram = 0;
 
-static GLBufferInfo graphData{};
-
 static std::array<GLBufferInfo, 3> gridVaos{};
 static GLuint gridVbo = 0;
 
@@ -317,7 +315,7 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 	}
 }
 
-std::vector<glm::vec2, ArenaAllocator<glm::vec2>> setGraphData(const CompiledFunction& func,
+void setGraphData(const CompiledFunction& func,
 																	GLBufferInfo& vboObject, int index) {
 	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
 	size_t targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
@@ -326,24 +324,10 @@ std::vector<glm::vec2, ArenaAllocator<glm::vec2>> setGraphData(const CompiledFun
 	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
 	vboObject.amount = vertexData.size();
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec2), vertexData.data(), GL_STATIC_DRAW);
-
-
-	//glBindBuffer(GL_ARRAY_BUFFER, graphData.id);
-	//glBufferSubData(GL_ARRAY_BUFFER, index * targetNumPoints * sizeof(glm::vec2),
-	//				vertexData.size() * sizeof(glm::vec2),
-	//				vertexData.data());
-
-	return vertexData;
-
 }
 void generateAllGraphs() {
 	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> buffer;
 	int targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
-
-	//graphData.amount = 0;
-	//glBindBuffer(GL_ARRAY_BUFFER, graphData.id);
-	//glBufferData(GL_ARRAY_BUFFER, (targetNumPoints + 1) * graphEquations.size() * sizeof(glm::vec2), nullptr,
-	//			 GL_DYNAMIC_DRAW);
 
 	for (GraphEquation& graph : graphEquations) {
 		generateGraphData(graph.func, graph.vboObj, buffer, targetNumPoints);
@@ -615,7 +599,6 @@ bool gameInit() {
 	for (auto& gridVao : gridVaos) {
 		glGenVertexArrays(1, &gridVao.id);
 	}
-	glGenBuffers(1, &graphData.id);
 
 	graphEquations.resize(1);
 	GraphEquation& firstGraph = graphEquations[0];
