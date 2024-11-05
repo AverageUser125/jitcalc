@@ -100,12 +100,17 @@ int isButtonTyped(int key);
 
 int isLMousePressed();
 int isRMousePressed();
+int isMMousePressed();
+
 
 int isLMouseReleased();
 int isRMouseReleased();
+int isMMouseReleased();
 
+int isMMouseHeld();
 int isLMouseHeld();
 int isRMouseHeld();
+
 
 ControllerButtons getControllerButtons();
 std::string getTypedInput();
@@ -117,6 +122,7 @@ void setButtonState(int button, int newState);
 
 void setLeftMouseState(int newState);
 void setRightMouseState(int newState);
+void setMiddleMouseState(int newState);
 
 inline void processEventButton(Button& b, bool newState) {
 	b.newState = newState;

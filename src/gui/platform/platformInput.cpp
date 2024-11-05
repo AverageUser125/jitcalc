@@ -3,6 +3,7 @@
 platform::Button keyBoard[platform::Button::BUTTONS_COUNT];
 platform::Button leftMouse;
 platform::Button rightMouse;
+platform::Button middleMouse;
 
 namespace platform
 {
@@ -47,11 +48,9 @@ int platform::isButtonTyped(int key) {
 int platform::isLMousePressed() {
 	return leftMouse.pressed;
 }
-
 int platform::isRMousePressed() {
 	return rightMouse.pressed;
 }
-
 int platform::isLMouseReleased() {
 	return leftMouse.released;
 }
@@ -59,13 +58,21 @@ int platform::isLMouseReleased() {
 int platform::isRMouseReleased() {
 	return rightMouse.released;
 }
-
 int platform::isLMouseHeld() {
 	return leftMouse.held;
 }
-
 int platform::isRMouseHeld() {
 	return rightMouse.held;
+}
+
+int platform::isMMouseReleased() {
+	return middleMouse.released;
+}
+int platform::isMMouseHeld() {
+	return middleMouse.held;
+}
+int platform::isMMousePressed() {
+	return middleMouse.pressed;
 }
 
 platform::ControllerButtons platform::getControllerButtons() {
@@ -89,6 +96,10 @@ void platform::internal::setRightMouseState(int newState) {
 	processEventButton(rightMouse, newState);
 }
 
+void platform::internal::setMiddleMouseState(int newState) {
+	processEventButton(middleMouse, newState);
+}
+
 void platform::internal::updateAllButtons(float deltaTime) {
 	for (int i = 0; i < platform::Button::BUTTONS_COUNT; i++) {
 		updateButton(keyBoard[i], deltaTime);
@@ -96,6 +107,7 @@ void platform::internal::updateAllButtons(float deltaTime) {
 
 	updateButton(leftMouse, deltaTime);
 	updateButton(rightMouse, deltaTime);
+	updateButton(middleMouse, deltaTime);
 
 	for (int i = 0; i <= GLFW_JOYSTICK_LAST; i++) {
 		if (glfwJoystickPresent(i) && glfwJoystickIsGamepad(i)) {
@@ -135,6 +147,7 @@ void platform::internal::resetInputsToZero() {
 
 	resetButtonToZero(leftMouse);
 	resetButtonToZero(rightMouse);
+	resetButtonToZero(middleMouse);
 
 	controllerButtons.setAllToZero();
 }

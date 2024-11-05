@@ -47,7 +47,7 @@ constexpr int WINDOW_DEFAULT_HEIGHT = 1280;
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
 	if ((action == GLFW_REPEAT || action == GLFW_PRESS) && key == GLFW_KEY_BACKSPACE) {
-		platform::internal::addToTypedInput(8);
+		platform::internal::addToTypedInput(key);
 	}
 
 	bool state = 0;
@@ -113,6 +113,9 @@ void mouseCallback(GLFWwindow* window, int key, int action, int mods) {
 		platform::internal::setLeftMouseState(state);
 	} else if (key == GLFW_MOUSE_BUTTON_RIGHT) {
 		platform::internal::setRightMouseState(state);
+	}
+	else if (key == GLFW_MOUSE_BUTTON_MIDDLE) {
+		platform::internal::setMiddleMouseState(state);
 	}
 }
 

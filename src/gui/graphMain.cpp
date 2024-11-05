@@ -507,19 +507,18 @@ bool gameLogic(float deltaTime, int w, int h) {
 	static glm::ivec2 originMousePos = {0, 0};
 	static glm::vec2 originOrigin = {0, 0};
 
-	if (platform::isRMousePressed()) {
+	if (platform::isMMousePressed()) {
 		originOrigin = origin;
 		// originMousePos = static_cast<glm::vec2>(platform::getRelMousePosition()) / glm::vec2({w, h});
 		originMousePos = platform::getRelMousePosition();
 	}
-	if (platform::isRMouseHeld()) {
+	if (platform::isMMouseHeld()) {
 		glm::ivec2 currentMousePos = platform::getRelMousePosition();
 		glm::vec2 delta = 2.0f * static_cast<glm::vec2>(originMousePos - currentMousePos); // Delta in pixels
 		origin = originOrigin + (delta / scale) / glm::vec2({w, h}); // Scale and update the origin
 
 		shouldRecalculateEverything = true;
 	}
-
 	double scrollSize = platform::getScrollSize();
 	if (scrollSize != 0) {
 		scale *= exp(scrollSize / scrollSensitivity);
