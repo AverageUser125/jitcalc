@@ -129,6 +129,8 @@ static GLint lineThicknessUniform = 0;
 static GLint lineColorUniform = 0;
 static GLuint shaderProgram = 0;
 
+static GLBufferInfo graphData{};
+
 static std::array<GLBufferInfo, 3> gridVaos{};
 static GLuint gridVbo = 0;
 
@@ -286,19 +288,21 @@ void clearGraphData(GLBufferInfo& vboObject) {
 	vboObject.amount = 0;
 }
 
-void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
+int generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 					   std::vector<glm::vec2, ArenaAllocator<glm::vec2>>& vertexData) {
 	if (func == nullptr) {
-		return;
+		return 0;
 	}
-	size_t targetNumPoints = std::min(static_cast<size_t>(initialNumPoints / std::sqrt(scale)), static_cast<size_t>(1e-6));
+	// the real amount is this + 2
+	size_t targetNumPoints = static_cast<size_t>(initialNumPoints / std::sqrt(scale));
+	permaAssertComment(targetNumPoints != 0, "Tried to display zero points for a graph");
+
 	vertexData.reserve(targetNumPoints);
 	vertexData.clear();
 
 	float step = 2.0f / targetNumPoints;
 
 	float prevX = -1.0f;
-	float prevY = func(prevX / scale + origin.x);
 
 	for (int j = 0; j <= targetNumPoints; ++j) {
 		float normalizedX = -1.0f + j * step;
@@ -306,35 +310,22 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 
 		float y = func(x);
 
-		float deltaY = std::abs(y - prevY);
-
-		// If deltaY is large, reduce the step size to add more points for better precision
-		if (deltaY > graphThreshold) {
-			float refinedStep = step / 10.0f;
-			for (float refinedX = prevX + refinedStep; refinedX < normalizedX; refinedX += refinedStep) {
-				float refinedFuncX = (refinedX / scale) + origin.x;
-				float refinedY = func(refinedFuncX);
-				float refinedScaledY = (refinedY + origin.y) * scale;
-				vertexData.push_back({refinedX, refinedScaledY});
-			}
-		}
-
 		float scaledY = (y + origin.y) * scale;
 		vertexData.push_back({normalizedX, scaledY});
 
 		prevX = normalizedX;
-		prevY = y;
 	}
-
 	glBindBuffer(GL_ARRAY_BUFFER, vboObject.id);
 	vboObject.amount = vertexData.size();
 	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec2), vertexData.data(), GL_STATIC_DRAW);
+
+	return vertexData.size();
 }
 
 
-void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject) {
+int generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject) {
 	std::vector<glm::vec2, ArenaAllocator<glm::vec2>> vertexData;
-	generateGraphData(func, vboObject, vertexData);
+	return generateGraphData(func, vboObject, vertexData);
 }
 
 #pragma endregion
@@ -536,6 +527,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 		for (GraphEquation& graph : graphEquations) {
 			generateGraphData(graph.func, graph.vboObj, vertexData);
 		}
+		graphData.amount = 0;
 	} else {
 		renderer.flush(false);
 	}
@@ -603,6 +595,7 @@ bool gameInit() {
 	for (auto& gridVao : gridVaos) {
 		glGenVertexArrays(1, &gridVao.id);
 	}
+	glGenBuffers(1, &graphData.id);
 
 	graphEquations.resize(1);
 	GraphEquation& firstGraph = graphEquations[0];
