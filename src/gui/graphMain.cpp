@@ -434,16 +434,6 @@ void removeGraph(int index) {
 #pragma endregion
 #pragma region imGui callbacks
 
-// Custom callback function to call setGraph when input changes
-int inputTextCallback(ImGuiInputTextCallbackData* data) {
-	size_t index = reinterpret_cast<size_t>(data->UserData) - 1;
-	if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
-		graphEquations[index].input = data->Buf;
-		setGraph(index); // Update the graph with both inputs
-	}
-	return 0;
-}
-
 #pragma endregion
 #pragma region mainSuff
 
@@ -481,8 +471,9 @@ bool gameLogic(float deltaTime, int w, int h) {
 	ImGui::Begin("Equations", nullptr,
 				 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
 	for (size_t i = 0; i < graphEquations.size(); i++) {
-		ImGui::InputText(("##" + std::to_string(i)).c_str(), &graphEquations[i].input, ImGuiInputTextFlags_CallbackEdit,
-						 inputTextCallback, (void*)(i + 1));
+		if(ImGui::InputText(("##" + std::to_string(i)).c_str(), &graphEquations[i].input)) {
+			setGraph(i);
+		}
 		ImGui::SameLine();
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));		   // Red button color
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.8f, 0.0f, 0.0f, 1.0f)); // Darker red when hovered
