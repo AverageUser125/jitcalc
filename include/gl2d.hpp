@@ -8,11 +8,6 @@
 #include <vector>
 #include <array>
 
-using Color4f = glm::vec4;
-using Rect = glm::vec4;
-typedef glm::vec2 Position2D;
-typedef glm::vec4 Texture_Coords;
-
 //this is how the library should load textures by default.
 #define GL2D_DEFAULT_TEXTURE_LOAD_MODE_PIXELATED false
 #define GL2D_DEFAULT_TEXTURE_LOAD_MODE_USE_MIPMAPS true
@@ -20,9 +15,32 @@ typedef glm::vec4 Texture_Coords;
 #define GL2D_OPNEGL_SHADER_VERSION "#version 330"
 #define GL2D_OPNEGL_SHADER_PRECISION "precision highp float;"
 
+#define Colors_Red (gl2d::Color4f{1, 0, 0, 1})
+#define Colors_Green (gl2d::Color4f{0, 1, 0, 1})
+#define Colors_Blue (gl2d::Color4f{0, 0, 1, 1})
+#define Colors_Black (gl2d::Color4f{0, 0, 0, 1})
+#define Colors_White (gl2d::Color4f{1, 1, 1, 1})
+#define Colors_Yellow (gl2d::Color4f{1, 1, 0, 1})
+#define Colors_Magenta (gl2d::Color4f{1, 0, 1, 1})
+#define Colors_Turqoise (gl2d::Color4f{0, 1, 1, 1})
+#define Colors_Orange (gl2d::Color4f{1, (float)0x7F / 255.0f, 0, 1})
+#define Colors_Purple (gl2d::Color4f{101.0f / 255.0f, 29.0f / 255.0f, 173.0f / 255.0f, 1})
+#define Colors_Gray (gl2d::Color4f{(float)0x7F / 255.0f, (float)0x7F / 255.0f, (float)0x7F / 255.0f, 1})
+#define Colors_Transparent (gl2d::Color4f{0, 0, 0, 0})
+
+namespace gl2d
+{
+
+using Color4f = glm::vec4;
+using Rect = glm::vec4;
+typedef glm::vec2 Position2D;
+typedef glm::vec4 Texture_Coords;
+
+
 void gldInit();
 
 #pragma region shader program
+
 struct ShaderProgram {
 	GLuint id = 0;
 	int u_sampler = 0;
@@ -43,6 +61,7 @@ ShaderProgram createShaderProgram(const char* vertex, const char* fragment);
 #pragma endregion
 
 #pragma region texture
+
 struct Texture {
 	GLuint id = 0;
 
@@ -84,9 +103,11 @@ struct Texture {
 
 	void cleanup();
 };
+
 #pragma endregion
 
 #pragma region font
+
 struct Font {
 	Texture texture = {};
 	glm::ivec2 size = {};
@@ -94,6 +115,7 @@ struct Font {
 	float max_height = 0.f;
 
 	static constexpr float FONT_SIZE = 45;
+
 	Font() {
 	}
 
@@ -139,14 +161,13 @@ struct FrameBuffer {
 
 void enableNecessaryGLFeatures();
 
-enum Renderer2DBufferType{
+enum Renderer2DBufferType {
 	quadPositions,
 	quadColors,
 	texturePositions,
 
 	bufferSize
 };
-
 
 struct Renderer2D {
 	Renderer2D(){};
@@ -200,24 +221,32 @@ struct Renderer2D {
 	//todo the function should returns the size of the text drawn also refactor
 	void renderText(glm::vec2 position, const char* text, const Font font, const Color4f color, const float size = 1.5f,
 					const float spacing = 4, const float line_space = 3, const glm::vec2 relativeCenter = {-0.5, -0.5},
-					const glm::vec2 absoluteCenter = {0.0f, 0.0f},
-					const Color4f ShadowColor = {0.1, 0.1, 0.1, 1}, const Color4f LightColor = {});
+					const glm::vec2 absoluteCenter = {0.0f, 0.0f}, const Color4f ShadowColor = {0.1, 0.1, 0.1, 0.0},
+					const Color4f LightColor = {});
 
 	void renderRectangle(const Rect transforms, const Texture texture, const Color4f colors[4],
-									 const glm::vec4 textureCoords);
-
+						 const glm::vec4 textureCoords = GL2D_DefaultTextureCoords);
 	inline void renderRectangle(const Rect transforms, const Texture texture, const Color4f colors = {1, 1, 1, 1},
 								const glm::vec4 textureCoords = GL2D_DefaultTextureCoords) {
 		Color4f c[4] = {colors, colors, colors, colors};
 		renderRectangle(transforms, texture, c, textureCoords);
 	}
 
-	inline void renderRectangle(const Rect transforms, const Texture texture, const Color4f colors = {1, 1, 1, 1}) {
-		const Color4f c[4] = {colors, colors, colors, colors};
-		renderRectangle(transforms, texture, c, GL2D_DefaultTextureCoords);
+	void renderRectangle(const Rect transforms, const Color4f colors[4]);
+	inline void renderRectangle(const Rect transforms, const Color4f colors = {1, 1, 1, 1}) {
+		Color4f c[4] = {colors, colors, colors, colors};
+		renderRectangle(transforms, c);
 	}
+
+	//used for ui. draws a texture that scales the margins different so buttons of different sizes can be drawn.
+	void render9Patch2(const Rect position, const Color4f color, const glm::vec2 origin, const float rotationDegrees,
+					   const Texture texture, const Texture_Coords textureCoords,
+					   const Texture_Coords inner_texture_coords);
+
+
 };
 
 void internalFlush(Renderer2D& renderer, bool clearDrawData);
+} // namespace gl2d
 
 #pragma endregion

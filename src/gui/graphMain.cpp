@@ -1,6 +1,6 @@
 #include "arenaAllocator.hpp"
 #include "compilerPipeline.hpp"
-#include "fontHandling.hpp"
+#include "gl2d.hpp"
 #include "graphMain.hpp"
 #include "mainGui.hpp"
 #include "platformInput.h"
@@ -18,6 +18,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include "glui.hpp"
 
 #pragma region defines
 
@@ -136,8 +137,9 @@ static std::vector<GraphEquation> graphEquations{};
 
 static VBOAllocator vboAllocator{};
 
-static Renderer2D renderer;
-static Font font;
+static gl2d::Renderer2D renderer;
+static glui::RendererUi ui;
+static gl2d::Font font;
 
 // use std::vector to allow dynamic amount of equations
 static glm::vec2 origin = {0, 0};
@@ -515,17 +517,23 @@ bool gameLogic(float deltaTime, int w, int h) {
 		// scale = std::clamp(scale, 0.001f, 1000.0f);
 		shouldRecalculateEverything = true;
 	}
+	ui.Begin(0);
+	std::string& input = graphEquations[0].input;
+	ui.InputText("eq1", &input, Colors_Black, {}, true, false, true);
+	ui.End();
 
 #pragma endregion
 	// reset early
 	if (shouldRecalculateEverything) {
-		renderer.flush();
-		generateAxisData();
 		arena_reset(&global_arena); // early reset cause this requires alot of memory
 		generateAllGraphs();
-	} else {
-		renderer.flush(false);
 	}
+	generateAxisData();
+	renderer.flush();
+
+	ui.renderFrame(renderer, font, platform::getRelMousePosition() / glm::ivec2(w, h), platform::isLMousePressed(),
+				   platform::isLMouseHeld(), platform::isLMouseReleased(),
+				   platform::isButtonPressedOn(platform::Button::Escape), platform::getTypedInput(), deltaTime);
 
 #pragma region fullscreen
 /*
@@ -553,7 +561,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 bool gameInit() {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
 
-	gldInit();
+	gl2d::gldInit();
 	renderer.create();
 	font.createFromFile(RESOURCES_PATH "RobotoMono-Medium.ttf");
 
