@@ -4,6 +4,8 @@
 #include <tools.hpp>
 #include <unordered_map>
 
+#include "compilerPipeline.hpp"
+
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
