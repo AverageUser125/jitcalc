@@ -174,18 +174,6 @@ ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode* left) {
 	ret->binary.left = left;
 	ret->binary.right = parserParseExpression(getPrecedence(tk.type));
 
-	/*
-	// Optimization
-	if (   (ret->type == NodeType::Add && ret->binary.right->type == NodeType::Number && ret->binary.right->number == 0) ||
-		   (ret->type == NodeType::Add && left->type == NodeType::Number && left->number == 0.0)) {
-		return left; // x + 0 => x
-	} else if (
-			(ret->type == NodeType::Mul && ret->binary.right->type == NodeType::Number && ret->binary.right->number == 1) ||
-			(ret->type == NodeType::Mul && left->type == NodeType::Number && left->number == 1.0)) {
-		return left; // x * 1 => x
-	}
-	*/
-
 	return ret;
 }
 
