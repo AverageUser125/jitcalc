@@ -44,7 +44,7 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 		permaAssertComment(globalLibrary, "The LLVM failed to linked to the global scope");
 		JD.addGenerator(std::move(globalLibrary.get()));
 	}
-
+	// TODO: add EarlyCSEPass 
 	// InstCombinePass [func] ( 1 + x - 0.5 converts to x - 0.5)
     llvm::legacy::PassManager passManager;
 	passManager.add(llvm::createInstructionCombiningPass());
