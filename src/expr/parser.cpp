@@ -149,8 +149,7 @@ ExpressionNode* Parser::parserParsePrefixExpr() {
 
 ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode* left) {
 	ExpressionNode* ret = nodePool.allocate(1);
-	ret->left = nullptr;
-	
+
 	switch (tk.type) {
 	case TokenType::Plus:
 		ret->type = NodeType::Add;
@@ -165,17 +164,6 @@ ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode* left) {
 		ret->type = NodeType::Div;
 		break;
 	case TokenType::Caret:
-		// Special handling for unary minus
-		if (left->type == NodeType::Negative) {
-			// Treat as `(-x)^n` by grouping `left` as a single operand
-			ExpressionNode* groupedLeft = nodePool.allocate(1);
-			groupedLeft->type = NodeType::Group;
-			groupedLeft->group.child = left; // Wrap left as a group
-			// Set up the power node with the grouped left operand
-			ret->binary.left = groupedLeft;
-	   	 } else {
-			ret->binary.left = left;
-	   	 }
 		ret->type = NodeType::Pow;
 		break;
 	default:
@@ -183,10 +171,7 @@ ExpressionNode* Parser::parserParseInfixExpr(Token tk, ExpressionNode* left) {
 		hasError = true;
 		return ret;
 	}
-	// unless set manually
-	if(ret->binary.left == nullptr){
-		ret->binary.left = left;
-	}
+	ret->binary.left = left;
 	ret->binary.right = parserParseExpression(getPrecedence(tk.type));
 
 	/*
