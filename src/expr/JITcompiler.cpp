@@ -19,8 +19,8 @@
 #include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>
-#include <llvm/Transforms/InstCombine/InstCombiner.h>
 
 static constexpr auto evaluateFunctionName = "eval";
 
@@ -36,6 +36,21 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 	}
 	auto M = createModule(expr);
 
+	std::string outputStreamContent = "";
+	llvm::raw_string_ostream outputStream(outputStreamContent);
+
+	if (llvm::verifyModule(*M.getModuleUnlocked(), &outputStream)) {
+		elog("LLVM MODULE FAILED: ", outputStreamContent);
+		return {};
+	}
+
+#if PRODUCTION_BUILD == 0
+	{
+		M.getModuleUnlocked()->print(outputStream, nullptr, false, true);
+		llog(outputStreamContent, "\n\n");
+	}
+#endif
+
 	// link all libraries already linked with the parent program
 	{
 		auto& JD = J.get()->getMainJITDylib();
@@ -44,11 +59,7 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 		permaAssertComment(globalLibrary, "The LLVM failed to linked to the global scope");
 		JD.addGenerator(std::move(globalLibrary.get()));
 	}
-	// TODO: add EarlyCSEPass 
-	// InstCombinePass [func] ( 1 + x - 0.5 converts to x - 0.5)
-    llvm::legacy::PassManager passManager;
-	passManager.add(llvm::createInstructionCombiningPass());
-	passManager.add(llvm::createDeadCodeEliminationPass());
+
 
 	if (J.get()->addIRModule(std::move(M))) {
 		elog("failed to link module to LLJIT");
@@ -67,16 +78,22 @@ CompiledFunction JITCompiler::compile(ExpressionNode* expr) {
 
 llvm::orc::ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	auto context = std::make_unique<llvm::LLVMContext>();
-	funcType = llvm::FunctionType::get(llvm::Type::getDoubleTy(*context), {llvm::Type::getDoubleTy(*context)}, false);
+	funcType = llvm::FunctionType::get(llvm::Type::getDoubleTy(*context),
+									   {llvm::Type::getDoubleTy(*context), llvm::Type::getDoubleTy(*context)}, false);
+	auto localFuncType =
+		llvm::FunctionType::get(llvm::Type::getDoubleTy(*context), {llvm::Type::getDoubleTy(*context)}, false);
 
 	auto module = std::make_unique<llvm::Module>("test", *context);
 	llvm::Module* M = module.get();
-	llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, evaluateFunctionName, M);
-	func->addFnAttr(llvm::Attribute::NoUnwind); // no exceptions
+
+	llvm::Function* func =
+		llvm::Function::Create(localFuncType, llvm::Function::ExternalLinkage, evaluateFunctionName, M);
+	func->addFnAttr(llvm::Attribute::NoUnwind);
 
 	llvm::BasicBlock* BB = llvm::BasicBlock::Create(*context, "EntryBlock", func);
 	llvm::IRBuilder<> builder(BB);
-
+	builder.setFastMathFlags(llvm::FastMathFlags::getFast());
+	
 	debugAssert(func->arg_begin() != func->arg_end());
 	llvm::Argument* ArgX = &*func->arg_begin(); // Get the arg
 	ArgX->setName("x");
@@ -87,19 +104,22 @@ llvm::orc::ThreadSafeModule JITCompiler::createModule(ExpressionNode* expr) {
 	modulePtr = M;
 	llvm::Value* result = generateCode(expr);
 	builder.CreateRet(result);
-#if PRODUCTION_BUILD == 0
+
 	{
-		std::string llvmIR = "";
-		llvm::raw_string_ostream ros(llvmIR);
-		module->print(ros, nullptr, false, !PRODUCTION_BUILD);
-		llog(llvmIR, '\n');
+		llvm::legacy::PassManager passManager;
+		passManager.add(llvm::createInstructionCombiningPass()); // Combine fadd instructions
+		passManager.add(llvm::createEarlyCSEPass()); // Early common subexpression elimination
+		passManager.add(llvm::createCFGSimplificationPass());	 // Simplify control flow
+		passManager.add(llvm::createDeadCodeEliminationPass());	 // Remove dead code
+		passManager.run(*module.get());
 	}
-#endif
+
 	return llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
 
 }
 
 llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
+
 	switch (expr->type) {
 	case NodeType::Number:
 		return llvm::ConstantFP::get(*contextPtr, llvm::APFloat(expr->number));
@@ -146,17 +166,8 @@ llvm::Value* JITCompiler::generateCode(ExpressionNode* expr) {
 
 		// Check if the right operand is another power expression
 		if (expr->binary.left->type == NodeType::Pow) {
-			// Get the base and inner exponent from the left power expression
-			ExpressionNode* innerPow = expr->binary.left; // This is the left Pow
-			llvm::Value* innerBase = generateCode(innerPow->binary.left);
-			llvm::Value* innerExponent = generateCode(innerPow->binary.right);
-
-			// Combine the inner exponent with the right exponent
-			llvm::Value* outerExponent = right; // Use the exponent from the current Pow
-			llvm::Value* newExponent = builderPtr->CreateFMul(innerExponent, outerExponent, "exponentProduct");
-
 			llvm::CallInst* callinst =
-				builderPtr->CreateCall(createdFunctions.at("pow"), {innerBase, newExponent}, "powtmp");
+				builderPtr->CreateCall(createdFunctions.at("pow"), {left, right}, "powtmp");
 			callinst->setTailCall(true);
 			return callinst;
 		}
@@ -190,9 +201,8 @@ void JITCompiler::createExternalFunction(const std::string_view name) {
 	// Check if the function has already been created
 	if (createdFunctions.find(name) == createdFunctions.end()) {
 		llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, name, modulePtr);
-		func->addFnAttr(llvm::Attribute::Builtin);
-		func->addFnAttr(llvm::Attribute::NoUnwind); // no exceptions
+		func->addFnAttr(llvm::Attribute::NoUnwind);
 
-		createdFunctions[name] = func;
+		createdFunctions.emplace(name, func);
 	}
 }
