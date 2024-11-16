@@ -160,8 +160,8 @@ void generateAxisData() {
 	// Convert NDC to function space, factoring in origin and scale
 	const float worldMinX = origin.x + screenMinX / scale;
 	const float worldMaxX = origin.x + screenMaxX / scale;
-	const float worldMinY = origin.y + screenMinY / scale;
-	const float worldMaxY = origin.y + screenMaxY / scale;
+	const float worldMinY = -origin.y + screenMinY / scale;
+	const float worldMaxY = -origin.y + screenMaxY / scale;
 
 	// Calculate the width and height in world space
 	const float size = 2 / scale;
@@ -207,7 +207,7 @@ void generateAxisData() {
 			verticesThin.push_back(ndcX);		// x2
 			verticesThin.push_back(screenMaxY); // y2
 		} else {
-			renderer.renderText({ndcX, -origin.y * scale}, formatFloat(x).c_str(), font,
+			renderer.renderText({ndcX, origin.y * scale}, formatFloat(x).c_str(), font,
 								{0.0f, 0, 0, 1.0f}, 0.00065f, 0.1f, 2.0f, {-1, 0}, {}, {}, {});
 			verticesMedium.push_back(ndcX);		  // x1
 			verticesMedium.push_back(screenMinY); // y1
@@ -219,7 +219,7 @@ void generateAxisData() {
 	// Generate horizontal lines in world space
 	for (float y = yStart; y <= worldMaxY; y += worldSpacing) {
 		// Correctly calculate ndcY using the origin and scale
-		float ndcY = (-y + origin.y) * scale; // Use the original y value and adjust correctly
+		float ndcY = -(y + origin.y) * scale; // Use the original y value and adjust correctly
 
 		if (y == 0) {
 			renderer.renderText({screenMaxX, -ndcY}, "X", font, {0.0f, 0, 0, 1.0f}, 0.0007f, 0.1f, 2.0f,
@@ -317,12 +317,12 @@ void generateGraphData(const CompiledFunction& func, GLBufferInfo& vboObject,
 			for (float refinedX = prevX + refinedStep; refinedX < normalizedX; refinedX += refinedStep) {
 				float refinedFuncX = (refinedX / scale) + origin.x;
 				float refinedY = func(refinedFuncX);
-				float refinedScaledY = (refinedY + origin.y) * scale;
+				float refinedScaledY = (refinedY - origin.y) * scale;
 				vertexData.push_back({refinedX, refinedScaledY});
 			}
 		}
 
-		float scaledY = (y + origin.y) * scale;
+		float scaledY = (y - origin.y) * scale;
 		vertexData.push_back({normalizedX, scaledY});
 
 		prevX = normalizedX;
@@ -518,6 +518,7 @@ bool gameLogic(float deltaTime, int w, int h) {
 	if (platform::isMMouseHeld()) {
 		glm::ivec2 currentMousePos = platform::getRelMousePosition();
 		glm::vec2 delta = 2.0f * static_cast<glm::vec2>(originMousePos - currentMousePos); // Delta in pixels
+		delta.y *= -1;
 		origin = originOrigin + (delta / scale) / glm::vec2({w, h}); // Scale and update the origin
 
 		shouldRecalculateEverything = true;
@@ -528,6 +529,28 @@ bool gameLogic(float deltaTime, int w, int h) {
 		// scale = std::clamp(scale, 0.001f, 1000.0f);
 		shouldRecalculateEverything = true;
 	}
+#pragma region hover to show point
+	// Hover to show point with RMouseHeld and movement detection
+	static glm::ivec2 lastMousePos = {0, 0};
+
+	if (platform::isRMouseHeld()) {
+		glm::ivec2 currentMousePos = platform::getRelMousePosition();
+		if ((currentMousePos != lastMousePos) || shouldRecalculateEverything) {
+			glm::vec2 cursorPos = static_cast<glm::vec2>(currentMousePos) / glm::vec2(w, h);
+			cursorPos = (cursorPos * 2.f - 1.f);
+
+			float functionX = (cursorPos.x / scale) + origin.x;
+			float functionY = -cursorPos.y / scale + origin.y;
+
+			std::string point = "(" + formatFloat(functionX) + ", " + formatFloat(functionY) + ")";
+
+			renderer.renderText(cursorPos, point.c_str(), font, {0.0f, 0, 0, 1.0f}, 0.00075f, 0.1f, 2.0f, {-0.5,0}, {},
+								{}, {});
+
+			lastMousePos = currentMousePos; // Update lastMousePos
+		}
+	}
+#pragma endregion
 
 #pragma endregion
 	// reset early
