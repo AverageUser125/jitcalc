@@ -33,6 +33,9 @@ GLuint VBOAllocator::allocateVBO() {
 }
 
 void VBOAllocator::freeVBO(GLuint& vbo) {
+	if (vbo == 0) {
+		return;
+	}
 	auto it = std::find(allocatedVBOs.begin(), allocatedVBOs.end(), vbo);
 	if (it != allocatedVBOs.end()) {
 		allocatedVBOs.erase(it);
