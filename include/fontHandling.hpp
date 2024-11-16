@@ -216,6 +216,8 @@ struct Renderer2D {
 		const Color4f c[4] = {colors, colors, colors, colors};
 		renderRectangle(transforms, texture, c, GL2D_DefaultTextureCoords);
 	}
+
+	void popRectangle();
 };
 
 void internalFlush(Renderer2D& renderer, bool clearDrawData);

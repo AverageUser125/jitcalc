@@ -409,6 +409,15 @@ void Renderer2D::cleanup() {
 	glDeleteVertexArrays(1, &vao);
 }
 
+void Renderer2D::popRectangle() {
+	constexpr auto remove_last_six = [](auto& vec) { vec.erase(vec.end() - 6, vec.end());
+	};
+	remove_last_six(spritePositions);
+	remove_last_six(spriteColors);
+	remove_last_six(texturePositions);
+	spriteTextures.pop_back();
+}
+
 void Renderer2D::renderRectangle(const Rect transforms, const Texture texture, const Color4f colors[4],
 												  const glm::vec4 textureCoords) {
 	debugAssertComment(texture.id != 0, "Invalid texture");
